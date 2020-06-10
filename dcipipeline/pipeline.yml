@@ -1,0 +1,13 @@
+---
+  - agent: openshift
+    credentials: /home/yassine/dci/telco-pipeline.rc.sh
+    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift
+    outputs:
+      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift/config.json
+
+  - agent: cnf
+    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/cnf
+    credentials: /home/yassine/dci/telco-rh-cnf.rc.sh
+    depends_on: openshift
+    inputs:
+      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift/config.json

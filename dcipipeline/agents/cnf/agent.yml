@@ -1,0 +1,56 @@
+---
+  - name: Schedule a job
+    hosts: localhost
+    gather_facts: false
+    tasks:
+      - name: 'Read credentials from env vars'
+        set_fact:
+          dci_client_id: "{{ DCI_CLIENT_ID }}"
+          dci_api_secret: "{{ DCI_API_SECRET }}"
+          dci_cs_url: "{{ DCI_CS_URL }}"
+        no_log: true
+  
+      - name: 'Schedule a new job in DCI Control Server'
+        dci_job:
+          topic: 'OCP-4.4'
+        register: job_info
+  
+      - name: 'print job id'
+        debug:
+          msg: dci_job_id:"{{ job_info['job']['id'] }}"
+  
+      - name: 'Set global variables'
+        set_fact:
+          job_id: "{{ job_info['job']['id'] }}"
+          topic_id: "{{ job_info['job']['topic_id'] }}"
+          remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
+          components: "{{ job_info['job']['components'] }}"
+          product: "{{ job_info['job']['topic']['product_id'] }}"
+  
+      - name: 'Set tags for the current job'
+        dci_job:
+          id: "{{ job_id }}"
+          tags: 'RH-CNF'
+  
+  - name: running cnf
+    hosts: localhost
+    gather_facts: false
+    vars:
+      dci_status: "running"
+    tasks:
+      - name: install cnf
+        shell: echo 'installing some cnf here'
+      - name: print config
+        debug:
+          msg: this is the ocp config:"{{ OCP_CONFIG }}"
+  
+  - name: success tasks
+    hosts: localhost
+    gather_facts: false
+    vars:
+      dci_status: "success"
+    tasks:
+      - name: success message
+        debug:
+          msg: 'The job is now finished. Review the log at: https://www.distributed-ci.io/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
+  
