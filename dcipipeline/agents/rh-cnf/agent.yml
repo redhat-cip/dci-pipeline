@@ -42,7 +42,7 @@
         shell: echo 'installing some cnf here'
       - name: print config
         debug:
-          msg: this is the ocp config:"{{ OCP_CONFIG }}"
+          msg: this is the ocp config:"{{ ocp_config }}"
   
   - name: success tasks
     hosts: localhost

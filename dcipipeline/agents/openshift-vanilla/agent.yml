@@ -3,13 +3,6 @@
     hosts: localhost
     gather_facts: false
     tasks:
-      - name: 'Read credentials from env vars'
-        set_fact:
-          dci_client_id: "{{ DCI_CLIENT_ID }}"
-          dci_api_secret: "{{ DCI_API_SECRET }}"
-          dci_cs_url: "{{ DCI_CS_URL }}"
-        no_log: true
-
       - name: 'Schedule a new job in DCI Control Server'
         dci_job:
           topic: 'OCP-4.4'

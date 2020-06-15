@@ -1,13 +1,15 @@
 ---
-  - agent: openshift
-    credentials: /home/yassine/dci/telco-pipeline.rc.sh
-    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift
+  - name: openshift-vanilla
+    type: ocp
+    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla
     outputs:
-      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift/config.json
+      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla/config.json
+    topic: OCP-4.4
+    fallback_last_succeed: true
 
-  - agent: cnf
-    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/cnf
-    credentials: /home/yassine/dci/telco-rh-cnf.rc.sh
-    depends_on: openshift
+  - name: rh-cnf
+    type: cnf
+    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/rh-cnf
     inputs:
-      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift/config.json
+      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla/config.json
+    topic: RH-CNF
