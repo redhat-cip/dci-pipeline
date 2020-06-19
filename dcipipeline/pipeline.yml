@@ -1,15 +1,15 @@
 ---
   - name: openshift-vanilla
     type: ocp
-    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla
+    location: agents/openshift-vanilla
     outputs:
-      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla/config.json
+      - ocp_config: agents/openshift-vanilla/config.json
     topic: OCP-4.4
     fallback_last_succeed: true
 
   - name: rh-cnf
     type: cnf
-    location: /home/yassine/dci/dci-pipeline/dcipipeline/agents/rh-cnf
+    location: agents/rh-cnf
     inputs:
-      - ocp_config: /home/yassine/dci/dci-pipeline/dcipipeline/agents/openshift-vanilla/config.json
+      - ocp_config: agents/rh-cnf/config.json
     topic: RH-CNF
