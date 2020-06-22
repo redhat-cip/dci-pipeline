@@ -21,6 +21,7 @@ import sys
 import yaml
 
 
+VERBOSE_LEVEL = 2
 TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -65,7 +66,7 @@ def run_ocp(stage, dci_credentials, envvars, data_dir):
     run = ansible_runner.run(
         private_data_dir=data_dir,
         playbook='%s/agent.yml' % stage['location'],
-        verbosity=2,
+        verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         quiet=False)
     print(run.stats)
@@ -88,7 +89,7 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir):
     run = ansible_runner.run(
         private_data_dir=data_dir,
         playbook='%s/agent.yml' % stage['location'],
-        verbosity=2,
+        verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         extravars=extravars,
         quiet=False)
