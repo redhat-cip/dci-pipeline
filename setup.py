@@ -39,5 +39,8 @@ setuptools.setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
-    ]
+    ],
+    entry_points={
+        'console_scripts': ['dci-pipeline=dcipipeline.main:main']
+    },
 )
