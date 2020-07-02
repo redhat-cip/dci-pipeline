@@ -10,11 +10,6 @@
           dci_cs_url="{{ lookup('env','DCI_CS_URL') }}"
         no_log: true
   
-      - name: 'Schedule a new job in DCI Control Server'
-        dci_job:
-          topic: 'OCP-4.4'
-        register: job_info
-  
       - name: 'print job id'
         debug:
           msg: dci_job_id:"{{ job_info['job']['id'] }}"
@@ -25,12 +20,7 @@
           topic_id: "{{ job_info['job']['topic_id'] }}"
           remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
           components: "{{ job_info['job']['components'] }}"
-          product: "{{ job_info['job']['topic']['product_id'] }}"
-  
-      - name: 'Set tags for the current job'
-        dci_job:
-          id: "{{ job_id }}"
-          tags: 'RH-CNF'
+          product: "{{ job_info['job']['topic']['product_id'] }}"  
   
   - name: running cnf
     hosts: localhost

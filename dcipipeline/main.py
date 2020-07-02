@@ -21,6 +21,7 @@ from dciclient.v1.api import context as dci_context
 import ansible_runner
 
 import os
+import shutil
 import sys
 import yaml
 
@@ -91,6 +92,17 @@ def schedule_job(topic_name, dci_credentials):
     return None
 
 
+def add_tags_to_job(job_id, tags, dci_credentials):
+    context = dci_context.build_signature_context(
+        dci_client_id=dci_credentials['DCI_CLIENT_ID'],
+        dci_api_secret=dci_credentials['DCI_API_SECRET'],
+        dci_cs_url=dci_credentials['DCI_CS_URL']
+    )
+
+    for tag in tags:
+        dci_job.add_tag(context, job_id, tag)
+
+
 def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
     # schedule job on topic
     # run ocp playbook with job_info
@@ -111,7 +123,8 @@ def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
     return {
         'ocp_config': {
             'host': 'host.example.com',
-            'worker': 'worker.example.com'}}
+            'worker': 'worker.example.com',
+            'job_info': job_info}}
 
 
 def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info):
@@ -144,15 +157,15 @@ def main():
     pipeline = load_yaml_file(config)
     check_pipeline(pipeline)
 
+    shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
     ocp_stage = get_ocp_stage(pipeline)
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
-    job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)
-    if not job_info:
+    ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)
+    if not ocp_job_info:
         print('error when scheduling a job')
         sys.exit(1)
 
-
-    ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, job_info)
+    ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info)
 
     cnf_stages = get_cnf_stages(pipeline)
     for cnf_stage in cnf_stages:
@@ -162,7 +175,19 @@ def main():
             'DCI_API_SECRET': dci_credentials.get('DCI_API_SECRET'),
             'DCI_CS_URL': dci_credentials.get('DCI_CS_URL')
         }
-        run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, job_info)
+        shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
+        cnf_job_info = schedule_job(cnf_stage['topic'], dci_credentials)
+
+        tags = ['RH-CNF']
+        for component in ocp_job_info['job']['components']:
+            tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
+        add_tags_to_job(cnf_job_info['job']['id'], tags, dci_credentials)
+        if not cnf_job_info:
+            print('error when scheduling a job')
+            sys.exit(1)
+        run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, cnf_job_info)
+
+    shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
 
 
 if __name__ == '__main__':

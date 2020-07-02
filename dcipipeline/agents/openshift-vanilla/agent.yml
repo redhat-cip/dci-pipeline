@@ -27,7 +27,7 @@
       - name: 'Set tags for the current job'
         dci_job:
           id: "{{ job_id }}"
-          tags: 'OCP-Vanilla'
+          tags: 'OCP-Vanilla-configuration'
 
   - name: running ocp deployment
     hosts: localhost
