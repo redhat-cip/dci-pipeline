@@ -13,6 +13,10 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
+from dciclient.v1.api import job as dci_job
+from dciclient.v1.api import jobstate as dci_jobstate
+from dciclient.v1.api import topic as dci_topic
+from dciclient.v1.api import context as dci_context
 
 import ansible_runner
 
@@ -56,18 +60,51 @@ def get_cnf_stages(pipeline):
     return cnf_stages
 
 
-def run_ocp(stage, dci_credentials, envvars, data_dir):
+def schedule_job(topic_name, dci_credentials):
+    context = dci_context.build_signature_context(
+        dci_client_id=dci_credentials['DCI_CLIENT_ID'],
+        dci_api_secret=dci_credentials['DCI_API_SECRET'],
+        dci_cs_url=dci_credentials['DCI_CS_URL']
+    )
+    print('schedule job on topic %s' % topic_name)
+
+    topic_res = dci_topic.list(context, where='name:' + topic_name)
+    if topic_res.status_code == 200:
+        topics = topic_res.json()['topics']
+        if len(topics) == 0:
+            print('topic %s not found' % topic_name)
+            sys.exit(1)
+        topic_id = topics[0]['id']
+        schedule = dci_job.schedule(context, topic_id=topic_id)
+        if schedule.status_code == 201:
+            scheduled_job_id = schedule.json()['job']['id']
+            scheduled_job = dci_job.get(
+                context, scheduled_job_id, embed='topic,remoteci,components')
+            if scheduled_job.status_code == 200:
+                job_id = scheduled_job.json()['job']['id']
+                dci_jobstate.create(
+                    context,
+                    status='new',
+                    comment='job scheduled',
+                    job_id=job_id)
+                return scheduled_job.json()
+    return None
+
+
+def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
     # schedule job on topic
     # run ocp playbook with job_info
     # return job_info
     print('running ocp stage: %s' % stage['name'])
     envvars = dict(envvars)
     envvars.update(dci_credentials)
+    extravars = {'job_info': job_info}
     run = ansible_runner.run(
         private_data_dir=data_dir,
         playbook='%s/agent.yml' % stage['location'],
         verbosity=VERBOSE_LEVEL,
         envvars=envvars,
+        extravars=extravars,
         quiet=False)
     print(run.stats)
 
@@ -77,14 +114,14 @@ def run_ocp(stage, dci_credentials, envvars, data_dir):
             'worker': 'worker.example.com'}}
 
 
-def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir):
+def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info):
     # schedule job on topic with
     # ocp_job_config components
     # run cnf playbook with ocp config
     print('running cnf stage: %s' % stage['name'])
     envvars = dict(envvars)
     envvars.update(dci_credentials)
-    extravars = {}
+    extravars = {'job_info': job_info}
     extravars.update(ocp_job_config)
     run = ansible_runner.run(
         private_data_dir=data_dir,
@@ -109,7 +146,13 @@ def main():
 
     ocp_stage = get_ocp_stage(pipeline)
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
-    ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir)
+    job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)
+    if not job_info:
+        print('error when scheduling a job')
+        sys.exit(1)
+
+
+    ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, job_info)
 
     cnf_stages = get_cnf_stages(pipeline)
     for cnf_stage in cnf_stages:
@@ -119,8 +162,7 @@ def main():
             'DCI_API_SECRET': dci_credentials.get('DCI_API_SECRET'),
             'DCI_CS_URL': dci_credentials.get('DCI_CS_URL')
         }
-
-        run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir)
+        run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, job_info)
 
 
 if __name__ == '__main__':

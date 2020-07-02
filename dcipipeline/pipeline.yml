@@ -12,4 +12,4 @@
     location: agents/rh-cnf
     inputs:
       - ocp_config: agents/rh-cnf/config.json
-    topic: RH-CNF
+    topic: OCP-4.4

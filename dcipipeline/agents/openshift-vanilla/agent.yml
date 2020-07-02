@@ -2,11 +2,15 @@
   - name: Schedule a job
     hosts: localhost
     gather_facts: false
+    vars:
+        dci_status: "new"
     tasks:
-      - name: 'Schedule a new job in DCI Control Server'
-        dci_job:
-          topic: 'OCP-4.4'
-        register: job_info
+      - name: 'Read credentials from env vars'
+        set_fact:
+          dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
+          dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
+          dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
+        no_log: true
 
       - name: 'print job id'
         debug:
