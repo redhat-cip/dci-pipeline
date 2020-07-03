@@ -97,10 +97,11 @@ def associate_product_to_team(product_id, team_id):
     post('products/%s/teams' % product_id, {'team_id': team_id})
 
 
-def create_component(name, type, topic_id):
+def create_component(name, version, topic_id):
     r = post('components', {
-        'name': name,
-        'type': type,
+        'name': name + '-' + version,
+        'type': name,
+        'data': {'version': version},
         'topic_id': topic_id
     })
     print(r.json())
@@ -149,21 +150,36 @@ def generate_remoteci_yml_files():
 def main():
     wait_db_ready()
     
+    ocp44_components = (
+        ('ocp-4.4', '4.4.0-0.nightly-12345'),
+        ('ose-tests', '20200628'),
+        ('cnf-tests', '20200628'),
+        ('partner1-plugin1', '12.03'),
+        ('partner1-plugin2', '20200706'),
+        ('partner2-plugin1', '20.03')
+    )
+
     ocp = create_product('OCP')
-    ocp44 = create_topic('OCP-4.4', ['metadata'], ocp)
-    create_component('4.4.0-0.nightly-12345', 'metadata', ocp44['id'])
+    ocp44_topic = create_topic('OCP-4.4', [name for name, _ in ocp44_components], ocp)
+    ocp_topic_id = ocp44_topic['id']
+    for name, version in ocp44_components:
+        create_component(name, version, ocp_topic_id)
+
+    cnf = create_product('RH-CNF')
+    cnf01 = create_topic('RH-CNF-0.1', ['RH-CNF-0.1'], cnf)
+    create_component('RH-CNF-0.1', '0.1.nightly-20200703', cnf01['id'])
 
     telco_ci = create_team('telco-ci')
-    telco_pipeline = create_remoteci('telco-pipeline', telco_ci['id'])
+    create_remoteci('telco-pipeline', telco_ci['id'])
 
     associate_product_to_team(ocp['id'], telco_ci['id'])
-    associate_topic_to_team(ocp44['id'], telco_ci['id'])
+    associate_topic_to_team(ocp_topic_id, telco_ci['id'])
 
     telco_ci_partner = create_team('telco-ci-partner')
-    telco_rh_cnf = create_remoteci('telco-rh-cnf', telco_ci_partner['id'])
+    create_remoteci('telco-rh-cnf', telco_ci_partner['id'])
 
-    associate_product_to_team(ocp['id'], telco_ci_partner['id'])
-    associate_topic_to_team(ocp44['id'], telco_ci_partner['id'])
+    associate_product_to_team(cnf['id'], telco_ci_partner['id'])
+    associate_topic_to_team(cnf01['id'], telco_ci_partner['id'])
     
     generate_remoteci_rc_files()
     generate_remoteci_yml_files()

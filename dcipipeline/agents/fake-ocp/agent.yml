@@ -1,7 +1,0 @@
----
-  - name: Fake OCP
-    hosts: localhost
-    gather_facts: false
-    tasks:
-      - pause:
-          seconds: 1

@@ -52,6 +52,18 @@ def check_pipeline(pipeline):
         pass
 
 
+def generate_ansible_cfg(dci_ansible_dir, config_dir):
+    with open(os.path.join(config_dir, 'ansible.cfg'), 'w') as f:
+        f.write('''[defaults]
+library            = {dci_ansible_dir}/modules/
+module_utils       = {dci_ansible_dir}/module_utils/
+callback_whitelist = dci
+callback_plugins   = {dci_ansible_dir}/callback/
+interpreter_python = /usr/bin/python2
+
+'''.format(dci_ansible_dir=dci_ansible_dir))
+
+
 def get_ocp_stage(pipeline):
     for stage in pipeline:
         if stage['type'] == 'ocp':
@@ -160,10 +172,9 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info)
 
 
 def main():
+    dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
     envvars = {
-        'ANSIBLE_CALLBACK_PLUGINS': os.getenv(
-            'ANSIBLE_CALLBACK_PLUGINS',
-            os.path.join(os.path.dirname(TOPDIR), 'dci-ansible/callback'))
+        'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
     }
     config = sys.argv[1] if len(sys.argv) > 1 else os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')
     config_dir = os.path.dirname(config)
@@ -171,6 +182,7 @@ def main():
     check_pipeline(pipeline)
 
     shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
+    generate_ansible_cfg(dci_ansible_dir, config_dir)
     ocp_stage = get_ocp_stage(pipeline)
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
     ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)

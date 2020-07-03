@@ -7,3 +7,4 @@ telco-pipeline.sh
 telco-pipeline_dci_credentials.yml
 telco-rh-cnf.sh
 telco-rh-cnf_dci_credentials.yml
+dcipipeline/ansible.cfg
