@@ -20,12 +20,18 @@ from dciclient.v1.api import context as dci_context
 
 import ansible_runner
 
+import logging
 import os
 import shutil
 import sys
 import yaml
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+log = logging.getLogger(__name__)
 VERBOSE_LEVEL = 2
 TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -42,7 +48,7 @@ def load_yaml_file(path):
 
 def check_pipeline(pipeline):
     def _check_agent_directory(path):
-        print('check agent directory at %s' % path)
+        log.info('check agent directory at %s' % path)
         pass
 
 
@@ -67,13 +73,14 @@ def schedule_job(topic_name, dci_credentials):
         dci_api_secret=dci_credentials['DCI_API_SECRET'],
         dci_cs_url=dci_credentials['DCI_CS_URL']
     )
-    print('schedule job on topic %s' % topic_name)
+    log.info('scheduling job on topic %s' % topic_name)
 
     topic_res = dci_topic.list(context, where='name:' + topic_name)
     if topic_res.status_code == 200:
         topics = topic_res.json()['topics']
+        log.debug('topics: %s' % topics)
         if len(topics) == 0:
-            print('topic %s not found' % topic_name)
+            log.error('topic %s not found' % topic_name)
             sys.exit(1)
         topic_id = topics[0]['id']
         schedule = dci_job.schedule(context, topic_id=topic_id)
@@ -89,6 +96,12 @@ def schedule_job(topic_name, dci_credentials):
                     comment='job scheduled',
                     job_id=job_id)
                 return scheduled_job.json()
+            else:
+                log.error('error getting schedule info: %s' % scheduled_job.text)
+        else:
+            log.error('error scheduling: %s' % schedule.text)
+    else:
+        log.error('error getting the list of topics: %s' % topic_res.text)
     return None
 
 
@@ -107,7 +120,7 @@ def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
     # schedule job on topic
     # run ocp playbook with job_info
     # return job_info
-    print('running ocp stage: %s' % stage['name'])
+    log.info('running ocp stage: %s' % stage['name'])
     envvars = dict(envvars)
     envvars.update(dci_credentials)
     extravars = {'job_info': job_info}
@@ -118,7 +131,7 @@ def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
         envvars=envvars,
         extravars=extravars,
         quiet=False)
-    print(run.stats)
+    log.info(run.stats)
 
     return {
         'ocp_config': {
@@ -131,7 +144,7 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info)
     # schedule job on topic with
     # ocp_job_config components
     # run cnf playbook with ocp config
-    print('running cnf stage: %s' % stage['name'])
+    log.info('running cnf stage: %s' % stage['name'])
     envvars = dict(envvars)
     envvars.update(dci_credentials)
     extravars = {'job_info': job_info}
@@ -143,7 +156,7 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info)
         envvars=envvars,
         extravars=extravars,
         quiet=False)
-    print(run.stats)
+    log.info(run.stats)
 
 
 def main():
@@ -162,7 +175,7 @@ def main():
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
     ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)
     if not ocp_job_info:
-        print('error when scheduling a job')
+        log.error('error when scheduling a job')
         sys.exit(1)
 
     ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info)
@@ -178,12 +191,15 @@ def main():
         shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
         cnf_job_info = schedule_job(cnf_stage['topic'], dci_credentials)
 
+        if not cnf_job_info:
+            log.error('Unable to schedule job %s. Skipping' % cnf_stage)
+            continue
         tags = ['RH-CNF']
         for component in ocp_job_info['job']['components']:
             tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
         add_tags_to_job(cnf_job_info['job']['id'], tags, dci_credentials)
         if not cnf_job_info:
-            print('error when scheduling a job')
+            log.error('error when scheduling a job')
             sys.exit(1)
         run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, cnf_job_info)
 
