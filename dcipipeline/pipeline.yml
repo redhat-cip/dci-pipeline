@@ -5,7 +5,8 @@
     outputs:
       - ocp_config: agents/openshift-vanilla/config.json
     topic: OCP-4.4
-    fallback_last_succeed: true
+    success_tag: ocp-vanilla-ok
+    fallback_last_success: ocp-vanilla-ok
 
   - name: rh-cnf
     type: cnf
@@ -13,3 +14,5 @@
     inputs:
       - ocp_config: agents/rh-cnf/config.json
     topic: RH-CNF-0.1
+    success_tag: ocp-vanilla-ok
+    fallback_last_success: ocp-vanilla-ok

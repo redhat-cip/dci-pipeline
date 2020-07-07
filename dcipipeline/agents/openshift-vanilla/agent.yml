@@ -14,7 +14,7 @@
 
       - name: 'print job id'
         debug:
-          msg: dci_job_id:"{{ job_info['job']['id'] }}"
+          msg: "dci_job_id: {{ job_info['job']['id'] }}"
 
       - name: 'Set global variables'
         set_fact:
@@ -35,6 +35,9 @@
     vars:
       dci_status: "running"
     tasks:
+#       - name: install ocp
+#         fail: 
+#           msg: "error installing OCP"
       - name: install ocp
         shell: echo 'installing some ocp here'
 
