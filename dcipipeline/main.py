@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) Red Hat, Inc
+# Copyright (C) 2020 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -40,17 +40,7 @@ TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
 
 def load_yaml_file(path):
     with open(path, 'r') as file:
-        try:
-            return yaml.load(file, Loader=yaml.SafeLoader)
-        except yaml.YAMLError as exc:
-            print(exc)
-            sys.exit(1)
-
-
-def check_pipeline(pipeline):
-    def _check_agent_directory(path):
-        log.info('check agent directory at %s' % path)
-        pass
+        return yaml.load(file, Loader=yaml.SafeLoader)
 
 
 def generate_ansible_cfg(dci_ansible_dir, config_dir):
@@ -82,12 +72,15 @@ def get_cnf_stages(pipeline):
     return cnf_stages
 
 
-def schedule_job(topic_name, dci_credentials):
-    context = dci_context.build_signature_context(
+def build_context(dci_credentials):
+    return dci_context.build_signature_context(
         dci_client_id=dci_credentials['DCI_CLIENT_ID'],
         dci_api_secret=dci_credentials['DCI_API_SECRET'],
         dci_cs_url=dci_credentials['DCI_CS_URL']
     )
+
+
+def schedule_job(topic_name, context):
     log.info('scheduling job on topic %s' % topic_name)
 
     topic_res = dci_topic.list(context, where='name:' + topic_name)
@@ -120,24 +113,13 @@ def schedule_job(topic_name, dci_credentials):
     return None
 
 
-def add_tags_to_job(job_id, tags, dci_credentials):
-    context = dci_context.build_signature_context(
-        dci_client_id=dci_credentials['DCI_CLIENT_ID'],
-        dci_api_secret=dci_credentials['DCI_API_SECRET'],
-        dci_cs_url=dci_credentials['DCI_CS_URL']
-    )
-
+def add_tags_to_job(job_id, tags, context):
     for tag in tags:
         log.info('Setting tag %s on job %s' % (tag, job_id))
         dci_job.add_tag(context, job_id, tag)
 
 
-def add_tag_to_component(component_id, tag, dci_credentials):
-    context = dci_context.build_signature_context(
-        dci_client_id=dci_credentials['DCI_CLIENT_ID'],
-        dci_api_secret=dci_credentials['DCI_API_SECRET'],
-        dci_cs_url=dci_credentials['DCI_CS_URL']
-    )
+def add_tag_to_component(component_id, tag, context):
     log.info('Setting tag %s on component %s' % (tag, component_id))
     dci_component.add_tag(context, component_id, tag)
 
@@ -189,21 +171,30 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info)
     return run.rc == 0
 
 
-def main():
+def get_config(args):
     dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
     envvars = {
         'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
     }
-    config = sys.argv[1] if len(sys.argv) > 1 else os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')
+    config = args[1] if len(args) > 1 else os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')
     config_dir = os.path.dirname(config)
     pipeline = load_yaml_file(config)
-    check_pipeline(pipeline)
-
-    shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
     generate_ansible_cfg(dci_ansible_dir, config_dir)
+    return config_dir, pipeline, envvars
+
+
+def set_success_tag(stage, job_info, context):
+    if 'success_tag' in stage:
+        for component in job_info['job']['components']:
+            add_tag_to_component(component['id'], stage['success_tag'], context)
+
+
+def run_ocp_stage(config_dir, pipeline, envvars):
+    shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
     ocp_stage = get_ocp_stage(pipeline)
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
-    ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_credentials)
+    ocp_dci_context = build_context(ocp_dci_credentials)
+    ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_context)
     if not ocp_job_info:
         log.error('error when scheduling a job for topic %s' % ocp_stage['topic'])
         sys.exit(1)
@@ -214,42 +205,46 @@ def main():
         log.error('Unable to run successfully job %s' % ocp_stage['name'])
         sys.exit(1)
 
-    if 'success_tag' in ocp_stage:
-        for component in ocp_job_info['job']['components']:
-            add_tag_to_component(component['id'], ocp_stage['success_tag'], ocp_dci_credentials)
+    set_success_tag(ocp_stage, ocp_job_info, ocp_dci_context)
 
+    return ocp_stage, ocp_job_config, ocp_job_info
+
+
+def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_config, ocp_job_info):
     cnf_stages = get_cnf_stages(pipeline)
     for cnf_stage in cnf_stages:
         dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, cnf_stage['location']))
-        dci_credentials = {
-            'DCI_CLIENT_ID': dci_credentials.get('DCI_CLIENT_ID'),
-            'DCI_API_SECRET': dci_credentials.get('DCI_API_SECRET'),
-            'DCI_CS_URL': dci_credentials.get('DCI_CS_URL')
-        }
+        dci_context = build_context(dci_credentials)
         shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
-        cnf_job_info = schedule_job(cnf_stage['topic'], dci_credentials)
+        cnf_job_info = schedule_job(cnf_stage['topic'], dci_context)
 
         if not cnf_job_info:
             log.error('Unable to schedule job %s. Skipping' % cnf_stage['name'])
             continue
-        tags = ['RH-CNF']
+        tags = [cnf_stage['topic']]
         for component in ocp_job_info['job']['components']:
             tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
-        add_tags_to_job(cnf_job_info['job']['id'], tags, dci_credentials)
+        add_tags_to_job(cnf_job_info['job']['id'], tags, dci_context)
         if not cnf_job_info:
-            log.error('Error when scheduling a job')
-            sys.exit(1)
+            log.error('Error when scheduling job %s' % cnf_stage['name'])
+            continue
         cnf_result = run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, cnf_job_info)
 
         if cnf_result:
-            if 'success_tag' in cnf_stage:
-                for component in cnf_job_info['job']['components']:
-                    add_tag_to_component(component['id'], cnf_stage['success_tag'], dci_credentials)
+            set_success_tag(cnf_stage, cnf_job_info, dci_context)
         else:
             log.error('Unable to run successfully job %s' % cnf_stage['name'])
 
     shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
 
 
+def main(args):
+    config_dir, pipeline, envvars = get_config(args)
+
+    ocp_stage, ocp_job_config, ocp_job_info = run_ocp_stage(config_dir, pipeline, envvars)
+
+    run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_config, ocp_job_info)
+
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
