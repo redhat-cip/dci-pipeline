@@ -144,14 +144,10 @@ def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
     if run.rc != 0:
         return False
 
-    return {
-        'ocp_config': {
-            'host': 'host.example.com',
-            'worker': 'worker.example.com',
-            'job_info': job_info}}
+    return True
 
 
-def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info):
+def run_cnf(stage, dci_credentials, envvars, data_dir, job_info):
     # schedule job on topic with
     # ocp_job_config components
     # run cnf playbook with ocp config
@@ -159,7 +155,6 @@ def run_cnf(stage, ocp_job_config, dci_credentials, envvars, data_dir, job_info)
     envvars = dict(envvars)
     envvars.update(dci_credentials)
     extravars = {'job_info': job_info}
-    extravars.update(ocp_job_config)
     run = ansible_runner.run(
         private_data_dir=data_dir,
         playbook='%s/agent.yml' % stage['location'],
@@ -195,42 +190,51 @@ def run_ocp_stage(config_dir, pipeline, envvars):
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
     ocp_dci_context = build_context(ocp_dci_credentials)
     ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_context)
+
     if not ocp_job_info:
         log.error('error when scheduling a job for topic %s' % ocp_stage['topic'])
         sys.exit(1)
 
-    ocp_job_config = run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info)
-
-    if not ocp_job_config:
+    if not run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
         log.error('Unable to run successfully job %s' % ocp_stage['name'])
         sys.exit(1)
 
     set_success_tag(ocp_stage, ocp_job_info, ocp_dci_context)
 
-    return ocp_stage, ocp_job_config, ocp_job_info
+    return ocp_stage, ocp_job_info
 
 
-def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_config, ocp_job_info):
+def create_inputs(config_dir, ocp_stage, cnf_stage):
+    if 'inputs' in cnf_stage:
+        for key in cnf_stage['inputs']:
+            log.info('Copying %s/%s into %s/%s' % (config_dir, ocp_stage['outputs'][key],
+                                                   config_dir, cnf_stage['inputs'][key]))
+            with open(os.path.join(config_dir, cnf_stage['inputs'][key]), 'wb') as ofile:
+                with open(os.path.join(config_dir, ocp_stage['outputs'][key]), 'rb') as ifile:
+                    ofile.write(ifile.read())
+
+
+def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
     cnf_stages = get_cnf_stages(pipeline)
     for cnf_stage in cnf_stages:
         dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, cnf_stage['location']))
         dci_context = build_context(dci_credentials)
         shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
+
+        create_inputs(config_dir, ocp_stage, cnf_stage)
+
         cnf_job_info = schedule_job(cnf_stage['topic'], dci_context)
 
         if not cnf_job_info:
             log.error('Unable to schedule job %s. Skipping' % cnf_stage['name'])
             continue
+
         tags = [cnf_stage['topic']]
         for component in ocp_job_info['job']['components']:
             tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
         add_tags_to_job(cnf_job_info['job']['id'], tags, dci_context)
-        if not cnf_job_info:
-            log.error('Error when scheduling job %s' % cnf_stage['name'])
-            continue
-        cnf_result = run_cnf(cnf_stage, ocp_job_config, dci_credentials, envvars, config_dir, cnf_job_info)
 
-        if cnf_result:
+        if run_cnf(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
             set_success_tag(cnf_stage, cnf_job_info, dci_context)
         else:
             log.error('Unable to run successfully job %s' % cnf_stage['name'])
@@ -241,9 +245,9 @@ def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_config, ocp
 def main(args):
     config_dir, pipeline, envvars = get_config(args)
 
-    ocp_stage, ocp_job_config, ocp_job_info = run_ocp_stage(config_dir, pipeline, envvars)
+    ocp_stage, ocp_job_info = run_ocp_stage(config_dir, pipeline, envvars)
 
-    run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_config, ocp_job_info)
+    run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info)
 
 
 if __name__ == '__main__':

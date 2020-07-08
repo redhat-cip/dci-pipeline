@@ -3,7 +3,7 @@
     type: ocp
     location: agents/openshift-vanilla
     outputs:
-      - ocp_config: agents/openshift-vanilla/config.json
+      hosts: agents/openshift-vanilla/outputs/localhost/etc/hosts
     topic: OCP-4.4
     success_tag: ocp-vanilla-ok
     fallback_last_success: ocp-vanilla-ok
@@ -12,7 +12,7 @@
     type: cnf
     location: agents/rh-cnf
     inputs:
-      - ocp_config: agents/rh-cnf/config.json
+      hosts: agents/rh-cnf/hosts
     topic: RH-CNF-0.1
     success_tag: ocp-vanilla-ok
     fallback_last_success: ocp-vanilla-ok

@@ -41,6 +41,11 @@
       - name: install ocp
         shell: echo 'installing some ocp here'
 
+      - name: get result file
+        fetch:
+          src: "/etc/hosts"
+          dest: "outputs"
+
   - name: success tasks
     hosts: localhost
     gather_facts: false
