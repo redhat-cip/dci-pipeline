@@ -163,6 +163,7 @@ def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
         verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         extravars=extravars,
+        inventory=stage.get('inventory'),
         quiet=False)
     log.info(run.stats)
 
@@ -186,6 +187,7 @@ def run_cnf(stage, dci_credentials, envvars, data_dir, job_info):
         verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         extravars=extravars,
+        inventory=stage.get('inventory'),
         quiet=False)
     log.info(run.stats)
     return run.rc == 0
