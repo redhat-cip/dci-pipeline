@@ -5,14 +5,14 @@
     vars:
         dci_status: "new"
     tasks:
-      - name: 'Read credentials from env vars'
+      - name: Read credentials from env vars
         set_fact:
           dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
           dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
           dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
         no_log: true
 
-      - name: 'print job id'
+      - name: Print job id
         debug:
           msg: "dci_job_id: {{ job_info['job']['id'] }}"
 
@@ -27,26 +27,41 @@
       - name: 'Set tags for the current job'
         dci_job:
           id: "{{ job_id }}"
-          tags: 'OCP-Vanilla-configuration'
+          tags: 'ocp-vanilla-conf'
 
-  - name: running ocp deployment
+  - name: Preparation tasks
+    hosts: localhost
+    gather_facts: false
+    vars:
+      dci_status: "pre-run"
+    tasks:
+      - name: do some checks
+        assert:
+          success_msg: "All components are present"
+          that:
+            - "components|length == 3"
+
+  - name: Running ocp deployment
     hosts: localhost
     gather_facts: false
     vars:
       dci_status: "running"
     tasks:
-#       - name: install ocp
-#         fail: 
-#           msg: "error installing OCP"
       - name: install ocp
         shell: echo 'installing some ocp here'
 
+  - name: Post-run tasks
+    hosts: localhost
+    gather_facts: false
+    vars:
+      dci_status: "post-run"
+    tasks:
       - name: get result file
         fetch:
           src: "/etc/hosts"
           dest: "outputs"
 
-  - name: success tasks
+  - name: Success tasks
     hosts: localhost
     gather_facts: false
     vars:

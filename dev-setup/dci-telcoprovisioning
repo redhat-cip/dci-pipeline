@@ -27,6 +27,13 @@ DCI_PASSWORD = os.environ.get('DCI_PASSWORD', 'admin')
 DCI_CS_URL = os.environ.get('DCI_CS_URL', 'http://127.0.0.1:5000')
 
 
+def check_return(response):
+    print(response)
+    if response.status_code // 100 != 2:
+        raise Exception(response.text)
+    return response
+
+
 def get_url(endpoint, subresource=None):
     return '%s/api/v1/%s' % (DCI_CS_URL, endpoint)
 
@@ -35,7 +42,7 @@ def get(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,)):
     url = get_url(endpoint)
     print('-------------')
     print('GET %s' % url)
-    return requests.get(url, auth=user)
+    return check_return(requests.get(url, auth=user))
 
 
 def post(endpoint, data, user=(DCI_LOGIN, DCI_PASSWORD,)):
@@ -43,20 +50,20 @@ def post(endpoint, data, user=(DCI_LOGIN, DCI_PASSWORD,)):
     print('-------------')
     print('POST %s' % url)
     print(json.dumps(data, indent=2))
-    return requests.post(url, json=data, auth=user)
+    return check_return(requests.post(url, json=data, auth=user))
 
 
 def associate_user_to_team(team_id, user_id, user=(DCI_LOGIN, DCI_PASSWORD,)):
     url = '%s/api/v1/teams/%s/users/%s' % (DCI_CS_URL, team_id, user_id)
     print('-------------')
     print('POST %s' % url)
-    return requests.post(url, json={}, auth=user)
+    return check_return(requests.post(url, json={}, auth=user))
 
 
 def delete(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,)):
     url = get_url(endpoint)
     print('DELETE %s' % url)
-    return requests.delete(url, auth=user)
+    return check_return(requests.delete(url, auth=user))
 
 
 def get_teams():
@@ -101,7 +108,6 @@ def create_component(name, version, topic_id):
     r = post('components', {
         'name': name + '-' + version,
         'type': name,
-        'data': {'version': version},
         'topic_id': topic_id
     })
     print(r.json())
@@ -151,23 +157,30 @@ def main():
     wait_db_ready()
     
     ocp44_components = (
-        ('ocp-4.4', '4.4.0-0.nightly-12345'),
+        ('ocp-4.4', '4.4.0-0.nightly-20200701'),
         ('ose-tests', '20200628'),
         ('cnf-tests', '20200628'),
         ('partner1-plugin1', '12.03'),
         ('partner1-plugin2', '20200706'),
-        ('partner2-plugin1', '20.03')
+        ('partner2-plugin1', '20.03'),
+    )
+
+    ocp44_components_2 = (
+        ('ocp-4.4', '4.4.0-0.nightly-20200703'),
+        ('ose-tests', '20200703'),
     )
 
     ocp = create_product('OCP')
-    ocp44_topic = create_topic('OCP-4.4', [name for name, _ in ocp44_components], ocp)
+    ocp44_topic = create_topic('OCP-4.4', [], ocp)
     ocp_topic_id = ocp44_topic['id']
     for name, version in ocp44_components:
         create_component(name, version, ocp_topic_id)
+    for name, version in ocp44_components_2:
+        create_component(name, version, ocp_topic_id)
 
     cnf = create_product('RH-CNF')
-    cnf01 = create_topic('RH-CNF-0.1', ['RH-CNF-0.1'], cnf)
-    create_component('RH-CNF-0.1', '0.1.nightly-20200703', cnf01['id'])
+    cnf01 = create_topic('RH-CNF-0.1', [], cnf)
+    create_component('rh-cnf-0.1', '0.1.nightly-20200703', cnf01['id'])
 
     telco_ci = create_team('telco-ci')
     create_remoteci('telco-pipeline', telco_ci['id'])

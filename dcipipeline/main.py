@@ -80,36 +80,61 @@ def build_context(dci_credentials):
     )
 
 
-def schedule_job(topic_name, context):
-    log.info('scheduling job on topic %s' % topic_name)
+def get_components(context, stage, topic_id):
+    components = []
+    for component_name in stage['components']:
+        resp = dci_topic.list_components(context, topic_id,
+                                         limit=1,
+                                         offset=0,
+                                         sort='-created_at',
+                                         where='type:%s' % (component_name,))
+        if resp.status_code == 200:
+            components.append(resp.json()['components'][0])
+        else:
+            log.error('Unable to fetch component %s for topic %s: %s' % (component_name,
+                                                                         stage['topic'],
+                                                                         resp.text))
+    return components
 
-    topic_res = dci_topic.list(context, where='name:' + topic_name)
+
+def get_topic_id(context, stage):
+    topic_res = dci_topic.list(context, where='name:' + stage['topic'])
     if topic_res.status_code == 200:
         topics = topic_res.json()['topics']
         log.debug('topics: %s' % topics)
         if len(topics) == 0:
-            log.error('topic %s not found' % topic_name)
-            sys.exit(1)
-        topic_id = topics[0]['id']
-        schedule = dci_job.schedule(context, topic_id=topic_id)
-        if schedule.status_code == 201:
-            scheduled_job_id = schedule.json()['job']['id']
-            scheduled_job = dci_job.get(
-                context, scheduled_job_id, embed='topic,remoteci,components')
-            if scheduled_job.status_code == 200:
-                job_id = scheduled_job.json()['job']['id']
-                dci_jobstate.create(
-                    context,
-                    status='new',
-                    comment='job scheduled',
-                    job_id=job_id)
-                return scheduled_job.json()
-            else:
-                log.error('error getting schedule info: %s' % scheduled_job.text)
-        else:
-            log.error('error scheduling: %s' % schedule.text)
+            log.error('topic %s not found' % stage['topic'])
+            return None
+        return topics[0]['id']
     else:
-        log.error('error getting the list of topics: %s' % topic_res.text)
+        log.error('Unable to get topic %s: %s' % (stage['topic'], topic_res.text))
+    return None
+
+
+def schedule_job(stage, context):
+    log.info('scheduling job %s on topic %s' % (stage['name'], stage['topic']))
+
+    topic_id = get_topic_id(context, stage)
+    components = get_components(context, stage, topic_id)
+
+    schedule = dci_job.create(context, topic_id, comment=stage['name'],
+                              components=[c['id'] for c in components])
+    if schedule.status_code == 201:
+        scheduled_job_id = schedule.json()['job']['id']
+        scheduled_job = dci_job.get(
+            context, scheduled_job_id, embed='topic,remoteci,components')
+        if scheduled_job.status_code == 200:
+            job_id = scheduled_job.json()['job']['id']
+            dci_jobstate.create(
+                context,
+                status='new',
+                comment='job scheduled',
+                job_id=job_id)
+            return scheduled_job.json()
+        else:
+            log.error('error getting schedule info: %s' % scheduled_job.text)
+    else:
+        log.error('error scheduling: %s' % schedule.text)
     return None
 
 
@@ -189,7 +214,7 @@ def run_ocp_stage(config_dir, pipeline, envvars):
     ocp_stage = get_ocp_stage(pipeline)
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
     ocp_dci_context = build_context(ocp_dci_credentials)
-    ocp_job_info = schedule_job(ocp_stage['topic'], ocp_dci_context)
+    ocp_job_info = schedule_job(ocp_stage, ocp_dci_context)
 
     if not ocp_job_info:
         log.error('error when scheduling a job for topic %s' % ocp_stage['topic'])
@@ -223,7 +248,7 @@ def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
 
         create_inputs(config_dir, ocp_stage, cnf_stage)
 
-        cnf_job_info = schedule_job(cnf_stage['topic'], dci_context)
+        cnf_job_info = schedule_job(cnf_stage, dci_context)
 
         if not cnf_job_info:
             log.error('Unable to schedule job %s. Skipping' % cnf_stage['name'])

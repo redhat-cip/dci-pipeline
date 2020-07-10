@@ -5,6 +5,10 @@
     outputs:
       hosts: agents/openshift-vanilla/outputs/localhost/etc/hosts
     topic: OCP-4.4
+    components:
+      - ocp-4.4
+      - ose-tests
+      - cnf-tests
     success_tag: ocp-vanilla-ok
     fallback_last_success: ocp-vanilla-ok
 
@@ -14,5 +18,7 @@
     inputs:
       hosts: agents/rh-cnf/hosts
     topic: RH-CNF-0.1
+    components:
+      - rh-cnf-0.1
     success_tag: ocp-vanilla-ok
     fallback_last_success: ocp-vanilla-ok
