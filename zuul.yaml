@@ -1,0 +1,28 @@
+- job:
+    name: dci-pipeline-tests
+    description: job to run the example pipeline
+    pre-run: zuul.d/pre-run.yaml
+    run: zuul.d/run.yaml
+    required-projects:
+      - dci-dev-env
+      - dci-control-server
+      - python-dciclient
+      - python-dciauth
+      - dci-ui
+      - dci-doc
+      - dci-ansible
+    nodeset:
+      nodes:
+        - name: testrunner
+          label: dib-dci-centos-7
+
+- project:
+
+    check:
+      jobs:
+        - dci-pipeline-tests:
+            nodeset: debian10-vm
+    gate:
+      jobs:
+        - dci-pipeline-tests:
+            nodeset: debian10-vm
