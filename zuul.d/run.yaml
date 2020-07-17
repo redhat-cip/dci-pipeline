@@ -1,0 +1,28 @@
+---
+- hosts: testrunner
+  vars:
+    dcidevenv_path_query: "[?name=='dci-dev-env'].src_dir"
+    dcidevenv_path: "{{ (zuul.projects.values() | list | json_query(dcidevenv_path_query))[0] }}"
+  tasks:
+
+    - name: build and launch docker images from dci-dev-env
+      shell: docker-compose up -d --build
+      environment:
+        DCI_GIT_REPO_DIR: ..
+      args:
+        chdir: '{{ dcidevenv_path }}'
+
+    - name: provision data
+      shell: ./dev-setup/dci-telcoprovisioning
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
+
+    - name: run the example pipeline in py27
+      shell: tox -epy27 --notest && .tox/py27/bin/python dcipipeline/main.py
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
+
+    - name: run the example pipeline in py37
+      shell: tox -epy37 --notest && .tox/py37/bin/python dcipipeline/main.py
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
