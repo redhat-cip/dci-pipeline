@@ -3,45 +3,65 @@
     hosts: localhost
     gather_facts: false
     tasks:
+
       - name: 'Read credentials from env vars'
         set_fact:
           dci_client_id="{{ lookup('env','DCI_CLIENT_ID') }}"
           dci_api_secret="{{ lookup('env','DCI_API_SECRET') }}"
           dci_cs_url="{{ lookup('env','DCI_CS_URL') }}"
+          dci_ui_url="{{ lookup('env','DCI_UI_URL') }}"
         no_log: true
-  
+
       - name: 'print job id'
         debug:
-          msg: dci_job_id:"{{ job_info['job']['id'] }}"
-  
+          msg: dci_job_id:"{{ job_info.job.id }}"
+
       - name: 'Set global variables'
         set_fact:
-          job_id: "{{ job_info['job']['id'] }}"
-          topic_id: "{{ job_info['job']['topic_id'] }}"
-          remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
-          components: "{{ job_info['job']['components'] }}"
-          product: "{{ job_info['job']['topic']['product_id'] }}"  
-    
-  - name: preparation
+          job_id: "{{ job_info.job.id }}"
+          topic_id: "{{ job_info.job.topic_id }}"
+          remoteci_id: "{{ job_info.job.remoteci_id }}"
+          components: "{{ job_info.job.components }}"
+          product: "{{ job_info.job.topic.product_id }}"
+
+  - name: Preparation
     hosts: localhost
     gather_facts: false
     vars:
       dci_status: "pre-run"
     tasks:
-      - name: do some checks
-        assert:
-          success_msg: "All components are present"
-          that:
-            - "components|length == 1"
 
-  - name: running cnf
+    - name: get CNF version from job_info
+      set_fact:
+        cnf_version: "{{ item.name }}"
+      with_items: "{{ job_info.job.components }}"
+      when: item["type"] == "rh-cnf"
+
+    - name: do some checks
+      assert:
+        success_msg: "All components are present"
+        that:
+          - "components|length == 1"
+          - cnf_version is defined
+
+    - name: display cnf_version
+      debug:
+        msg: "CNF version {{ cnf_version }}"
+
+  - name: Running cnf
     hosts: localhost
     gather_facts: false
     vars:
       dci_status: "running"
     tasks:
+
       - name: install cnf
         shell: echo 'installing some cnf here'
+
+      - name: fail on rh-cnf-0.1.nightly-20200708
+        fail:
+          msg: 'rh-cnf-0.1.nightly-20200708 is buggy'
+        when: cnf_version == "rh-cnf-0.1.nightly-20200708"
 
   - name: success tasks
     hosts: localhost
@@ -49,7 +69,8 @@
     vars:
       dci_status: "success"
     tasks:
+
       - name: success message
         debug:
-          msg: 'The job is now finished. Review the log at: https://www.distributed-ci.io/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
+          msg: 'The job is now finished. Review the log at: {{ dci_ui_url|default("https://www.distributed-ci.io") }}/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
   

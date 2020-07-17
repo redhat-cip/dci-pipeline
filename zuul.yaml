@@ -1,3 +1,5 @@
+---
+
 - job:
     name: dci-pipeline-tests
     description: job to run the example pipeline
