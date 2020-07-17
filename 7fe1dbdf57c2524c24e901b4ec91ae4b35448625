@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ad8a544e_21925365",
+        "filename": "zuul.d/run.yaml",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-17T15:37:54Z",
+      "side": 1,
+      "message": "you don\u0027t need dci-extra.yml nor dci-swift.yml",
+      "revId": "7fe1dbdf57c2524c24e901b4ec91ae4b35448625",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
