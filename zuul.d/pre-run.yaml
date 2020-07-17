@@ -1,0 +1,12 @@
+---
+- hosts: testrunner
+  tasks:
+    - selinux:
+        state: permissive
+        policy: targeted
+      become: true
+
+    - service:
+        name: docker
+        state: started
+      become: true
