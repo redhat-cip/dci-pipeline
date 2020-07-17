@@ -39,7 +39,7 @@ TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
 
 
 def load_yaml_file(path):
-    with open(path, 'r') as file:
+    with open(path) as file:
         return yaml.load(file, Loader=yaml.SafeLoader)
 
 
@@ -80,16 +80,21 @@ def build_context(dci_credentials):
     )
 
 
-def get_components(context, stage, topic_id):
+def get_components(context, stage, topic_id, tag=None):
     components = []
     for component_name in stage['components']:
         resp = dci_topic.list_components(context, topic_id,
                                          limit=1,
                                          offset=0,
                                          sort='-created_at',
-                                         where='type:%s' % (component_name,))
+                                         where='type:%s%s' % (component_name,
+                                                              ',tags:%s' % tag if tag else ''))
         if resp.status_code == 200:
-            components.append(resp.json()['components'][0])
+            log.info('Got component %s: %s' % (component_name, resp.text))
+            if resp.json()['_meta']['count'] > 0:
+                components.append(resp.json()['components'][0])
+            else:
+                log.error('No %s component' % component_name)
         else:
             log.error('Unable to fetch component %s for topic %s: %s' % (component_name,
                                                                          stage['topic'],
@@ -111,11 +116,16 @@ def get_topic_id(context, stage):
     return None
 
 
-def schedule_job(stage, context):
-    log.info('scheduling job %s on topic %s' % (stage['name'], stage['topic']))
+def schedule_job(stage, context, tag=None):
+    log.info('scheduling job %s on topic %s%s' % (stage['name'], stage['topic'],
+                                                  ' with tag %s' % tag if tag else ''))
 
     topic_id = get_topic_id(context, stage)
-    components = get_components(context, stage, topic_id)
+    components = get_components(context, stage, topic_id, tag)
+
+    if len(stage['components']) != len(components):
+        log.error('Unable to get all components %d out of %d' % (len(components), len(stage['components'])))
+        return None
 
     schedule = dci_job.create(context, topic_id, comment=stage['name'],
                               components=[c['id'] for c in components])
@@ -149,34 +159,8 @@ def add_tag_to_component(component_id, tag, context):
     dci_component.add_tag(context, component_id, tag)
 
 
-def run_ocp(stage, dci_credentials, envvars, data_dir, job_info):
-    # schedule job on topic
-    # run ocp playbook with job_info
-    # return job_info
-    log.info('running ocp stage: %s' % stage['name'])
-    envvars = dict(envvars)
-    envvars.update(dci_credentials)
-    extravars = {'job_info': job_info}
-    run = ansible_runner.run(
-        private_data_dir=data_dir,
-        playbook='%s/agent.yml' % stage['location'],
-        verbosity=VERBOSE_LEVEL,
-        envvars=envvars,
-        extravars=extravars,
-        quiet=False)
-    log.info(run.stats)
-
-    if run.rc != 0:
-        return False
-
-    return True
-
-
-def run_cnf(stage, dci_credentials, envvars, data_dir, job_info):
-    # schedule job on topic with
-    # ocp_job_config components
-    # run cnf playbook with ocp config
-    log.info('running cnf stage: %s' % stage['name'])
+def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
+    log.info('running stage: %s' % stage['name'])
     envvars = dict(envvars)
     envvars.update(dci_credentials)
     extravars = {'job_info': job_info}
@@ -220,9 +204,19 @@ def run_ocp_stage(config_dir, pipeline, envvars):
         log.error('error when scheduling a job for topic %s' % ocp_stage['topic'])
         sys.exit(1)
 
-    if not run_ocp(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
+    log.info('Job info: %s' % ocp_job_info)
+
+    if not run_stage(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
         log.error('Unable to run successfully job %s' % ocp_stage['name'])
-        sys.exit(1)
+        if 'fallback_last_success' in ocp_stage:
+            log.info('Retrying with tag %s' % ocp_stage['fallback_last_success'])
+            ocp_job_info = schedule_job(ocp_stage, ocp_dci_context, ocp_stage['fallback_last_success'])
+            if not run_stage(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
+                log.error('Unable to run successfully job %s on tag %s' % (ocp_stage['name'],
+                                                                           ocp_stage['fallback_last_success']))
+                sys.exit(1)
+        else:
+            sys.exit(1)
 
     set_success_tag(ocp_stage, ocp_job_info, ocp_dci_context)
 
@@ -259,10 +253,18 @@ def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
             tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
         add_tags_to_job(cnf_job_info['job']['id'], tags, dci_context)
 
-        if run_cnf(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
+        if run_stage(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
             set_success_tag(cnf_stage, cnf_job_info, dci_context)
         else:
             log.error('Unable to run successfully job %s' % cnf_stage['name'])
+            if 'fallback_last_success' in cnf_stage:
+                log.info('Retrying with tag %s' % cnf_stage['fallback_last_success'])
+                cnf_job_info = schedule_job(cnf_stage, dci_context, cnf_stage['fallback_last_success'])
+                if run_stage(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
+                    set_success_tag(cnf_stage, cnf_job_info, dci_context)
+                else:
+                    log.error('Unable to run successfully job %s on tag %s' % (cnf_stage['name'],
+                                                                               cnf_stage['fallback_last_success']))
 
     shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
 
