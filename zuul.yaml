@@ -1,5 +1,5 @@
 - job:
-    name: dci-pipeline-tests
+    name: dci-pipeline-tests-7
     description: job to run the example pipeline
     pre-run: zuul.d/pre-run.yaml
     run: zuul.d/run.yaml
@@ -16,18 +16,33 @@
         - name: testrunner
           label: dib-dci-centos-7
 
+- job:
+    name: dci-pipeline-tests-8
+    parent: dci-pipeline-tests-7
+    nodeset:
+      nodes:
+        - name: testrunner
+          label: dib-dci-centos-8
+
+
 - project:
 
     check:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests-7
+
+        - dci-pipeline-tests-8
+
         - tox:
             vars:
               tox_envlist: pep8
 
     gate:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests-7
+
+        - dci-pipeline-tests-8
+
         - tox:
             vars:
               tox_envlist: pep8
