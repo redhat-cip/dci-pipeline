@@ -1,0 +1,38 @@
+---
+- hosts: testrunner
+  tasks:
+
+    - name: Ensure group "docker" exists
+      become: yes
+      group:
+        name: docker
+        state: present
+
+
+    - name: Install list of packages
+      become: yes
+      yum:
+        name:
+          - docker
+          - docker-compose
+          - tox
+        state: present
+
+    - name: Set SELinux in permissive mode
+      become: yes
+      selinux:
+        state: permissive
+        policy: targeted
+
+    - name: Start the docker service
+      become: yes
+      service:
+        name: docker
+        state: started
+
+    - name: Add user zuul-worker to the docker group
+      become: yes
+      user:
+        name: 'zuul-worker'
+        groups: 'docker'
+        append: 'yes'
