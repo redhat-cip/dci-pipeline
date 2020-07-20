@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "574a3696_b8a553b8",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-07-20T12:39:59Z",
+      "side": 1,
+      "message": "do we need to specify an actual directory anymore?  Seems it makes more sense to specify if there are output or inputs?\n\nexample...\noutputs: true\ninputs: false",
+      "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
