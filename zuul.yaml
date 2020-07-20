@@ -11,23 +11,41 @@
       - dci-ui
       - dci-doc
       - dci-ansible
-    nodeset:
-      nodes:
-        - name: testrunner
-          label: dib-dci-centos-7
 
 - project:
 
     check:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests:
+            nodeset:
+              nodes:
+                - name: testrunner8
+                  label: dib-dci-centos-8
+
+        - dci-pipeline-tests:
+            nodeset:
+              nodes:
+                - name: testrunner7
+                  label: dib-dci-centos-7
+
         - tox:
             vars:
               tox_envlist: pep8
 
     gate:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests:
+            nodeset:
+              nodes:
+                - name: testrunner8
+                  label: dib-dci-centos-8
+
+        - dci-pipeline-tests:
+            nodeset:
+              nodes:
+                - name: testrunner7
+                  label: dib-dci-centos-7
+
         - tox:
             vars:
               tox_envlist: pep8
