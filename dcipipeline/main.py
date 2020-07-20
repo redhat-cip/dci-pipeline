@@ -215,6 +215,11 @@ def run_ocp_stage(config_dir, pipeline, envvars):
     ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
     ocp_dci_context = build_context(ocp_dci_credentials)
     ocp_job_info = schedule_job(ocp_stage, ocp_dci_context)
+    outputs_job_directory = '%s/%s/outputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+                                                  ocp_stage['location'],
+                                                  ocp_job_info['job']['id'])
+    os.makedirs(outputs_job_directory)
+    ocp_job_info['outputs'] = outputs_job_directory
 
     if not ocp_job_info:
         log.error('error when scheduling a job for topic %s' % ocp_stage['topic'])
@@ -229,16 +234,6 @@ def run_ocp_stage(config_dir, pipeline, envvars):
     return ocp_stage, ocp_job_info
 
 
-def create_inputs(config_dir, ocp_stage, cnf_stage):
-    if 'inputs' in cnf_stage:
-        for key in cnf_stage['inputs']:
-            log.info('Copying %s/%s into %s/%s' % (config_dir, ocp_stage['outputs'][key],
-                                                   config_dir, cnf_stage['inputs'][key]))
-            with open(os.path.join(config_dir, cnf_stage['inputs'][key]), 'wb') as ofile:
-                with open(os.path.join(config_dir, ocp_stage['outputs'][key]), 'rb') as ifile:
-                    ofile.write(ifile.read())
-
-
 def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
     cnf_stages = get_cnf_stages(pipeline)
     for cnf_stage in cnf_stages:
@@ -246,13 +241,17 @@ def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
         dci_context = build_context(dci_credentials)
         shutil.rmtree('%s/env' % config_dir, ignore_errors=True)
 
-        create_inputs(config_dir, ocp_stage, cnf_stage)
-
         cnf_job_info = schedule_job(cnf_stage, dci_context)
 
         if not cnf_job_info:
             log.error('Unable to schedule job %s. Skipping' % cnf_stage['name'])
             continue
+
+        inputs_job_directory = '%s/%s/inputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+                                                    cnf_stage['location'],
+                                                    cnf_job_info['job']['id'])
+        cnf_job_info['inputs'] = inputs_job_directory
+        shutil.copytree(ocp_job_info['outputs'], cnf_job_info['inputs'])
 
         tags = [cnf_stage['topic']]
         for component in ocp_job_info['job']['components']:
