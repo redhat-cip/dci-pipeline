@@ -16,6 +16,24 @@
       "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "921f75e6_e867be17",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-20T12:47:23Z",
+      "side": 1,
+      "message": "If we specify only a boolean, how will we know where to create the directories to put the kube config file ?\n\nIt\u0027s more a \"prefix\" directory since we need to somehow create a unique directory path. To do so i use this \u0027outputs\u0027 key + the job\u0027s id.\n\nAlso these files will be saved locally for debugging and stuffs.",
+      "parentUuid": "574a3696_b8a553b8",
+      "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
