@@ -1,8 +1,8 @@
 ---
 
 - job:
-    name: dci-pipeline-tests
-    description: job to run the example pipeline
+    name: dci-pipeline-tests-py2
+    description: job to run the example pipeline in python 2
     pre-run: zuul.d/pre-run.yaml
     run: zuul.d/run.yaml
     required-projects:
@@ -18,18 +18,43 @@
         - name: testrunner
           label: dib-dci-centos-7
 
+- job:
+    name: dci-pipeline-tests-py3
+    description: job to run the example pipeline in python 3
+    pre-run: zuul.d/pre-run3.yaml
+    run: zuul.d/run3.yaml
+    required-projects:
+      - dci-dev-env
+      - dci-control-server
+      - python-dciclient
+      - python-dciauth
+      - dci-ui
+      - dci-doc
+      - dci-ansible
+    nodeset:
+      nodes:
+        - name: testrunner
+          label: cloud-fedora-30
+
+
 - project:
 
     check:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests-py2
+
+        - dci-pipeline-tests-py3
+
         - tox:
             vars:
               tox_envlist: pep8
 
     gate:
       jobs:
-        - dci-pipeline-tests
+        - dci-pipeline-tests-py2
+
+        - dci-pipeline-tests-py3
+
         - tox:
             vars:
               tox_envlist: pep8
