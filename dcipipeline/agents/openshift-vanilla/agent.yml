@@ -56,10 +56,13 @@
     vars:
       dci_status: "post-run"
     tasks:
-      - name: get result file
+      - name: Print job output location
+        debug:
+          msg: "{{ job_info['outputs'] }}"
+      - name: Move result files to the outputs location
         fetch:
           src: "/etc/hosts"
-          dest: "outputs"
+          dest: "{{ job_info['outputs'] }}/hosts"
 
   - name: Success tasks
     hosts: localhost
