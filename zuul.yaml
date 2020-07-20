@@ -21,7 +21,21 @@
     check:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: ALL
+            nodeset:
+              nodes:
+                - name: testrunner
+                  label: dib-dci-centos-7
 
     gate:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: ALL
+            nodeset:
+              nodes:
+                - name: testrunner
+                  label: dib-dci-centos-7
