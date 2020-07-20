@@ -1,0 +1,30 @@
+---
+- hosts: testrunner
+  tasks:
+    - name: Install list of packages
+      become: yes
+      yum:
+        name:
+          - docker
+          - docker-compose
+          - tox
+        state: present
+
+    - selinux:
+        state: permissive
+        policy: targeted
+      become: yes
+
+    - service:
+        name: docker
+        state: started
+      become: yes
+
+    - command: whoami
+
+    - name: add user to the docker group
+      user:
+        name: 'zuul-runner'
+        groups: 'docker'
+        append: 'yes'
+      become: yes
