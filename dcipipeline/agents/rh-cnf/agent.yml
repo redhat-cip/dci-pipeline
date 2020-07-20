@@ -3,7 +3,6 @@
     hosts: localhost
     gather_facts: false
     tasks:
-
       - name: 'Read credentials from env vars'
         set_fact:
           dci_client_id="{{ lookup('env','DCI_CLIENT_ID') }}"
@@ -30,6 +29,13 @@
     vars:
       dci_status: "pre-run"
     tasks:
+      - name: do some checks
+        assert:
+          success_msg: "All components are present"
+          that:
+            - "components|length == 1"
+      - name: list inputs directory
+        shell: ls "{{ job_info['inputs'] }}"
 
     - name: get CNF version from job_info
       set_fact:
