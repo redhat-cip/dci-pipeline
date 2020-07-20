@@ -21,7 +21,9 @@
     check:
       jobs:
         - dci-pipeline-tests
+        - tox
 
     gate:
       jobs:
         - dci-pipeline-tests
+        - tox
