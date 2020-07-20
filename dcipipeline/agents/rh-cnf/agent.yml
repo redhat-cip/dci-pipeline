@@ -33,6 +33,8 @@
           success_msg: "All components are present"
           that:
             - "components|length == 1"
+      - name: list inputs directory
+        shell: ls "{{ job_info['inputs'] }}"
 
   - name: running cnf
     hosts: localhost
