@@ -21,7 +21,13 @@
     check:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: pep8
 
     gate:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: pep8
