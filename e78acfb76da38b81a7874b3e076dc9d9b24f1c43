@@ -70,6 +70,24 @@
       "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b0094865_672188d8",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-07-20T13:02:11Z",
+      "side": 1,
+      "message": "I don\u0027t have a strong preference, but since you were building the directory path anyway it seemed like you could eliminate a config setting.  use \"%s/outputs/%s\" % (location, jobid), But I\u0027m ok with it as is.  Just thought I\u0027d discuss it. :-)",
+      "parentUuid": "921f75e6_e867be17",
+      "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
