@@ -2,8 +2,7 @@
   - name: openshift-vanilla
     type: ocp
     location: agents/openshift-vanilla
-    outputs:
-      hosts: agents/openshift-vanilla/outputs/localhost/etc/hosts
+    outputs: agents/openshift-vanilla/outputs
     topic: OCP-4.4
     components:
       - ocp-4.4
@@ -15,8 +14,7 @@
   - name: rh-cnf
     type: cnf
     location: agents/rh-cnf
-    inputs:
-      hosts: agents/rh-cnf/hosts
+    inputs: agents/rh-cnf/inputs
     topic: RH-CNF-0.1
     components:
       - rh-cnf-0.1
