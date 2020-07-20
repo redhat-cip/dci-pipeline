@@ -88,6 +88,24 @@
       "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2ec50e6e_ea62a06e",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-20T13:05:39Z",
+      "side": 1,
+      "message": "+1 Bill, same for the CNF I guess, will do it \u003d) !",
+      "parentUuid": "b0094865_672188d8",
+      "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
