@@ -15,32 +15,32 @@
 
 import unittest
 
-import main
+from dcipipeline.main import process_args
 
 
 class TestMain(unittest.TestCase):
 
     def test_process_args_empty(self):
         args = ['dci-pipeline']
-        result, args = main.process_args(args)
+        result, args = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, {})
 
     def test_process_args_single(self):
         args = ['dci-pipeline', 'stage:key=value']
-        result, args = main.process_args(args)
+        result, args = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, {'stage': {'key': 'value'}})
 
     def test_process_args_list(self):
         args = ['dci-pipeline', 'stage:key=value=toto,value2']
-        result, args = main.process_args(args)
+        result, args = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, {'stage': {'key': ['value=toto', 'value2']}})
 
     def test_process_args_only_files(self):
         args = ['dci-pipeline', 'file1', 'file2']
-        result, args = main.process_args(args)
+        result, args = process_args(args)
         self.assertEqual(args, ['file1', 'file2'])
         self.assertEqual(result, {})
 
