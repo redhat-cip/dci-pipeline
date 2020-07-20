@@ -34,6 +34,24 @@
       "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1226faaa_395cd30a",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-07-20T12:49:31Z",
+      "side": 1,
+      "message": "how will we do if we need to rename files in the process?",
+      "parentUuid": "921f75e6_e867be17",
+      "revId": "e78acfb76da38b81a7874b3e076dc9d9b24f1c43",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
