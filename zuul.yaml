@@ -21,7 +21,13 @@
     check:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: ALL
 
     gate:
       jobs:
         - dci-pipeline-tests
+        - tox:
+            vars:
+              tox_envlist: ALL
