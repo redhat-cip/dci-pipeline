@@ -1,0 +1,21 @@
+---
+- hosts: testrunner
+  tasks:
+    - name: Install list of packages
+      become: yes
+      yum:
+        name:
+          - docker
+          - docker-compose
+          - tox
+        state: present
+
+    - selinux:
+        state: permissive
+        policy: targeted
+      become: true
+
+    - service:
+        name: docker
+        state: started
+      become: true
