@@ -285,7 +285,7 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
     return errors
 
 
-def main(args):
+def main(args=sys.argv):
     config_dir, pipeline, envvars = get_config(args)
 
     for stage_type in get_types_of_stage(pipeline):
@@ -299,4 +299,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main())
