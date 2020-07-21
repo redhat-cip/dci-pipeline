@@ -17,7 +17,7 @@
       args:
         chdir: "{{ zuul.project.src_dir }}"
 
-    - name: Run the example pipeline in Python 2
-      shell: set -x; tox -epy2
+    - name: Run the test pipelines with Python 2
+      shell: set -x; tox -epy2; . .tox/py2/bin/activate; ./dcipipeline/pipeline.yml
       args:
         chdir: "{{ zuul.project.src_dir }}"
