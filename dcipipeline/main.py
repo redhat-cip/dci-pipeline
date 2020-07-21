@@ -273,7 +273,7 @@ def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
                                                                                cnf_stage['fallback_last_success']))
 
 
-def main(args):
+def main(args=sys.argv):
     config_dir, pipeline, envvars = get_config(args)
 
     ocp_stage, ocp_job_info = run_ocp_stage(config_dir, pipeline, envvars)
@@ -282,4 +282,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
