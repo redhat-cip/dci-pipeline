@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7b3af43c_1593498d",
+        "filename": "dcipipeline/agents/rh-cnf/agent.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-21T11:27:31Z",
+      "side": 1,
+      "message": "spaces up and down :D !",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bf0b91f2_9b2228d5",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 11
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-21T11:27:31Z",
+      "side": 1,
+      "message": "It\u0027s worth printing the expected components and the components that has been get from the server, for debugging purpose.",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "97ad55f7_520c9f0d",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 11
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-21T11:27:31Z",
+      "side": 1,
+      "message": "I don\u0027t the point to retry the CNF. It makes sense to retry the OCP to have something working in order to deploy the CNF agent, but retrying the CNF agent will end with the same result as the last CNF job in success.\n\nMy understanding is if the CNF fail, then it\u0027s a \"real\" failure.",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2f5693d9_cc402cb6",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 11
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-21T11:27:31Z",
+      "side": 1,
+      "message": "spaces !",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
