@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "926047bf_05af7223",
+        "filename": "dcipipeline/agents/rh-cnf/agent.yml",
+        "patchSetId": 11
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-07-21T11:56:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b3af43c_1593498d",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bf0b91f2_9b2228d5",
         "filename": "dcipipeline/main.py",
         "patchSetId": 11
@@ -30,6 +48,24 @@
       "writtenOn": "2020-07-21T11:27:31Z",
       "side": 1,
       "message": "It\u0027s worth printing the expected components and the components that has been get from the server, for debugging purpose.",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1bed3f64_e083f556",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 11
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-07-21T11:56:35Z",
+      "side": 1,
+      "message": "in fact you have them in previous log messages in get_components.",
+      "parentUuid": "bf0b91f2_9b2228d5",
       "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "45a3eaf5_357d0c96",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 11
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-07-21T11:56:35Z",
+      "side": 1,
+      "message": "this is needed if we have a new OCP build that is passing at the same time we have a new CNF, we need to understand if the new CNF is failing and not the last known good. If we don\u0027t want this enabled, we just have to remove the fallback_last_success in the pipeline yaml file anyway.",
+      "parentUuid": "97ad55f7_520c9f0d",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2f5693d9_cc402cb6",
         "filename": "dev-setup/dci-telcoprovisioning",
         "patchSetId": 11
@@ -64,6 +118,24 @@
       "writtenOn": "2020-07-21T11:27:31Z",
       "side": 1,
       "message": "spaces !",
+      "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "66c5b510_994cbdfd",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 11
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-07-21T11:56:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2f5693d9_cc402cb6",
       "revId": "73db68f25a1f786f1726456a7f6dba26639cd668",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
