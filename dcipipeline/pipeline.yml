@@ -9,16 +9,17 @@
       - ocp
       - ose-tests
       - cnf-tests
-    success_tag: ocp-vanilla-ok
-    fallback_last_success: ocp-vanilla-ok
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.4-ok
 
   - name: rh-cnf
     type: cnf
+    prev_stages: openshift-vanilla
     location: agents/rh-cnf
     inputs:
       hosts: agents/rh-cnf/hosts
     topic: RH-CNF-0.1
     components:
       - rh-cnf
-    success_tag: ocp-vanilla-ok
-    fallback_last_success: ocp-vanilla-ok
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.4-ok

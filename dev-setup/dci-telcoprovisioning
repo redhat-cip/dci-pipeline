@@ -168,12 +168,12 @@ def main():
     wait_db_ready()
 
     ocp44_components = (
-        ('ocp', '4.4.0-0.nightly-20200701', 'ocp-vanilla-ok'),
-        ('ose-tests', '20200628', 'ocp-vanilla-ok'),
-        ('cnf-tests', '20200628', 'ocp-vanilla-ok'),
-        ('partner1-plugin1', '12.03', 'ocp-vanilla-ok'),
-        ('partner1-plugin2', '20200706', 'ocp-vanilla-ok'),
-        ('partner2-plugin1', '20.03', 'ocp-vanilla-ok'),
+        ('ocp', '4.4.0-0.nightly-20200701', 'ocp-vanilla-4.4-ok'),
+        ('ose-tests', '20200628', 'ocp-vanilla-4.4-ok'),
+        ('cnf-tests', '20200628', 'ocp-vanilla-4.4-ok'),
+        ('partner1-plugin1', '12.03', 'ocp-vanilla-4.4-ok'),
+        ('partner1-plugin2', '20200706', 'ocp-vanilla-4.4-ok'),
+        ('partner2-plugin1', '20.03', 'ocp-vanilla-4.4-ok'),
     )
 
     ocp44_components_2 = (
@@ -181,30 +181,47 @@ def main():
         ('ose-tests', '20200703'),
     )
 
+    ocp45_components = (
+        ('ocp', '4.5.0-0.nightly-20200701'),
+        ('ose-tests', '20200729'),
+        ('cnf-tests', '20200728'),
+    )
+
     ocp = create_product('OCP')
+
     ocp44_topic = create_topic('OCP-4.4', ['ocp', 'ose-tests', 'cnf-tests'], ocp)
-    ocp_topic_id = ocp44_topic['id']
+    ocp44_topic_id = ocp44_topic['id']
     for name, version, tag in ocp44_components:
-        create_component(name, version, ocp_topic_id, tag)
+        create_component(name, version, ocp44_topic_id, tag)
     for name, version in ocp44_components_2:
-        create_component(name, version, ocp_topic_id)
+        create_component(name, version, ocp44_topic_id)
+
+    ocp45_topic = create_topic('OCP-4.5', ['ocp', 'ose-tests', 'cnf-tests'], ocp)
+    ocp45_topic_id = ocp45_topic['id']
+    for name, version in ocp45_components:
+        create_component(name, version, ocp45_topic_id)
 
     cnf = create_product('RH-CNF')
     cnf01 = create_topic('RH-CNF-0.1', ['rh-cnf'], cnf)
-    create_component('rh-cnf', '0.1.nightly-20200703', cnf01['id'], 'ocp-vanilla-ok')
+    create_component('rh-cnf', '0.1.nightly-20200703', cnf01['id'], 'ocp-vanilla-4.4-ok')
     create_component('rh-cnf', '0.1.nightly-20200708', cnf01['id'])
+
+    cnf02 = create_topic('RH-CNF-0.2', ['rh-cnf'], cnf)
+    create_component('rh-cnf', '0.2.nightly-20200723', cnf02['id'])
 
     telco_ci = create_team('telco-ci')
     create_remoteci('telco-pipeline', telco_ci['id'])
 
     associate_product_to_team(ocp['id'], telco_ci['id'])
-    associate_topic_to_team(ocp_topic_id, telco_ci['id'])
+    associate_topic_to_team(ocp44_topic_id, telco_ci['id'])
+    associate_topic_to_team(ocp45_topic_id, telco_ci['id'])
 
     telco_ci_partner = create_team('telco-ci-partner')
     create_remoteci('telco-rh-cnf', telco_ci_partner['id'])
 
     associate_product_to_team(cnf['id'], telco_ci_partner['id'])
     associate_topic_to_team(cnf01['id'], telco_ci_partner['id'])
+    associate_topic_to_team(cnf02['id'], telco_ci_partner['id'])
 
     generate_remoteci_rc_files()
     generate_remoteci_yml_files()

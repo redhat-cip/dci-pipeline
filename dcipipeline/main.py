@@ -57,19 +57,33 @@ interpreter_python = /usr/bin/python2
 '''.format(dci_ansible_dir=dci_ansible_dir))
 
 
-def get_ocp_stage(pipeline):
+def get_types_of_stage(pipeline):
+    names = []
     for stage in pipeline:
-        if stage['type'] == 'ocp':
-            return dict(stage)
-    return None
+        if stage['type'] not in names:
+            names.append(stage['type'])
+    return names
 
 
-def get_cnf_stages(pipeline):
-    cnf_stages = []
+def get_stages(stage_type, pipeline):
+    stages = []
     for stage in pipeline:
-        if stage['type'] == 'cnf':
-            cnf_stages.append(dict(stage))
-    return cnf_stages
+        if stage['type'] == stage_type:
+            stages.append(stage)
+    return stages
+
+
+def get_stages_by_name(names, pipeline):
+    stages = []
+    if names:
+        # manage cases where a single entry is provided
+        if type(names) != list:
+            names = [names]
+        for name in names:
+            for stage in pipeline:
+                if stage['name'] == name:
+                    stages.append(stage)
+    return stages
 
 
 def build_context(dci_credentials):
@@ -194,92 +208,84 @@ def set_success_tag(stage, job_info, context):
             add_tag_to_component(component['id'], stage['success_tag'], context)
 
 
-def run_ocp_stage(config_dir, pipeline, envvars):
-    ocp_stage = get_ocp_stage(pipeline)
-    ocp_dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, ocp_stage['location']))
-    ocp_dci_context = build_context(ocp_dci_credentials)
-    ocp_job_info = schedule_job(ocp_stage, ocp_dci_context)
-
-    if not ocp_job_info:
-        log.error('Error when scheduling a job for topic %s' % ocp_stage['topic'])
-        sys.exit(1)
-
-    log.info('Job info: %s' % ocp_job_info)
-
-    if not run_stage(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
-        log.error('Unable to run successfully job %s' % ocp_stage['name'])
-        if 'fallback_last_success' in ocp_stage:
-            tag = ocp_stage['fallback_last_success']
-            log.info('Retrying with tag %s' % tag)
-            ocp_job_info = schedule_job(ocp_stage, ocp_dci_context, tag)
-
-            if not ocp_job_info:
-                log.error('Error when scheduling a retry job for topic %s' % ocp_stage['topic'])
-                sys.exit(1)
-
-            log.info('Retry job info: %s' % ocp_job_info)
-
-            if not run_stage(ocp_stage, ocp_dci_credentials, envvars, config_dir, ocp_job_info):
-                log.error('Unable to run successfully job %s on tag %s' % (ocp_stage['name'], tag))
-                sys.exit(1)
-        else:
-            sys.exit(1)
-
-    set_success_tag(ocp_stage, ocp_job_info, ocp_dci_context)
-
-    return ocp_stage, ocp_job_info
+def lookup_stage_by_outputs(key, stages):
+    for stage in stages:
+        if 'outputs' in stage and key in stage['outputs']:
+            return stage
+    return None
 
 
-def create_inputs(config_dir, ocp_stage, cnf_stage):
-    if 'inputs' in cnf_stage:
-        for key in cnf_stage['inputs']:
-            log.info('Copying %s/%s into %s/%s' % (config_dir, ocp_stage['outputs'][key],
-                                                   config_dir, cnf_stage['inputs'][key]))
-            with open(os.path.join(config_dir, cnf_stage['inputs'][key]), 'wb') as ofile:
-                with open(os.path.join(config_dir, ocp_stage['outputs'][key]), 'rb') as ifile:
-                    ofile.write(ifile.read())
+def create_inputs(config_dir, prev_stages, stage):
+    if 'inputs' in stage:
+        for key in stage['inputs']:
+            prev_stage = lookup_stage_by_outputs(key, prev_stages)
+            if prev_stage:
+                log.info('Copying %s/%s into %s/%s' % (config_dir, prev_stage['outputs'][key],
+                                                       config_dir, stage['inputs'][key]))
+                with open(os.path.join(config_dir, stage['inputs'][key]), 'wb') as ofile:
+                    with open(os.path.join(config_dir, prev_stage['outputs'][key]), 'rb') as ifile:
+                        ofile.write(ifile.read())
+            else:
+                log.error('Unable to find outputs for key %s in stages %s'
+                          % (key, ', '.join([s['name'] for s in prev_stages])))
 
 
-def run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info):
-    cnf_stages = get_cnf_stages(pipeline)
-    for cnf_stage in cnf_stages:
-        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, cnf_stage['location']))
+def run_stages(stage_type, pipeline, config_dir, envvars):
+    stages = get_stages(stage_type, pipeline)
+    errors = 0
+    for stage in stages:
+        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, stage['location']))
         dci_context = build_context(dci_credentials)
 
-        create_inputs(config_dir, ocp_stage, cnf_stage)
+        prev_stages = get_stages_by_name(stage.get('prev_stages'), pipeline)
+        create_inputs(config_dir, prev_stages, stage)
 
-        cnf_job_info = schedule_job(cnf_stage, dci_context)
+        job_info = schedule_job(stage, dci_context)
 
-        if not cnf_job_info:
-            log.error('Unable to schedule job %s. Skipping' % cnf_stage['name'])
+        if not job_info:
+            log.error('Unable to schedule job %s. Skipping' % stage['name'])
+            errors += 1
             continue
 
-        tags = [cnf_stage['topic']]
-        for component in ocp_job_info['job']['components']:
-            tags.append('%s/%s' % (ocp_stage['topic'], component['name']))
-        add_tags_to_job(cnf_job_info['job']['id'], tags, dci_context)
+        tags = [stage['topic']]
+        for prev_stage in prev_stages:
+            if prev_stage and 'job_info' in prev_stage:
+                log.info('prev stage: %s' % prev_stage)
+                for component in prev_stage['job_info']['job']['components']:
+                    tags.append('%s/%s' % (prev_stage['topic'], component['name']))
+        add_tags_to_job(job_info['job']['id'], tags, dci_context)
 
-        if run_stage(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
-            set_success_tag(cnf_stage, cnf_job_info, dci_context)
+        if run_stage(stage, dci_credentials, envvars, config_dir, job_info):
+            set_success_tag(stage, job_info, dci_context)
         else:
-            log.error('Unable to run successfully job %s' % cnf_stage['name'])
-            if 'fallback_last_success' in cnf_stage:
-                log.info('Retrying with tag %s' % cnf_stage['fallback_last_success'])
-                cnf_job_info = schedule_job(cnf_stage, dci_context, cnf_stage['fallback_last_success'])
-                if run_stage(cnf_stage, dci_credentials, envvars, config_dir, cnf_job_info):
-                    set_success_tag(cnf_stage, cnf_job_info, dci_context)
+            log.error('Unable to run successfully job %s' % stage['name'])
+            if 'fallback_last_success' in stage:
+                log.info('Retrying with tag %s' % stage['fallback_last_success'])
+                job_info = schedule_job(stage, dci_context, stage['fallback_last_success'])
+                if run_stage(stage, dci_credentials, envvars, config_dir, job_info):
+                    set_success_tag(stage, job_info, dci_context)
                 else:
-                    log.error('Unable to run successfully job %s on tag %s' % (cnf_stage['name'],
-                                                                               cnf_stage['fallback_last_success']))
+                    log.error('Unable to run successfully job %s on tag %s' % (stage['name'],
+                                                                               stage['fallback_last_success']))
+                    errors += 1
+            else:
+                errors += 1
+        stage['job_info'] = job_info
+    return errors
 
 
 def main(args):
     config_dir, pipeline, envvars = get_config(args)
 
-    ocp_stage, ocp_job_info = run_ocp_stage(config_dir, pipeline, envvars)
-
-    run_cnf_stages(pipeline, config_dir, envvars, ocp_stage, ocp_job_info)
+    for stage_type in get_types_of_stage(pipeline):
+        job_in_errors = run_stages(stage_type, pipeline, config_dir, envvars)
+        if job_in_errors != 0:
+            log.error('%d job%s in error at stage %s' % (job_in_errors,
+                                                         's' if job_in_errors > 1 else '',
+                                                         stage_type))
+            return 1
+    return 0
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    sys.exit(main(sys.argv))
