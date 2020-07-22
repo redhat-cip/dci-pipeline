@@ -1,0 +1,51 @@
+---
+- name: openshift-vanilla
+  type: ocp
+  location: agents/openshift-vanilla
+  outputs:
+    hosts: agents/openshift-vanilla/outputs/localhost/etc/hosts
+  topic: OCP-4.4
+  components:
+    - ocp
+    - ose-tests
+    - cnf-tests
+  success_tag: ocp-vanilla-4.4-ok
+  fallback_last_success: ocp-vanilla-4.4-ok
+
+- name: rh-cnf
+  type: cnf
+  prev_stages: openshift-vanilla
+  location: agents/rh-cnf
+  inputs:
+    hosts: agents/rh-cnf/hosts
+  topic: RH-CNF-0.1
+  components:
+    - rh-cnf
+  success_tag: ocp-vanilla-4.4-ok
+  fallback_last_success: ocp-vanilla-4.4-ok
+
+- name: openshift-upgrade
+  type: ocp-upgrade
+  prev_stages: openshift-vanilla
+  location: agents/openshift-upgrade
+  outputs:
+    hosts: agents/openshift-vanilla/outputs/localhost/etc/hosts
+  topic: OCP-4.5
+  components:
+    - ocp
+    - ose-tests
+    - cnf-tests
+  success_tag: ocp-vanilla-4.5-upgrade-ok
+  fallback_last_success: ocp-vanilla-4.5-upgrade-ok
+
+- name: rh-cnf2
+  type: cnf2
+  prev_stages: [openshift-upgrade, rh-cnf]
+  location: agents/rh-cnf
+  inputs:
+    hosts: agents/rh-cnf/hosts
+  topic: RH-CNF-0.2
+  components:
+    - rh-cnf
+  success_tag: ocp-vanilla-4.5-upgrade-ok
+  fallback_last_success: ocp-vanilla-4.5-upgrade-ok

@@ -2,6 +2,7 @@
 artifacts
 env
 __pycache__
+*.pyc
 *.egg-info
 telco-pipeline.sh
 telco-pipeline_dci_credentials.yml
