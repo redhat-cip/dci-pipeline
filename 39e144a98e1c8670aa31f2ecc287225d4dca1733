@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "457621c6_75b355cb",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-24T12:22:37Z",
+      "side": 1,
+      "message": "if prev_stage\u003dNone, it will fail",
+      "revId": "39e144a98e1c8670aa31f2ecc287225d4dca1733",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8e700973_98c42819",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-24T12:22:37Z",
+      "side": 1,
+      "message": "for the first ocp there is no prev, so prev_stage\u003dNone ?",
+      "revId": "39e144a98e1c8670aa31f2ecc287225d4dca1733",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d6e4b2a6_d1692ddc",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-24T12:22:37Z",
+      "side": 1,
+      "message": "Why getting every stages type in order to run every stage by getting them by type again ?\n\nInstead we could just loop over each stage as they appear in the pipeline description ?",
+      "revId": "39e144a98e1c8670aa31f2ecc287225d4dca1733",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8dc0d901_99ea6381",
+        "filename": "dcipipeline/upgrade-pipeline.yml",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-24T12:22:37Z",
+      "side": 1,
+      "message": "cnf-upgrade ?",
+      "revId": "39e144a98e1c8670aa31f2ecc287225d4dca1733",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "86adfbaf_e86e6776",
+        "filename": "dcipipeline/upgrade-pipeline.yml",
+        "patchSetId": 1
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-07-24T12:22:37Z",
+      "side": 1,
+      "message": "prev should reference the previous cnf so \u0027rh-cnf\u0027 ?",
+      "revId": "39e144a98e1c8670aa31f2ecc287225d4dca1733",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
