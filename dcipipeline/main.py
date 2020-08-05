@@ -65,7 +65,7 @@ def get_types_of_stage(pipeline):
     return names
 
 
-def get_stages(stage_type, pipeline):
+def get_stages_of_type(stage_type, pipeline):
     stages = []
     for stage in pipeline:
         if stage['type'] == stage_type:
@@ -215,35 +215,62 @@ def set_success_tag(stage, job_info, context):
 
 def lookup_stage_by_outputs(key, stages):
     for stage in stages:
-        if 'outputs' in stage and key in stage['outputs']:
+        if 'outputs' in stage and 'job_info' in stage and key in stage['outputs']:
             return stage
     return None
 
 
-def create_inputs(config_dir, prev_stages, stage):
-    if 'inputs' in stage:
-        for key in stage['inputs']:
-            prev_stage = lookup_stage_by_outputs(key, prev_stages)
-            if prev_stage:
-                log.info('Copying %s/%s into %s/%s' % (config_dir, prev_stage['outputs'][key],
-                                                       config_dir, stage['inputs'][key]))
-                with open(os.path.join(config_dir, stage['inputs'][key]), 'wb') as ofile:
-                    with open(os.path.join(config_dir, prev_stage['outputs'][key]), 'rb') as ifile:
-                        ofile.write(ifile.read())
-            else:
-                log.error('Unable to find outputs for key %s in stages %s'
-                          % (key, ', '.join([s['name'] for s in prev_stages])))
+def create_inputs(config_dir, prev_stages, stage, job_info):
+    if 'inputs' not in stage:
+        return
+
+    try:
+        os.makedirs('%s/%s/inputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+                                         stage['location'],
+                                         job_info['job']['id']))
+    except Exception:
+        pass
+
+    job_info['inputs'] = {}
+    for key in stage['inputs']:
+        prev_stage = lookup_stage_by_outputs(key, prev_stages)
+        if prev_stage:
+            prev_stage_outputs_key = prev_stage['job_info']['outputs'][key]
+            stage_inputs_key = '%s/%s/inputs/%s/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+                                                       stage['location'],
+                                                       job_info['job']['id'],
+                                                       stage['inputs'][key])
+            log.info('Copying %s into %s' % (prev_stage_outputs_key, stage_inputs_key))
+            with open(stage_inputs_key, 'wb') as ofile:
+                with open(prev_stage_outputs_key, 'rb') as ifile:
+                    ofile.write(ifile.read())
+            job_info['inputs'][key] = stage_inputs_key
+        else:
+            log.error('Unable to find outputs for key %s in stages %s'
+                      % (key, ', '.join([s['name'] for s in prev_stages])))
+
+
+def add_outputs_paths(job_info, stage):
+
+    if 'outputs' not in stage:
+        return
+
+    outputs_job_directory_prefix = '%s/%s/outputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+                                                         stage['location'],
+                                                         job_info['job']['id'])
+    os.makedirs(outputs_job_directory_prefix)
+    outputs_keys_paths = {}
+    for key in stage['outputs']:
+        outputs_keys_paths[key] = '%s/%s' % (outputs_job_directory_prefix, stage['outputs'][key])
+    job_info['outputs'] = outputs_keys_paths
 
 
 def run_stages(stage_type, pipeline, config_dir, envvars):
-    stages = get_stages(stage_type, pipeline)
+    stages = get_stages_of_type(stage_type, pipeline)
     errors = 0
     for stage in stages:
         dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, stage['location']))
         dci_context = build_context(dci_credentials)
-
-        prev_stages = get_stages_by_name(stage.get('prev_stages'), pipeline)
-        create_inputs(config_dir, prev_stages, stage)
 
         job_info = schedule_job(stage, dci_context)
 
@@ -251,6 +278,10 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
             log.error('Unable to schedule job %s. Skipping' % stage['name'])
             errors += 1
             continue
+
+        prev_stages = get_stages_by_name(stage.get('prev_stages'), pipeline)
+        create_inputs(config_dir, prev_stages, stage, job_info)
+        add_outputs_paths(job_info, stage)
 
         tags = [stage['topic']]
         for prev_stage in prev_stages:
@@ -273,6 +304,8 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
                                                                         stage['fallback_last_success']))
                     errors += 1
                 else:
+                    create_inputs(config_dir, prev_stages, stage, job_info)
+                    add_outputs_paths(job_info, stage)
                     if run_stage(stage, dci_credentials, envvars, config_dir, job_info):
                         set_success_tag(stage, job_info, dci_context)
                     else:
