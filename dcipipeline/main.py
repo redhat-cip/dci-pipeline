@@ -178,6 +178,30 @@ def add_tag_to_component(component_id, tag, context):
     dci_component.add_tag(context, component_id, tag)
 
 
+def get_list(stage, key):
+    val = stage.get(key)
+    if val and isinstance(val, str):
+        val = [val]
+    return val
+
+
+def build_cmdline(stage):
+    cmd = ''
+    tags = get_list(stage, 'ansible_tags')
+    skip_tags = get_list(stage, 'ansible_skip_tags')
+
+    if tags:
+        cmd = '--tags ' + ','.join(tags)
+
+    if skip_tags:
+        cmd += ' --skip-tags ' + ','.join(skip_tags)
+
+    if cmd != '':
+        log.info('cmdline="%s"' % cmd)
+
+    return cmd
+
+
 def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
     shutil.rmtree('%s/env' % data_dir, ignore_errors=True)
     log.info('running stage: %s' % stage['name'])
@@ -186,8 +210,9 @@ def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
     extravars = {'job_info': job_info}
     run = ansible_runner.run(
         private_data_dir=data_dir,
-        playbook='%s/agent.yml' % stage['location'],
+        playbook=stage['ansible_playbook'],
         verbosity=VERBOSE_LEVEL,
+        cmdline=build_cmdline(stage),
         envvars=envvars,
         extravars=extravars,
         inventory=stage.get('inventory'),
@@ -240,7 +265,8 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
     stages = get_stages(stage_type, pipeline)
     errors = 0
     for stage in stages:
-        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, stage['location']))
+        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir,
+                                                                        os.path.dirname(stage['ansible_playbook'])))
         dci_context = build_context(dci_credentials)
 
         prev_stages = get_stages_by_name(stage.get('prev_stages'), pipeline)
