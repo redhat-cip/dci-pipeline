@@ -2,6 +2,8 @@
   - name: Schedule a job
     hosts: localhost
     gather_facts: false
+    tags:
+      - working
     vars:
         dci_status: "new"
     tasks:
@@ -49,6 +51,8 @@
   - name: Preparation tasks
     hosts: localhost
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "pre-run"
     tasks:
@@ -74,6 +78,8 @@
   - name: Running ocp deployment
     hosts: localhost
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "running"
     tasks:
@@ -85,9 +91,21 @@
           msg: 'ocp-4.4.0-0.nightly-20200703 is buggy'
         when: ocp_version == "ocp-4.4.0-0.nightly-20200703"
 
+  - name: Broken tasks
+    hosts: localhost
+    gather_facts: false
+    tags:
+      - broken
+    tasks:
+      - name: Broken task
+        fail:
+          msg: "broken task"
+
   - name: Post-run tasks
     hosts: localhost
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "post-run"
     tasks:
@@ -99,6 +117,8 @@
   - name: Success tasks
     hosts: localhost
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "success"
     tasks:
