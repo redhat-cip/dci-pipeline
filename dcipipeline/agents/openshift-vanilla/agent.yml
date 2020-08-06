@@ -1,7 +1,9 @@
 ---
   - name: Schedule a job
-    hosts: localhost
+    hosts: runner
     gather_facts: false
+    tags:
+      - working
     vars:
         dci_status: "new"
     tasks:
@@ -47,8 +49,10 @@
           tags: 'ocp-vanilla-conf'
 
   - name: Preparation tasks
-    hosts: localhost
+    hosts: runner
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "pre-run"
     tasks:
@@ -71,9 +75,16 @@
         debug:
           msg: "OCP version {{ ocp_version }}"
 
+      - name: validate extravars
+        assert:
+          that:
+            - "answer == 42"
+
   - name: Running ocp deployment
-    hosts: localhost
+    hosts: runner
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "running"
     tasks:
@@ -85,9 +96,21 @@
           msg: 'ocp-4.4.0-0.nightly-20200703 is buggy'
         when: ocp_version == "ocp-4.4.0-0.nightly-20200703"
 
-  - name: Post-run tasks
-    hosts: localhost
+  - name: Broken tasks
+    hosts: runner
     gather_facts: false
+    tags:
+      - broken
+    tasks:
+      - name: Broken task
+        fail:
+          msg: "broken task"
+
+  - name: Post-run tasks
+    hosts: runner
+    gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "post-run"
     tasks:
@@ -102,8 +125,10 @@
           dest: "{{ job_info['outputs']['hosts'] }}"
 
   - name: Success tasks
-    hosts: localhost
+    hosts: runner
     gather_facts: false
+    tags:
+      - working
     vars:
       dci_status: "success"
     tasks:

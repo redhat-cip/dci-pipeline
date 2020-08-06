@@ -178,22 +178,60 @@ def add_tag_to_component(component_id, tag, context):
     dci_component.add_tag(context, component_id, tag)
 
 
+def get_list(stage, key):
+    val = stage.get(key)
+    if val and isinstance(val, str):
+        val = [val]
+    return val
+
+
+def build_cmdline(stage):
+    cmd = ''
+    for key, switch in (('ansible_tags', '--tags'),
+                        ('ansible_skip_tags', '--skip-tags')):
+        lst = get_list(stage, key)
+
+        if lst:
+            cmd += switch + ' ' + ','.join(lst) + ' '
+
+    if cmd != '':
+        log.info('cmdline="%s"' % cmd)
+
+    return cmd
+
+
+def check_stats(stats):
+    if stats.get('ok', {}) == {} and stats.get('changed', {}) == {} and stats.get('processed', {}) == {}:
+        log.error('Nothing has been executed')
+        return False
+    return True
+
+
 def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
     shutil.rmtree('%s/env' % data_dir, ignore_errors=True)
-    log.info('running stage: %s' % stage['name'])
+    inventory = stage.get('ansible_inventory')
+    if inventory:
+        if inventory[0] != '/':
+            inventory = os.path.join(data_dir, inventory)
+        if not os.path.exists(inventory):
+            log.error('No inventory %s' % inventory)
+            return False
+    log.info('running stage: %s%s' % (stage['name'], ' with inventory %s' % inventory if inventory else ''))
     envvars = dict(envvars)
     envvars.update(dci_credentials)
-    extravars = {'job_info': job_info}
+    extravars = stage.get('ansible_extravars', {})
+    extravars['job_info'] = job_info
     run = ansible_runner.run(
         private_data_dir=data_dir,
-        playbook='%s/agent.yml' % stage['location'],
+        playbook=stage['ansible_playbook'],
         verbosity=VERBOSE_LEVEL,
+        cmdline=build_cmdline(stage),
         envvars=envvars,
         extravars=extravars,
-        inventory=stage.get('inventory'),
+        inventory=inventory,
         quiet=False)
     log.info(run.stats)
-    return run.rc == 0
+    return run.rc == 0 and check_stats(run.stats)
 
 
 def get_config(args):
@@ -202,7 +240,7 @@ def get_config(args):
         'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
     }
     config = args[1] if len(args) > 1 else os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')
-    config_dir = os.path.dirname(config)
+    config_dir = os.path.abspath(os.path.dirname(config))
     pipeline = load_yaml_file(config)
     generate_ansible_cfg(dci_ansible_dir, config_dir)
     return config_dir, pipeline, envvars
@@ -226,7 +264,7 @@ def create_inputs(config_dir, prev_stages, stage, job_info):
         return
 
     top_dir = '%s/%s/inputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
-                                   stage['location'],
+                                   os.path.dirname(stage['ansible_playbook']),
                                    job_info['job']['id'])
     try:
         os.makedirs(top_dir)
@@ -255,7 +293,7 @@ def add_outputs_paths(job_info, stage):
         return
 
     outputs_job_directory_prefix = '%s/%s/outputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
-                                                         stage['location'],
+                                                         os.path.dirname(stage['ansible_playbook']),
                                                          job_info['job']['id'])
     os.makedirs(outputs_job_directory_prefix)
     outputs_keys_paths = {}
@@ -268,7 +306,8 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
     stages = get_stages_of_type(stage_type, pipeline)
     errors = 0
     for stage in stages:
-        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir, stage['location']))
+        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir,
+                                                                        os.path.dirname(stage['ansible_playbook'])))
         dci_context = build_context(dci_credentials)
 
         job_info = schedule_job(stage, dci_context)

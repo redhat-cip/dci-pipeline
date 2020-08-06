@@ -1,7 +1,14 @@
 ---
   - name: openshift-vanilla
     type: ocp
-    location: agents/openshift-vanilla
+    ansible_playbook: agents/openshift-vanilla/agent.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_extravars:
+      answer: 42
+    ansible_tags:
+      - working
+    ansible_skip_tags:
+      - broken
     outputs:
       hosts: etc/hosts
     topic: OCP-4.4
@@ -15,7 +22,7 @@
   - name: rh-cnf
     type: cnf
     prev_stages: openshift-vanilla
-    location: agents/rh-cnf
+    ansible_playbook: agents/rh-cnf/agent.yml
     inputs:
       hosts: hosts
     topic: RH-CNF-0.1
