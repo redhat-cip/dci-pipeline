@@ -91,6 +91,11 @@
       - name: install ocp
         shell: echo 'installing some ocp here'
 
+      - name: fail on ocp-4.4-4.4.0-0.nightly-20200703
+        fail:
+          msg: 'ocp-4.4.0-0.nightly-20200703 is buggy'
+        when: ocp_version == "ocp-4.4.0-0.nightly-20200703"
+
   - name: Broken tasks
     hosts: runner
     gather_facts: false
