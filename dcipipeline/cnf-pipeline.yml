@@ -1,0 +1,12 @@
+---
+  - name: rh-cnf
+    type: cnf
+    prev_stages: openshift-vanilla
+    ansible_playbook: agents/rh-cnf/agent-retry.yml
+    inputs:
+      hosts: hosts
+    topic: RH-CNF-0.1
+    components:
+      - rh-cnf
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.4-ok
