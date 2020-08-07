@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "40ab84ec_302528fe",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 6
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-08-07T11:51:13Z",
+      "side": 1,
+      "message": "Can we use absolute paths now?  before it would break if you started with / .  otherwise I have a really ugly ../../../ for the ocp agent..",
+      "revId": "6bfa3e077596aa40f0ba020153b9dd46e6254acb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
