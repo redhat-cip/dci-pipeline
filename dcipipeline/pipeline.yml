@@ -13,7 +13,7 @@
       hosts: etc/hosts
     topic: OCP-4.4
     components:
-      - ocp
+      - ocp=4.4.0-0.nightly-20200701
       - ose-tests
       - cnf-tests
     success_tag: ocp-vanilla-4.4-ok
