@@ -94,25 +94,38 @@ def build_context(dci_credentials):
     )
 
 
+def is_stage_with_fixed_components(stage):
+    for component_type in stage['components']:
+        if '=' in component_type:
+            return True
+    return False
+
+
 def get_components(context, stage, topic_id, tag=None):
     components = []
-    for component_name in stage['components']:
+    for component_type in stage['components']:
+        c_type = component_type
+        c_name = ''
+        where_query = 'type:%s%s' % (c_type,
+                                     (',tags:%s' % tag) if tag else '')
+        if '=' in c_type:
+            c_type, c_name = c_type.split('=')
+            where_query = 'type:%s,name:%s' % (c_type, c_name)
         resp = dci_topic.list_components(context, topic_id,
                                          limit=1,
                                          offset=0,
                                          sort='-created_at',
-                                         where='type:%s%s' % (component_name,
-                                                              (',tags:%s' % tag) if tag else ''))
+                                         where=where_query)
         if resp.status_code == 200:
-            log.info('Got component %s: %s' % (component_name, resp.text))
+            log.info('Got component %s[%s]: %s' % (c_type, c_name, resp.text))
             if resp.json()['_meta']['count'] > 0:
                 components.append(resp.json()['components'][0])
             else:
-                log.error('No %s component' % component_name)
+                log.error('No %s[%s] component' % (c_type, c_name))
         else:
-            log.error('Unable to fetch component %s for topic %s: %s' % (component_name,
-                                                                         stage['topic'],
-                                                                         resp.text))
+            log.error('Unable to fetch component %s%s for topic %s: %s' % (c_type, c_name,
+                                                                           stage['topic'],
+                                                                           resp.text))
     return components
 
 
@@ -333,7 +346,7 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
             set_success_tag(stage, job_info, dci_context)
         else:
             log.error('Unable to run successfully job %s' % stage['name'])
-            if 'fallback_last_success' in stage:
+            if 'fallback_last_success' in stage and not is_stage_with_fixed_components(stage):
                 log.info('Retrying with tag %s' % stage['fallback_last_success'])
                 job_info = schedule_job(stage, dci_context, stage['fallback_last_success'])
 
