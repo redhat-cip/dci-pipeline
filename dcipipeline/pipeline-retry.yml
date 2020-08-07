@@ -1,0 +1,31 @@
+# need to specify openshift-vanilla:ansible_skip_tags=broken or
+# openshift-vanilla:ansible_tags=working on the command line to make
+# it work
+---
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: agents/openshift-vanilla/agent-retry.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_extravars:
+      answer: 42
+    outputs:
+      hosts: etc/hosts
+    topic: OCP-4.4
+    components:
+      - ocp
+      - ose-tests
+      - cnf-tests
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.4-ok
+
+  - name: rh-cnf
+    type: cnf
+    prev_stages: openshift-vanilla
+    ansible_playbook: agents/rh-cnf/agent-retry.yml
+    inputs:
+      hosts: hosts
+    topic: RH-CNF-0.1
+    components:
+      - rh-cnf
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.4-ok
