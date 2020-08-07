@@ -247,14 +247,62 @@ def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
     return run.rc == 0 and check_stats(run.stats)
 
 
+def usage(ret, cmd):
+    print('Usage: %s [<stage name>:<key>=<value>...] [<pipeline file>]' % cmd)
+    sys.exit(ret)
+
+
+def process_args(args):
+    overload = {}
+    cmd = args[0]
+    args = args[1:]
+    ret = []
+    while True:
+        if len(args) == 0:
+            break
+        arg = args.pop(0)
+        if arg == '-h' or arg == '--help':
+            usage(0, cmd)
+        # Process args with a : in them and let other args be pipeline
+        # filenames.
+        if ':' not in arg:
+            ret.append(arg)
+            continue
+        # Allow these syntaxes:
+        # <name>:<key>=<value> value can be a list separated by ','
+        try:
+            name, rest = arg.split(':', 1)
+            key, value = rest.split('=', 1)
+            if ',' in value:
+                value = value.split(',')
+            dct = overload.get(name, {})
+            dct[key] = value
+            overload[name] = dct
+        except ValueError:
+            log.error('Invalid syntax: "%s"' % arg)
+            usage(3, cmd)
+    return overload, ret
+
+
 def get_config(args):
     dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
     envvars = {
         'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
     }
-    config = args[1] if len(args) > 1 else os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')
-    config_dir = os.path.abspath(os.path.dirname(config))
-    pipeline = load_yaml_file(config)
+    overload, args = process_args(args)
+    log.info("overload=%s" % overload)
+    if len(args) == 0:
+        args = [os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')]
+    pipeline = []
+    for config in args:
+        config_dir = os.path.abspath(os.path.dirname(config))
+        pipeline += load_yaml_file(config)
+    for name in overload:
+        stage = get_stages_by_name(name, pipeline)
+        if not stage:
+            log.error('No such stage %s' % name)
+            sys.exit(3)
+        stage[0].update(overload[name])
     generate_ansible_cfg(dci_ansible_dir, config_dir)
     return config_dir, pipeline, envvars
 
@@ -369,7 +417,7 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
     return errors
 
 
-def main(args):
+def main(args=sys.argv):
     config_dir, pipeline, envvars = get_config(args)
 
     for stage_type in get_types_of_stage(pipeline):
@@ -383,4 +431,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main())

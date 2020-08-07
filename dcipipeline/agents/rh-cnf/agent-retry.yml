@@ -61,6 +61,11 @@
       - name: install cnf
         shell: echo 'installing some cnf here'
 
+      - name: fail on rh-cnf-0.1.nightly-20200708
+        fail:
+          msg: 'rh-cnf-0.1.nightly-20200708 is buggy'
+        when: cnf_version == "rh-cnf-0.1.nightly-20200708"
+
   - name: success tasks
     hosts: localhost
     gather_facts: false
