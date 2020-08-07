@@ -34,6 +34,24 @@
       "revId": "6bfa3e077596aa40f0ba020153b9dd46e6254acb",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "56f3bc76_9058054c",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 6
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-08-07T12:21:28Z",
+      "side": 1,
+      "message": "yes this is implemented line 214 in main.py",
+      "parentUuid": "015a7a88_45662b34",
+      "revId": "6bfa3e077596aa40f0ba020153b9dd46e6254acb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
