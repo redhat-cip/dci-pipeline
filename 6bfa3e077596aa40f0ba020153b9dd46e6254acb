@@ -16,6 +16,24 @@
       "revId": "6bfa3e077596aa40f0ba020153b9dd46e6254acb",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "015a7a88_45662b34",
+        "filename": "dcipipeline/pipeline.yml",
+        "patchSetId": 6
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-07T11:54:51Z",
+      "side": 1,
+      "message": "yes you can use absolute path. i think if so, we might also use absolute path for the inventory or have a dedicated folder for the inventories (this is what we\u0027ll have eventually)",
+      "parentUuid": "40ab84ec_302528fe",
+      "revId": "6bfa3e077596aa40f0ba020153b9dd46e6254acb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
