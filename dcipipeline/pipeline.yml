@@ -7,8 +7,6 @@
       answer: 42
     ansible_tags:
       - working
-    ansible_skip_tags:
-      - broken
     outputs:
       hosts: etc/hosts
     topic: OCP-4.4
@@ -16,8 +14,8 @@
       - ocp
       - ose-tests
       - cnf-tests
-    success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.4-ok
+    success_tag: ocp-vanilla-4.4-simple-ok
+    fallback_last_success: ocp-vanilla-4.4-simple-ok
 
   - name: rh-cnf
     type: cnf
@@ -28,5 +26,5 @@
     topic: RH-CNF-0.1
     components:
       - rh-cnf
-    success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.4-ok
+    success_tag: ocp-vanilla-4.4-simple-ok
+    fallback_last_success: ocp-vanilla-4.4-simple-ok
