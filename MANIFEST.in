@@ -1,0 +1,2 @@
+include dcipipeline/pipeline.yml
+include dcipipeline/agents/*/agent.yml
