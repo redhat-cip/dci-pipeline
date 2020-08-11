@@ -1,0 +1,6 @@
+include dcipipeline/pipeline.yml
+include dcipipeline/agents/*/agent.yml
+include README.md
+include sysconfig/*
+include systemd/*
+include LICENSE
