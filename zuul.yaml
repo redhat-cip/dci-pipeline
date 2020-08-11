@@ -26,10 +26,19 @@
         - tox:
             vars:
               tox_envlist: pep8
+        - dci-rpm-build
+        - dci-rpm-build-el8
 
     gate:
+      queue: dci
       jobs:
         - dci-pipeline-tests
         - tox:
             vars:
               tox_envlist: pep8
+        - dci-rpm-build
+        - dci-rpm-build-el8
+        - dci-rpm-publish:
+            dependencies:
+              - dci-rpm-build
+              - dci-rpm-build-el8

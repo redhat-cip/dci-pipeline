@@ -1,0 +1,4 @@
+# environment variables for dci-pipeline
+#DCI_PIPELINE_TOPDIR=
+DCI_ANSIBLE_DIR=/usr/share/dci
+PIPELINE=/etc/dci-pipeline/pipeline.yml
