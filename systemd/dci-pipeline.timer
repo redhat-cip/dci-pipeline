@@ -1,0 +1,9 @@
+[Unit]
+Description=Trigger the DCI Pipeline
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=24h
+
+[Install]
+WantedBy=timers.target

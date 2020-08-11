@@ -1,0 +1,12 @@
+[Unit]
+Description=CI pipeline management for DCI jobs
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/sysconfig/dci-pipeline
+ExecStart=/usr/bin/dci-pipeline $PIPELINE
+SuccessExitStatus=0
+User=dci-pipeline
+
+[Install]
+WantedBy=default.target

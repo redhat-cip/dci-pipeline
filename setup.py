@@ -22,7 +22,7 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 readme = open(os.path.join(root_dir, 'README.md')).read()
 
 setuptools.setup(
-    name='dcipipeline',
+    name='dci-pipeline',
     version='0.0.1',
     packages=setuptools.find_packages(exclude=("tests")),
     author='Distributed CI team',
