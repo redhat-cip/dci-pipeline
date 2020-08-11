@@ -4,6 +4,9 @@ env
 __pycache__
 *.pyc
 *.egg-info
+*.tar.gz
+build
+dist
 telco-pipeline.sh
 telco-pipeline_dci_credentials.yml
 telco-rh-cnf.sh
