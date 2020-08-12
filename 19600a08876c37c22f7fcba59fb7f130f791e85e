@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "e1b782f1_8cd91b47",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-08-12T14:59:24Z",
+      "side": 1,
+      "message": "dci-ansible already pulls dciclient and ansible pieces, but I\u0027ll add them explicitly in here too",
+      "parentUuid": "088ad13d_6a1f9d0e",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ea5a6a6c_236a6b0f",
         "filename": "dci-pipeline.spec",
         "patchSetId": 1
@@ -53,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "86b8e5b7_b50f3202",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-08-12T14:59:24Z",
+      "side": 1,
+      "message": "good catch",
+      "parentUuid": "b66dbb1a_7a878053",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "40eb3588_5e68074c",
         "filename": "dci-pipeline.spec",
         "patchSetId": 1
@@ -64,6 +100,24 @@
       "writtenOn": "2020-08-12T12:20:24Z",
       "side": 1,
       "message": "we are used to have a dci user in the dci group",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e50e97d8_17bfe6cc",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-08-12T14:59:24Z",
+      "side": 1,
+      "message": "do you mean I should reuse the dci user? I am following the pattern in other pieces e.g. dci-openshift-agent creates its own user/group",
+      "parentUuid": "40eb3588_5e68074c",
       "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
