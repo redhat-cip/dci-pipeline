@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "088ad13d_6a1f9d0e",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "You can check the other requirements in requirements.txt file.",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ea5a6a6c_236a6b0f",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "I don\u0027t think it\u0027s a good pattern, i think we should instead fix the version in requirements.txt according to what is available in the distribution repo. This in order to have the same dependencies versions in the CI and in \"production\" server.",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b66dbb1a_7a878053",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "$agent is a directory ?",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "40eb3588_5e68074c",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 1
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "we are used to have a dci user in the dci group",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f9c1b280_5d00aca3",
+        "filename": "sysconfig/dci-pipeline",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "Maybe PIPELINE is a better name ?",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b271258e_317bfb0a",
+        "filename": "sysconfig/dci-pipeline",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-12T12:20:24Z",
+      "side": 1,
+      "message": "I like the idea, currently we don\u0027t how the pipeline(s) will be referenced and run. We need think about that.",
+      "revId": "19600a08876c37c22f7fcba59fb7f130f791e85e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
