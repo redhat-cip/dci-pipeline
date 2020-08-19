@@ -16,6 +16,24 @@
       "revId": "1a5ed02b866211e81796b98ba9b2dfcf083ffadb",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ffed8f95_d4c25ff3",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 5
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-08-19T09:47:38Z",
+      "side": 1,
+      "message": "this used line 95 and 97.",
+      "parentUuid": "45e31970_effd020e",
+      "revId": "1a5ed02b866211e81796b98ba9b2dfcf083ffadb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
