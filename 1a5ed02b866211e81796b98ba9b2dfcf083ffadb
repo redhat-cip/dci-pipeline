@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "45e31970_effd020e",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 5
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2020-08-19T08:01:43Z",
+      "side": 1,
+      "message": "We can drop the the python_sitelib setting since it\u0027s unused",
+      "revId": "1a5ed02b866211e81796b98ba9b2dfcf083ffadb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
