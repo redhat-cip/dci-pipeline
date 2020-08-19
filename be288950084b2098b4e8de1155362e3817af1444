@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ebef605c_f27d4460",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 6
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-08-19T17:45:18Z",
+      "side": 1,
+      "message": "/etc/dci-pipeline needs to be owned by dci-pipeline since dci-pipeline writes ansible.cfg to the directory where pipeline.yml exists.\n\n%attr(0755, dci-pipeline, dci-pipeline) %{_sharedstatedir}/dci-pipeline",
+      "revId": "be288950084b2098b4e8de1155362e3817af1444",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
