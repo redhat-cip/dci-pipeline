@@ -23,7 +23,6 @@ import ansible_runner
 
 import logging
 import os
-import shutil
 import sys
 import yaml
 
@@ -36,6 +35,24 @@ log = logging.getLogger(__name__)
 VERBOSE_LEVEL = 2
 TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def get_data_dir(job_info):
+    for base_dir in (os.getenv('DCI_PIPELINE_DATADIR'), '/var/lib/dci-pipeline', '/tmp/dci-pipeline'):
+        try:
+            if base_dir:
+                d = os.path.join(base_dir, job_info['job']['id'])
+                os.makedirs(d)
+                with open(os.path.join(d, 'job_info.yaml'), 'w') as f:
+                    yaml.safe_dump(job_info, f)
+                job_info['data_dir'] = d
+                break
+        except PermissionError:
+            continue
+    else:
+        log.error('Unable to find a suitable data_dir')
+        sys.exit(4)
+    return d
 
 
 def load_yaml_file(path):
@@ -172,7 +189,9 @@ def schedule_job(stage, context, tag=None):
                     log.error('%s is not a scheduled components from %s'
                               % (c['name'], [comp['name'] for comp in components]))
                     return None
-            return scheduled_job.json()
+            job_info = scheduled_job.json()
+            get_data_dir(job_info)
+            return job_info
         else:
             log.error('error getting schedule info: %s' % scheduled_job.text)
     else:
@@ -220,8 +239,8 @@ def check_stats(stats):
     return True
 
 
-def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
-    shutil.rmtree('%s/env' % data_dir, ignore_errors=True)
+def run_stage(stage, dci_credentials, data_dir, job_info):
+    private_data_dir = job_info['data_dir']
     inventory = stage.get('ansible_inventory')
     if inventory:
         if inventory[0] != '/':
@@ -229,14 +248,21 @@ def run_stage(stage, dci_credentials, envvars, data_dir, job_info):
         if not os.path.exists(inventory):
             log.error('No inventory %s' % inventory)
             return False
-    log.info('running stage: %s%s' % (stage['name'], ' with inventory %s' % inventory if inventory else ''))
-    envvars = dict(envvars)
+    dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
+    envvars = {
+        'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
+    }
+    generate_ansible_cfg(dci_ansible_dir, private_data_dir)
+    log.info('running stage: %s%s data_dir=%s' %
+             (stage['name'],
+              ' with inventory %s' % inventory if inventory else '',
+              private_data_dir))
     envvars.update(dci_credentials)
     extravars = stage.get('ansible_extravars', {})
     extravars['job_info'] = job_info
     run = ansible_runner.run(
-        private_data_dir=data_dir,
-        playbook=stage['ansible_playbook'],
+        private_data_dir=private_data_dir,
+        playbook=os.path.join(data_dir, stage['ansible_playbook']),
         verbosity=VERBOSE_LEVEL,
         cmdline=build_cmdline(stage),
         envvars=envvars,
@@ -285,10 +311,6 @@ def process_args(args):
 
 
 def get_config(args):
-    dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
-    envvars = {
-        'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
-    }
     overload, args = process_args(args)
     log.info("overload=%s" % overload)
     if len(args) == 0:
@@ -303,8 +325,7 @@ def get_config(args):
             log.error('No such stage %s' % name)
             sys.exit(3)
         stage[0].update(overload[name])
-    generate_ansible_cfg(dci_ansible_dir, config_dir)
-    return config_dir, pipeline, envvars
+    return config_dir, pipeline
 
 
 def set_success_tag(stage, job_info, context):
@@ -324,7 +345,7 @@ def create_inputs(config_dir, prev_stages, stage, job_info):
     if 'inputs' not in stage:
         return
 
-    top_dir = '%s/%s/inputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+    top_dir = '%s/%s/inputs/%s' % (job_info['data_dir'],
                                    os.path.dirname(stage['ansible_playbook']),
                                    job_info['job']['id'])
     try:
@@ -353,7 +374,7 @@ def add_outputs_paths(job_info, stage):
     if 'outputs' not in stage:
         return
 
-    outputs_job_directory_prefix = '%s/%s/outputs/%s' % (os.path.join(TOPDIR, 'dcipipeline'),
+    outputs_job_directory_prefix = '%s/%s/outputs/%s' % (job_info['data_dir'],
                                                          os.path.dirname(stage['ansible_playbook']),
                                                          job_info['job']['id'])
     os.makedirs(outputs_job_directory_prefix)
@@ -363,7 +384,7 @@ def add_outputs_paths(job_info, stage):
     job_info['outputs'] = outputs_keys_paths
 
 
-def run_stages(stage_type, pipeline, config_dir, envvars):
+def run_stages(stage_type, pipeline, config_dir):
     stages = get_stages_of_type(stage_type, pipeline)
     errors = 0
     for stage in stages:
@@ -390,7 +411,7 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
                     tags.append('%s/%s' % (prev_stage['topic'], component['name']))
         add_tags_to_job(job_info['job']['id'], tags, dci_context)
 
-        if run_stage(stage, dci_credentials, envvars, config_dir, job_info):
+        if run_stage(stage, dci_credentials, config_dir, job_info):
             set_success_tag(stage, job_info, dci_context)
         else:
             log.error('Unable to run successfully job %s' % stage['name'])
@@ -405,7 +426,7 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
                 else:
                     create_inputs(config_dir, prev_stages, stage, job_info)
                     add_outputs_paths(job_info, stage)
-                    if run_stage(stage, dci_credentials, envvars, config_dir, job_info):
+                    if run_stage(stage, dci_credentials, config_dir, job_info):
                         set_success_tag(stage, job_info, dci_context)
                     else:
                         log.error('Unable to run successfully job %s on tag %s' % (stage['name'],
@@ -418,10 +439,10 @@ def run_stages(stage_type, pipeline, config_dir, envvars):
 
 
 def main(args=sys.argv):
-    config_dir, pipeline, envvars = get_config(args)
+    config_dir, pipeline = get_config(args)
 
     for stage_type in get_types_of_stage(pipeline):
-        job_in_errors = run_stages(stage_type, pipeline, config_dir, envvars)
+        job_in_errors = run_stages(stage_type, pipeline, config_dir)
         if job_in_errors != 0:
             log.error('%d job%s in error at stage %s' % (job_in_errors,
                                                          's' if job_in_errors > 1 else '',
