@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 Version:        0.0.1
-Release:        1.VERS%{?dist}
+Release:        2.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
 # TODO: actually mirror on github
@@ -64,6 +64,7 @@ install -p -D -m 644 systemd/%{name}.service %{buildroot}%{_unitdir}/%{name}.ser
 install -p -D -m 644 systemd/%{name}.timer %{buildroot}%{_unitdir}/%{name}.timer
 install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
+install -d -m 700 %{buildroot}/var/lib/%{name}
 cat > %{buildroot}%{_sysconfdir}/%{name}/pipeline.yml <<EOF
 ---
 EOF
@@ -96,11 +97,15 @@ exit 0
 %{python3_sitelib}/*
 %endif
 %{_bindir}/%{name}
+%attr(700, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
 
 %changelog
+* Fri Aug 21 2020 Frederic Lepied <flepied@redhat.com> - 0.0.1-2.VERS
+- add /var/lib/dci-pipeline directory
+
 * Thu Aug 11 2020 Jorge A Gallegos <jgallego@redhat.com> - 0.0.1-1.VERS
 - Initial build
