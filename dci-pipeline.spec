@@ -97,7 +97,7 @@ exit 0
 %{python3_sitelib}/*
 %endif
 %{_bindir}/%{name}
-%attr(700, %{name}, %{name}) /var/lib/%{name}
+%attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
 %{_unitdir}/dci-pipeline.service
