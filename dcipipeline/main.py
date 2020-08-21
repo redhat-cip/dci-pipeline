@@ -23,9 +23,13 @@ import ansible_runner
 
 import logging
 import os
+import shutil
 import sys
 import yaml
 
+if sys.version_info[0] == 2:
+    FileNotFoundError = IOError
+    PermissionError = IOError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,27 +41,19 @@ TOPDIR = os.getenv('DCI_PIPELINE_TOPDIR',
                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def get_data_dir(job_info):
-    for base_dir in (os.getenv('DCI_PIPELINE_DATADIR'), '/var/lib/dci-pipeline', '/tmp/dci-pipeline'):
-        try:
-            if base_dir:
-                d = os.path.join(base_dir, job_info['job']['id'])
-                os.makedirs(d, mode=0o700)
-                with open(os.path.join(d, 'job_info.yaml'), 'w') as f:
-                    yaml.safe_dump(job_info, f)
-                job_info['data_dir'] = d
-                break
-        except Exception:
-            continue
-    else:
-        log.error('Unable to find a suitable data_dir')
-        sys.exit(4)
-    return d
-
-
 def load_yaml_file(path):
     with open(path) as file:
         return yaml.load(file, Loader=yaml.SafeLoader)
+
+
+def load_credentials(stage, config_dir):
+    dci_credentials = load_yaml_file(stage.get('dci_credentials',
+                                               '%s/%s/dci_credentials.yml' %
+                                               (config_dir,
+                                                os.path.dirname(stage['ansible_playbook']))))
+    if 'DCI_CS_URL' not in dci_credentials:
+        dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
+    return dci_credentials
 
 
 def generate_ansible_cfg(dci_ansible_dir, config_dir):
@@ -68,9 +64,7 @@ def generate_ansible_cfg(dci_ansible_dir, config_dir):
 library            = {dci_ansible_dir}/modules/
 module_utils       = {dci_ansible_dir}/module_utils/
 callback_whitelist = dci
-callback_plugins   = {dci_ansible_dir}/callback/
-interpreter_python = /usr/bin/python2
-
+log_path           = ansible.log
 '''.format(dci_ansible_dir=dci_ansible_dir))
 
 
@@ -160,6 +154,29 @@ def get_topic_id(context, stage):
     return None
 
 
+def get_data_dir(job_info):
+    for base_dir in (os.getenv('DCI_PIPELINE_DATADIR'), '/var/lib/dci-pipeline', '/tmp/dci-pipeline'):
+        try:
+            if base_dir:
+                d = os.path.join(base_dir, job_info['job']['id'])
+                os.makedirs(d, mode=0o700)
+                with open(os.path.join(d, 'job_info.yaml'), 'w') as f:
+                    yaml.safe_dump(job_info, f)
+                job_info['data_dir'] = d
+                log.info('Using data_dir=%s' % d)
+                break
+        except PermissionError:
+            log.info('No permission to write in %s' % base_dir)
+            continue
+        except Exception:
+            log.exception(base_dir)
+            continue
+    else:
+        log.error('Unable to find a suitable data_dir')
+        sys.exit(4)
+    return d
+
+
 def schedule_job(stage, context, tag=None):
     log.info('scheduling job %s on topic %s%s' % (stage['name'], stage['topic'],
                                                   ' with tag %s' % tag if tag else ''))
@@ -239,21 +256,43 @@ def check_stats(stats):
     return True
 
 
+def stage_check_path(stage, key, data_dir):
+    path = stage.get(key)
+    if path:
+        if path[0] != '/':
+            path = os.path.join(data_dir, path)
+            if not os.path.exists(path):
+                log.error('No %s file: %s.' % (key, path))
+                raise FileNotFoundError(path)
+    return path
+
+
+def find_dci_ansible_dir(stage):
+    for dci_ansible_dir in (os.getenv('DCI_ANSIBLE_DIR'),
+                            stage.get('dci_ansible_dir'),
+                            os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'),
+                            '/usr/share/dci'):
+        if dci_ansible_dir and os.path.isfile(os.path.join(dci_ansible_dir, 'callback', 'dci.py')):
+            log.info('Found dci.py in %s' % os.path.join(dci_ansible_dir, 'callback'))
+            envvars = {
+                'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
+            }
+            return dci_ansible_dir, envvars
+    else:
+        log.warning('Unable to find dci.py callback. Reverting to default: %s.' % dci_ansible_dir)
+        return dci_ansible_dir, {}
+
+
 def run_stage(stage, dci_credentials, data_dir, job_info):
     private_data_dir = job_info['data_dir']
-    inventory = stage.get('ansible_inventory')
-    if inventory:
-        if inventory[0] != '/':
-            inventory = os.path.join(data_dir, inventory)
-        if not os.path.exists(inventory):
-            log.error('No inventory %s' % inventory)
-            return False
-    dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
-    envvars = {
-        'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
-    }
-    generate_ansible_cfg(dci_ansible_dir, private_data_dir)
-    log.info('running stage: %s%s data_dir=%s' %
+    inventory = stage_check_path(stage, 'ansible_inventory', data_dir)
+    dci_ansible_dir, envvars = find_dci_ansible_dir(stage)
+    ansible_cfg = stage_check_path(stage, 'ansible_cfg', data_dir)
+    if ansible_cfg:
+        shutil.copy(ansible_cfg, os.path.join(private_data_dir, 'ansible.cfg'))
+    else:
+        generate_ansible_cfg(dci_ansible_dir, private_data_dir)
+    log.info('running stage: %s%s private_data_dir=%s' %
              (stage['name'],
               ' with inventory %s' % inventory if inventory else '',
               private_data_dir))
@@ -388,10 +427,8 @@ def run_stages(stage_type, pipeline, config_dir):
     stages = get_stages_of_type(stage_type, pipeline)
     errors = 0
     for stage in stages:
-        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir,
-                                                                        os.path.dirname(stage['ansible_playbook'])))
+        dci_credentials = load_credentials(stage, config_dir)
         dci_context = build_context(dci_credentials)
-
         job_info = schedule_job(stage, dci_context)
 
         if not job_info:
