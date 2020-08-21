@@ -23,9 +23,12 @@ import ansible_runner
 
 import logging
 import os
+import shutil
 import sys
 import yaml
 
+if sys.version_info[0] == 2:
+    FileNotFoundError = IOError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,6 +61,19 @@ def get_data_dir(job_info):
 def load_yaml_file(path):
     with open(path) as file:
         return yaml.load(file, Loader=yaml.SafeLoader)
+
+
+def load_credentials(stage, config_dir):
+    path = stage.get('dci_credentials')
+    if path:
+        dci_credentials = load_yaml_file(path)
+    else:
+        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' %
+                                         (config_dir,
+                                          os.path.dirname(stage['ansible_playbook'])))
+    if 'DCI_CS_URL' not in dci_credentials:
+        dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
+    return dci_credentials
 
 
 def generate_ansible_cfg(dci_ansible_dir, config_dir):
@@ -239,20 +255,29 @@ def check_stats(stats):
     return True
 
 
+def stage_check_path(stage, key, data_dir):
+    path = stage.get(key)
+    if path:
+        if path[0] != '/':
+            path = os.path.join(data_dir, path)
+            if not os.path.exists(path):
+                log.error('No %s file: %s.' % (key, path))
+                raise FileNotFoundError(path)
+    return path
+
+
 def run_stage(stage, dci_credentials, data_dir, job_info):
     private_data_dir = job_info['data_dir']
-    inventory = stage.get('ansible_inventory')
-    if inventory:
-        if inventory[0] != '/':
-            inventory = os.path.join(data_dir, inventory)
-        if not os.path.exists(inventory):
-            log.error('No inventory %s' % inventory)
-            return False
+    inventory = stage_check_path(stage, 'ansible_inventory', data_dir)
     dci_ansible_dir = os.getenv('DCI_ANSIBLE_DIR', os.path.join(os.path.dirname(TOPDIR), 'dci-ansible'))
     envvars = {
         'ANSIBLE_CALLBACK_PLUGINS': os.path.join(dci_ansible_dir, 'callback'),
     }
-    generate_ansible_cfg(dci_ansible_dir, private_data_dir)
+    ansible_cfg = stage_check_path(stage, 'ansible_cfg', data_dir)
+    if ansible_cfg:
+        shutil.copy(ansible_cfg, os.path.join(private_data_dir, 'ansible.cfg'))
+    else:
+        generate_ansible_cfg(dci_ansible_dir, private_data_dir)
     log.info('running stage: %s%s data_dir=%s' %
              (stage['name'],
               ' with inventory %s' % inventory if inventory else '',
@@ -388,10 +413,8 @@ def run_stages(stage_type, pipeline, config_dir):
     stages = get_stages_of_type(stage_type, pipeline)
     errors = 0
     for stage in stages:
-        dci_credentials = load_yaml_file('%s/%s/dci_credentials.yml' % (config_dir,
-                                                                        os.path.dirname(stage['ansible_playbook'])))
+        dci_credentials = load_credentials(stage, config_dir)
         dci_context = build_context(dci_credentials)
-
         job_info = schedule_job(stage, dci_context)
 
         if not job_info:
