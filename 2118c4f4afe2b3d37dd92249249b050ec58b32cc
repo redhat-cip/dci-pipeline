@@ -16,6 +16,24 @@
       "revId": "2118c4f4afe2b3d37dd92249249b050ec58b32cc",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3a017773_aed37875",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 9
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-08-24T21:20:42Z",
+      "side": 1,
+      "message": "nope that\u0027s done on purpose to be written on each job private_data_dir.",
+      "parentUuid": "9ae467de_d53d2656",
+      "revId": "2118c4f4afe2b3d37dd92249249b050ec58b32cc",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
