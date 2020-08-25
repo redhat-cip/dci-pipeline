@@ -16,6 +16,24 @@
       "revId": "8e4ac7f948133e58063a2160ee92a3c2e7e5963c",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "819e02fc_a7070522",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 14
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-08-25T10:38:29Z",
+      "side": 1,
+      "message": "it\u0027s to be able to run in dci-dev-env, locally, in CI or in production.",
+      "parentUuid": "47366a06_0aedda25",
+      "revId": "8e4ac7f948133e58063a2160ee92a3c2e7e5963c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
