@@ -413,7 +413,7 @@ def add_outputs_paths(job_info, stage):
         return
 
     outputs_job_directory_prefix = '%s/%s/outputs/%s' % (job_info['data_dir'],
-                                                         os.path.dirname(stage['ansible_playbook']),
+                                                         stage['name'],
                                                          job_info['job']['id'])
     os.makedirs(outputs_job_directory_prefix)
     outputs_keys_paths = {}
