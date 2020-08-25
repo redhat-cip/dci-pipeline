@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "47366a06_0aedda25",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 14
+      },
+      "lineNbr": 282,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-08-25T09:53:02Z",
+      "side": 1,
+      "message": "What is the purpose of this check ? The dci.py is part of the dci-ansible project, how it cannot be in the directory ?\n\nOr do you want to check if dci.py has been copied into ansible_runner/callbacks directory ?",
+      "revId": "8e4ac7f948133e58063a2160ee92a3c2e7e5963c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
