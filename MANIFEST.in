@@ -4,3 +4,4 @@ include README.md
 include sysconfig/*
 include systemd/*
 include LICENSE
+include dci-pipeline.sudo
