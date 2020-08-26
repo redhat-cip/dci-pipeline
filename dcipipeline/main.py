@@ -339,6 +339,8 @@ def process_args(args):
             key, value = rest.split('=', 1)
             if ',' in value:
                 value = value.split(',')
+                if value[-1] == '':
+                    value = value[:-1]
             dct = overload.get(name, {})
             dct[key] = value
             overload[name] = dct

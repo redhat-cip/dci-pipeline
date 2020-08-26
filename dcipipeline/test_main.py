@@ -38,6 +38,12 @@ class TestMain(unittest.TestCase):
         self.assertEqual(args, [])
         self.assertEqual(result, {'stage': {'key': ['value=toto', 'value2']}})
 
+    def test_process_args_list1(self):
+        args = ['dci-pipeline', 'stage:key=value=toto,']
+        result, args = process_args(args)
+        self.assertEqual(args, [])
+        self.assertEqual(result, {'stage': {'key': ['value=toto']}})
+
     def test_process_args_only_files(self):
         args = ['dci-pipeline', 'file1', 'file2']
         result, args = process_args(args)
