@@ -37,6 +37,7 @@ BuildRequires:  systemd
 Requires(pre):  shadow-utils
 Requires:       ansible
 Requires:       dci-ansible
+Requires:       /usr/bin/sudo
 
 %description
 CI pipeline management for DCI jobs
@@ -65,6 +66,7 @@ install -p -D -m 644 systemd/%{name}.timer %{buildroot}%{_unitdir}/%{name}.timer
 install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 700 %{buildroot}/var/lib/%{name}
+install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
 cat > %{buildroot}%{_sysconfdir}/%{name}/pipeline.yml <<EOF
 ---
 EOF
@@ -102,6 +104,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
+%{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
 * Fri Aug 21 2020 Frederic Lepied <flepied@redhat.com> - 0.0.1-2.VERS
