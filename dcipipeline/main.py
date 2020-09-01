@@ -282,7 +282,8 @@ def find_dci_ansible_dir(stage):
         return dci_ansible_dir, {}
 
 
-def run_stage(stage, dci_credentials, data_dir, job_info):
+def run_stage(stage, dci_credentials, data_dir):
+    job_info = stage['job_info']
     private_data_dir = job_info['data_dir']
     inventory = stage_check_path(stage, 'ansible_inventory', data_dir)
     dci_ansible_dir, envvars = find_dci_ansible_dir(stage)
@@ -430,49 +431,54 @@ def run_stages(stage_type, pipeline, config_dir):
     for stage in stages:
         dci_credentials = load_credentials(stage, config_dir)
         dci_context = build_context(dci_credentials)
-        job_info = schedule_job(stage, dci_context)
+        stage['job_info'] = schedule_job(stage, dci_context)
 
-        if not job_info:
+        if not stage['job_info']:
             log.error('Unable to schedule job %s. Skipping' % stage['name'])
             errors += 1
             continue
 
         prev_stages = get_stages_by_name(stage.get('prev_stages'), pipeline)
-        create_inputs(config_dir, prev_stages, stage, job_info)
-        add_outputs_paths(job_info, stage)
+        create_inputs(config_dir, prev_stages, stage, stage['job_info'])
+        add_outputs_paths(stage['job_info'], stage)
 
-        tags = [stage['topic']]
+        tags = []
+
+        if 'ansible_inventory' in stage:
+            tags.append('inventory:' + os.path.basename(stage['ansible_inventory']))
+
         for prev_stage in prev_stages:
             if prev_stage and 'job_info' in prev_stage:
                 log.info('prev stage: %s' % prev_stage)
                 for component in prev_stage['job_info']['job']['components']:
-                    tags.append('%s/%s' % (prev_stage['topic'], component['name']))
-        add_tags_to_job(job_info['job']['id'], tags, dci_context)
+                    tags.append('prev-component:%s:%s/%s' % (component['type'], prev_stage['topic'], component['name']))
+                tags.append('prev-job:' + prev_stage['job_info']['job']['id'])
+        add_tags_to_job(stage['job_info']['job']['id'], tags, dci_context)
 
-        if run_stage(stage, dci_credentials, config_dir, job_info):
-            set_success_tag(stage, job_info, dci_context)
+        if run_stage(stage, dci_credentials, config_dir):
+            set_success_tag(stage, stage['job_info'], dci_context)
         else:
             log.error('Unable to run successfully job %s' % stage['name'])
             if 'fallback_last_success' in stage and not is_stage_with_fixed_components(stage):
                 log.info('Retrying with tag %s' % stage['fallback_last_success'])
-                job_info = schedule_job(stage, dci_context, stage['fallback_last_success'])
+                stage['job_info'] = schedule_job(stage, dci_context, stage['fallback_last_success'])
 
-                if not job_info:
+                if not stage['job_info']:
                     log.error('Unable to schedule job %s on tag %s.' % (stage['name'],
                                                                         stage['fallback_last_success']))
                     errors += 1
                 else:
-                    create_inputs(config_dir, prev_stages, stage, job_info)
-                    add_outputs_paths(job_info, stage)
-                    if run_stage(stage, dci_credentials, config_dir, job_info):
-                        set_success_tag(stage, job_info, dci_context)
+                    add_tags_to_job(stage['job_info']['job']['id'], tags, dci_context)
+                    create_inputs(config_dir, prev_stages, stage, stage['job_info'])
+                    add_outputs_paths(stage['job_info'], stage)
+                    if run_stage(stage, dci_credentials, config_dir):
+                        set_success_tag(stage, stage['job_info'], dci_context)
                     else:
                         log.error('Unable to run successfully job %s on tag %s' % (stage['name'],
                                                                                    stage['fallback_last_success']))
                         errors += 1
             else:
                 errors += 1
-        stage['job_info'] = job_info
     return errors
 
 
