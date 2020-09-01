@@ -1,0 +1,10 @@
+Workflow+1: Bill Peck <bill@pecknet.com>
+Code-Review+1: Haïkel Guémar <hguemar@fedoraproject.org>
+Code-Review+2: Frederic Lepied <flepied@redhat.com>
+Workflow+1: Frederic Lepied <flepied@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Tue, 01 Sep 2020 17:45:02 +0000
+Reviewed-on: https://softwarefactory-project.io/r/19342
+Project: dci-pipeline
+Branch: refs/heads/master
