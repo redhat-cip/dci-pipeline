@@ -272,16 +272,16 @@ def main():
         create_component(name, version, ocp45_topic_id)
 
     # Create plugins components
-    create_component('storage-plugin', '0.1.nightly-20200622', ocp44_topic_id)
-    create_component('storage-plugin', '0.1.nightly-20200521', ocp45_topic_id)
-    create_component('network-plugin', '0.1.nightly-20200420', ocp44_topic_id)
-    create_component('network-plugin', '0.1.nightly-20200319', ocp45_topic_id)
+    create_component('storage-plugin', '0.1.nightly-20200622', ocp44_topic_id, team_id=storage_plugin_telco_ci_id)
+    create_component('storage-plugin', '0.1.nightly-20200521', ocp45_topic_id, team_id=storage_plugin_telco_ci_id)
+    create_component('network-plugin', '0.1.nightly-20200420', ocp44_topic_id, team_id=network_plugin_telco_ci_id)
+    create_component('network-plugin', '0.1.nightly-20200319', ocp45_topic_id, team_id=network_plugin_telco_ci_id)
 
     # Create CNF components
 
-    create_component('rh-cnf', '0.1.nightly-20200703', cnf01_topic_id, tag='ocp-vanilla-4.4-ok')
-    create_component('rh-cnf', '0.1.nightly-20200708', cnf01_topic_id)
-    create_component('rh-cnf', '0.2.nightly-20200723', cnf02_topic_id)
+    create_component('rh-cnf', '0.1.nightly-20200703', cnf01_topic_id, tag='ocp-vanilla-4.4-ok', team_id=cnf_telco_ci_id)
+    create_component('rh-cnf', '0.1.nightly-20200708', cnf01_topic_id, team_id=cnf_telco_ci_id)
+    create_component('rh-cnf', '0.2.nightly-20200723', cnf02_topic_id, team_id=cnf_telco_ci_id)
 
     generate_remoteci_rc_files()
     generate_remoteci_yml_files()
