@@ -19,6 +19,8 @@ from dciclient.v1.api import jobstate as dci_jobstate
 from dciclient.v1.api import topic as dci_topic
 from dciclient.v1.api import context as dci_context
 
+from dcipipeline import settings
+
 import ansible_runner
 
 import logging
@@ -51,6 +53,13 @@ def load_credentials(stage, config_dir):
                                                '%s/%s/dci_credentials.yml' %
                                                (config_dir,
                                                 os.path.dirname(stage['ansible_playbook']))))
+    if 'DCI_CS_URL' not in dci_credentials:
+        dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
+    return dci_credentials
+
+
+def load_pipeline_user_credentials():
+    dci_credentials = load_yaml_file(os.path.abspath(settings.get('PIPELINE_USER_PATH')))
     if 'DCI_CS_URL' not in dci_credentials:
         dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
     return dci_credentials
@@ -89,10 +98,18 @@ def get_stages(names, pipeline):
     return stages
 
 
-def build_context(dci_credentials):
+def build_remoteci_context(dci_credentials):
     return dci_context.build_signature_context(
         dci_client_id=dci_credentials['DCI_CLIENT_ID'],
         dci_api_secret=dci_credentials['DCI_API_SECRET'],
+        dci_cs_url=dci_credentials['DCI_CS_URL']
+    )
+
+
+def build_pipeline_user_context(dci_credentials):
+    return dci_context.build_dci_context(
+        dci_login=dci_credentials['DCI_PIPELINE_USERNAME'],
+        dci_password=dci_credentials['DCI_PIPELINE_PASSWORD'],
         dci_cs_url=dci_credentials['DCI_CS_URL']
     )
 
@@ -126,9 +143,9 @@ def get_components(context, stage, topic_id, tag=None):
             else:
                 log.error('No %s[%s] component' % (c_type, c_name))
         else:
-            log.error('Unable to fetch component %s%s for topic %s: %s' % (c_type, c_name,
-                                                                           stage['topic'],
-                                                                           resp.text))
+            log.error('Unable to fetch component %s/%s for topic %s: %s' % (c_type, c_name,
+                                                                            stage['topic'],
+                                                                            resp.text))
     return components
 
 
@@ -170,27 +187,27 @@ def get_data_dir(job_info, stage):
     return d
 
 
-def schedule_job(stage, context, tag=None):
+def schedule_job(stage, remoteci_context, pipeline_user_context, tag=None):
     log.info('scheduling job %s on topic %s%s' % (stage['name'], stage['topic'],
                                                   ' with tag %s' % tag if tag else ''))
 
-    topic_id = get_topic_id(context, stage)
-    components = get_components(context, stage, topic_id, tag)
+    topic_id = get_topic_id(remoteci_context, stage)
+    components = get_components(pipeline_user_context, stage, topic_id, tag)
 
     if len(stage['components']) != len(components):
         log.error('Unable to get all components %d out of %d' % (len(components), len(stage['components'])))
         return None
 
-    schedule = dci_job.create(context, topic_id, comment=stage.get('comment', stage['name']),
+    schedule = dci_job.create(remoteci_context, topic_id, comment=stage['name'],
                               components=[c['id'] for c in components])
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()['job']['id']
         scheduled_job = dci_job.get(
-            context, scheduled_job_id, embed='topic,remoteci,components')
+            remoteci_context, scheduled_job_id, embed='topic,remoteci,components')
         if scheduled_job.status_code == 200:
             job_id = scheduled_job.json()['job']['id']
             dci_jobstate.create(
-                context,
+                remoteci_context,
                 status='new',
                 comment='job scheduled',
                 job_id=job_id)
@@ -435,8 +452,10 @@ def run_stages(stage_type, pipeline, config_dir):
     errors = 0
     for stage in stages:
         dci_credentials = load_credentials(stage, config_dir)
-        dci_context = build_context(dci_credentials)
-        stage['job_info'] = schedule_job(stage, dci_context)
+        dci_remoteci_context = build_remoteci_context(dci_credentials)
+        dci_pipeline_user_credentials = load_pipeline_user_credentials()
+        dci_pipeline_user_context = build_pipeline_user_context(dci_pipeline_user_credentials)
+        stage['job_info'] = schedule_job(stage, dci_remoteci_context, dci_pipeline_user_context)
 
         if not stage['job_info']:
             log.error('Unable to schedule job %s. Skipping' % stage['name'])
@@ -448,26 +467,26 @@ def run_stages(stage_type, pipeline, config_dir):
         add_outputs_paths(stage['job_info'], stage)
 
         tags = compute_tags(stage, prev_stages)
-        add_tags_to_job(stage['job_info']['job']['id'], tags, dci_context)
+        add_tags_to_job(stage['job_info']['job']['id'], tags, dci_remoteci_context)
 
         if run_stage(stage, dci_credentials, config_dir):
-            set_success_tag(stage, stage['job_info'], dci_context)
+            set_success_tag(stage, stage['job_info'], dci_remoteci_context)
         else:
             log.error('Unable to run successfully job %s' % stage['name'])
             if 'fallback_last_success' in stage and not is_stage_with_fixed_components(stage):
                 log.info('Retrying with tag %s' % stage['fallback_last_success'])
-                stage['job_info'] = schedule_job(stage, dci_context, stage['fallback_last_success'])
+                stage['job_info'] = schedule_job(stage, dci_remoteci_context, dci_pipeline_user_context, stage['fallback_last_success'])
 
                 if not stage['job_info']:
                     log.error('Unable to schedule job %s on tag %s.' % (stage['name'],
                                                                         stage['fallback_last_success']))
                     errors += 1
                 else:
-                    add_tags_to_job(stage['job_info']['job']['id'], tags, dci_context)
+                    add_tags_to_job(stage['job_info']['job']['id'], tags, dci_remoteci_context)
                     create_inputs(config_dir, prev_stages, stage, stage['job_info'])
                     add_outputs_paths(stage['job_info'], stage)
                     if run_stage(stage, dci_credentials, config_dir):
-                        set_success_tag(stage, stage['job_info'], dci_context)
+                        set_success_tag(stage, stage['job_info'], dci_remoteci_context)
                     else:
                         log.error('Unable to run successfully job %s on tag %s' % (stage['name'],
                                                                                    stage['fallback_last_success']))
