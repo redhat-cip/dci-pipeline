@@ -59,7 +59,7 @@ def load_credentials(stage, config_dir):
 
 
 def load_pipeline_user_credentials():
-    dci_credentials = load_yaml_file(os.path.abspath(settings.get('PIPELINE_USER_PATH'))
+    dci_credentials = load_yaml_file(os.path.abspath(settings.get('PIPELINE_USER_PATH')))
     if 'DCI_CS_URL' not in dci_credentials:
         dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
     return dci_credentials
