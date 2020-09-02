@@ -172,6 +172,26 @@ def generate_remoteci_yml_files():
 """.format(remoteci_id=remoteci['id'], api_secret=remoteci['api_secret']))
 
 
+def generate_pipeline_user_files():
+    with open('./pipeline_user_dci_credentials.yml', 'w') as f:
+        f.write("""---
+  DCI_PIPELINE_USERNAME: pipeline-user
+  DCI_PIPELINE_PASSWORD: pipeline-user
+  DCI_CS_URL: http://127.0.0.1:5000/
+  DCI_UI_URL: http://127.0.0.1:8000""")
+
+    with open('./pipeline_user_dci_credentials.sh', 'w') as f:
+        f.write("""---
+  DCI_PIPELINE_USERNAME='pipeline-user'
+  DCI_PIPELINE_PASSWORD='pipeline-user'
+  DCI_CS_URL='http://127.0.0.1:5000/'
+  DCI_UI_URL='http://127.0.0.1:8000'
+  export DCI_PIPELINE_USERNAME
+  export DCI_PIPELINE_PASSWORD
+  export DCI_CS_URL
+  export DCI_UI_URL""")
+
+
 def main():
     wait_db_ready()
 
@@ -265,6 +285,7 @@ def main():
 
     generate_remoteci_rc_files()
     generate_remoteci_yml_files()
+    generate_pipeline_user_files()
 
 
 if __name__ == '__main__':
