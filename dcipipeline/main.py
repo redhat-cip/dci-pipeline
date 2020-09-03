@@ -92,7 +92,7 @@ def get_stages_by_name(names, pipeline):
             names = [names]
         for name in names:
             for stage in pipeline:
-                if stage['name'] == name:
+                if stage['name'] == name or stage['type'] == name:
                     stages.append(stage)
     return stages
 
@@ -154,7 +154,7 @@ def get_topic_id(context, stage):
     return None
 
 
-def get_data_dir(job_info):
+def get_data_dir(job_info, stage):
     for base_dir in (os.getenv('DCI_PIPELINE_DATADIR'), '/var/lib/dci-pipeline', '/tmp/dci-pipeline'):
         try:
             if base_dir:
@@ -162,6 +162,8 @@ def get_data_dir(job_info):
                 os.makedirs(d, mode=0o700)
                 with open(os.path.join(d, 'job_info.yaml'), 'w') as f:
                     yaml.safe_dump(job_info, f)
+                with open(os.path.join(d, 'stage.yaml'), 'w') as f:
+                    yaml.safe_dump(stage, f)
                 job_info['data_dir'] = d
                 break
         except PermissionError:
@@ -206,7 +208,7 @@ def schedule_job(stage, context, tag=None):
                               % (c['name'], [comp['name'] for comp in components]))
                     return None
             job_info = scheduled_job.json()
-            get_data_dir(job_info)
+            get_data_dir(job_info, stage)
             return job_info
         else:
             log.error('error getting schedule info: %s' % scheduled_job.text)
@@ -386,9 +388,7 @@ def create_inputs(config_dir, prev_stages, stage, job_info):
     if 'inputs' not in stage:
         return
 
-    top_dir = '%s/%s/inputs/%s' % (job_info['data_dir'],
-                                   os.path.dirname(stage['ansible_playbook']),
-                                   job_info['job']['id'])
+    top_dir = '%s/inputs' % job_info['data_dir']
     try:
         os.makedirs(top_dir)
     except Exception:
@@ -415,14 +415,27 @@ def add_outputs_paths(job_info, stage):
     if 'outputs' not in stage:
         return
 
-    outputs_job_directory_prefix = '%s/%s/outputs/%s' % (job_info['data_dir'],
-                                                         stage['name'],
-                                                         job_info['job']['id'])
+    outputs_job_directory_prefix = '%s/outputs' % job_info['data_dir']
     os.makedirs(outputs_job_directory_prefix)
     outputs_keys_paths = {}
     for key in stage['outputs']:
         outputs_keys_paths[key] = '%s/%s' % (outputs_job_directory_prefix, stage['outputs'][key])
     job_info['outputs'] = outputs_keys_paths
+
+
+def compute_tags(stage, prev_stages):
+    tags = ['job:' + stage['name']]
+
+    if 'ansible_inventory' in stage:
+        tags.append('inventory:' + os.path.basename(stage['ansible_inventory']))
+
+    for prev_stage in prev_stages:
+        if prev_stage and 'job_info' in prev_stage:
+            log.info('prev stage: %s' % prev_stage)
+            for component in prev_stage['job_info']['job']['components']:
+                tags.append('prev-component:%s:%s/%s' % (component['type'], prev_stage['topic'], component['name']))
+            tags.append('prev-job:' + prev_stage['job_info']['job']['id'])
+    return tags
 
 
 def run_stages(stage_type, pipeline, config_dir):
@@ -442,17 +455,7 @@ def run_stages(stage_type, pipeline, config_dir):
         create_inputs(config_dir, prev_stages, stage, stage['job_info'])
         add_outputs_paths(stage['job_info'], stage)
 
-        tags = []
-
-        if 'ansible_inventory' in stage:
-            tags.append('inventory:' + os.path.basename(stage['ansible_inventory']))
-
-        for prev_stage in prev_stages:
-            if prev_stage and 'job_info' in prev_stage:
-                log.info('prev stage: %s' % prev_stage)
-                for component in prev_stage['job_info']['job']['components']:
-                    tags.append('prev-component:%s:%s/%s' % (component['type'], prev_stage['topic'], component['name']))
-                tags.append('prev-job:' + prev_stage['job_info']['job']['id'])
+        tags = compute_tags(stage, prev_stages)
         add_tags_to_job(stage['job_info']['job']['id'], tags, dci_context)
 
         if run_stage(stage, dci_credentials, config_dir):
