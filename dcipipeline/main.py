@@ -154,7 +154,7 @@ def get_topic_id(context, stage):
     return None
 
 
-def get_data_dir(job_info):
+def get_data_dir(job_info, stage):
     for base_dir in (os.getenv('DCI_PIPELINE_DATADIR'), '/var/lib/dci-pipeline', '/tmp/dci-pipeline'):
         try:
             if base_dir:
@@ -162,6 +162,8 @@ def get_data_dir(job_info):
                 os.makedirs(d, mode=0o700)
                 with open(os.path.join(d, 'job_info.yaml'), 'w') as f:
                     yaml.safe_dump(job_info, f)
+                with open(os.path.join(d, 'stage.yaml'), 'w') as f:
+                    yaml.safe_dump(stage, f)
                 job_info['data_dir'] = d
                 break
         except PermissionError:
@@ -206,7 +208,7 @@ def schedule_job(stage, context, tag=None):
                               % (c['name'], [comp['name'] for comp in components]))
                     return None
             job_info = scheduled_job.json()
-            get_data_dir(job_info)
+            get_data_dir(job_info, stage)
             return job_info
         else:
             log.error('error getting schedule info: %s' % scheduled_job.text)
