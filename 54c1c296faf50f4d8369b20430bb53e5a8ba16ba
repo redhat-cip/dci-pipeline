@@ -36,6 +36,24 @@
     },
     {
       "key": {
+        "uuid": "d94c2102_48baca8d",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-09T13:09:12Z",
+      "side": 1,
+      "message": "It\u0027s for reusability. if we allow only a stage name it is not possible to reuse in another pipeline except if we keep the same name everywhere...",
+      "parentUuid": "32c53c1d_f1454171",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0acb3a21_a546542b",
         "filename": "dcipipeline/main.py",
         "patchSetId": 5
@@ -65,6 +83,24 @@
       "side": 1,
       "message": "Same comment. Also, having the job id would be interessting for troubleshooting.",
       "parentUuid": "0acb3a21_a546542b",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ba9a1fff_5788e9d7",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-09T13:09:12Z",
+      "side": 1,
+      "message": "There is already the job id in data_dir so i was duplicating it in the path. Did you try to see how it looks on disk?",
+      "parentUuid": "baf90b47_5e860337",
       "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
