@@ -189,7 +189,7 @@ def schedule_job(stage, context, tag=None):
         log.error('Unable to get all components %d out of %d' % (len(components), len(stage['components'])))
         return None
 
-    schedule = dci_job.create(context, topic_id, comment=stage['name'],
+    schedule = dci_job.create(context, topic_id, comment=stage.get('comment', stage['name']),
                               components=[c['id'] for c in components])
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()['job']['id']
