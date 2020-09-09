@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f1ece585_8b434346",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-09-09T11:38:00Z",
+      "side": 1,
+      "message": "should we change the name to just get_stages?",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0acb3a21_a546542b",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-09-09T11:38:00Z",
+      "side": 1,
+      "message": "Don\u0027t we still want job_info[\u0027job\u0027][\u0027id\u0027] to keep us from accidentally using data from a previous run?",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
