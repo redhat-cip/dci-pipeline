@@ -54,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "8667cf17_77042fa2",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-09T20:35:24Z",
+      "side": 1,
+      "message": "I\u0027m not sure i understood this one.",
+      "parentUuid": "d94c2102_48baca8d",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0acb3a21_a546542b",
         "filename": "dcipipeline/main.py",
         "patchSetId": 5
@@ -101,6 +119,24 @@
       "side": 1,
       "message": "There is already the job id in data_dir so i was duplicating it in the path. Did you try to see how it looks on disk?",
       "parentUuid": "baf90b47_5e860337",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b23cea18_63840e31",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-09T20:35:24Z",
+      "side": 1,
+      "message": "Yeah, this is nice.\n\nWithin the job[\u0027data_dir\u0027] path it would be handy to have the agent name before the job id instead of flat job ids directories.\n\nExample:\n\n/tmp/dci-pipeline/rh-cnf/b5c366c7-66b2-4933-bcd3-2f726926c2f1/inputs\n\nInstead of:\n\n/tmp/dci-pipeline/b5c366c7-66b2-4933-bcd3-2f726926c2f1/inputs",
+      "parentUuid": "ba9a1fff_5788e9d7",
       "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
