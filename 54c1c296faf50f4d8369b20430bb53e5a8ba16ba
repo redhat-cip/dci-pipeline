@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "32c53c1d_f1454171",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-09T12:01:14Z",
+      "side": 1,
+      "message": "Looks confusing to me, why do we need this ?",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0acb3a21_a546542b",
         "filename": "dcipipeline/main.py",
         "patchSetId": 5
@@ -30,6 +47,24 @@
       "writtenOn": "2020-09-09T11:38:00Z",
       "side": 1,
       "message": "Don\u0027t we still want job_info[\u0027job\u0027][\u0027id\u0027] to keep us from accidentally using data from a previous run?",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baf90b47_5e860337",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-09T12:01:14Z",
+      "side": 1,
+      "message": "Same comment. Also, having the job id would be interessting for troubleshooting.",
+      "parentUuid": "0acb3a21_a546542b",
       "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
