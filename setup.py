@@ -23,7 +23,7 @@ readme = open(os.path.join(root_dir, 'README.md')).read()
 
 setuptools.setup(
     name='dci-pipeline',
-    version='0.0.1',
+    version='0.0.2',
     packages=setuptools.find_packages(exclude=("tests")),
     author='Distributed CI team',
     author_email='distributed-ci@redhat.com',
@@ -41,6 +41,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3',
     ],
     entry_points={
-        'console_scripts': ['dci-pipeline=dcipipeline.main:main']
+        'console_scripts': ['dci-pipeline=dcipipeline.main:main'],
+        'console_scripts': ['queue=dciqueue.main:main'],
     },
 )
