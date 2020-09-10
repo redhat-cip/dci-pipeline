@@ -108,6 +108,24 @@
     },
     {
       "key": {
+        "uuid": "974d5ba8_8e04dce3",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-10T09:11:20Z",
+      "side": 1,
+      "message": "Yes, thanks.",
+      "parentUuid": "472a191f_335247c1",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0acb3a21_a546542b",
         "filename": "dcipipeline/main.py",
         "patchSetId": 5
