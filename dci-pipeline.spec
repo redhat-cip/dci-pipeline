@@ -7,8 +7,8 @@
 %endif
 
 Name:           dci-pipeline
-Version:        0.0.1
-Release:        2.VERS%{?dist}
+Version:        0.0.2
+Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
 # TODO: actually mirror on github
@@ -99,6 +99,7 @@ exit 0
 %{python3_sitelib}/*
 %endif
 %{_bindir}/%{name}
+%{_bindir}/queue
 %attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
@@ -107,8 +108,11 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
-* Fri Aug 21 2020 Frederic Lepied <flepied@redhat.com> - 0.0.1-2.VERS
+* Thu Sep 10 2020 Frederic Lepied <flepied@redhat.com> - 0.0.2-1.VERS
+- add queue files
+
+* Fri Aug 21 2020 Frederic Lepied <flepied@redhat.com> - 0.0.1-2
 - add /var/lib/dci-pipeline directory
 
-* Thu Aug 11 2020 Jorge A Gallegos <jgallego@redhat.com> - 0.0.1-1.VERS
+* Tue Aug 11 2020 Jorge A Gallegos <jgallego@redhat.com> - 0.0.1-1
 - Initial build
