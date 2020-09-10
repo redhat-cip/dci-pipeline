@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "dfb2d645_017eaeb9",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-10T05:17:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f1ece585_8b434346",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "32c53c1d_f1454171",
         "filename": "dcipipeline/main.py",
         "patchSetId": 5
@@ -66,6 +84,24 @@
       "side": 1,
       "message": "I\u0027m not sure i understood this one.",
       "parentUuid": "d94c2102_48baca8d",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "472a191f_335247c1",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-10T05:17:02Z",
+      "side": 1,
+      "message": "when we put a stage in its own pipeline file and we want to reuse it with other pipeline files like a cnf stage that we\u0027ll be used in multiple pipelines, we cannot hardcode the name of the previous stage. is it clearer?",
+      "parentUuid": "8667cf17_77042fa2",
       "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
@@ -137,6 +173,24 @@
       "side": 1,
       "message": "Yeah, this is nice.\n\nWithin the job[\u0027data_dir\u0027] path it would be handy to have the agent name before the job id instead of flat job ids directories.\n\nExample:\n\n/tmp/dci-pipeline/rh-cnf/b5c366c7-66b2-4933-bcd3-2f726926c2f1/inputs\n\nInstead of:\n\n/tmp/dci-pipeline/b5c366c7-66b2-4933-bcd3-2f726926c2f1/inputs",
       "parentUuid": "ba9a1fff_5788e9d7",
+      "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8e96e765_57259701",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-10T05:17:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b23cea18_63840e31",
       "revId": "54c1c296faf50f4d8369b20430bb53e5a8ba16ba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
