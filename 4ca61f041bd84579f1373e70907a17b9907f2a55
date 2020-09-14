@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bf1ac463_786c6f0d",
+        "filename": "dciqueue/add_pool_cmd.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "This code is not \"race condition free\", since two processes may see the file not existing in the same time.\n\nThe fix is to do the \"seq.lock\" before the if statement.",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "363ade23_2258f5f6",
+        "filename": "dciqueue/add_pool_cmd.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "this code should be part of lib.Seq.__init__()",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "135f4675_b36fbd4e",
+        "filename": "dciqueue/run_cmd.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "this is not needed because the for loop will no iterate if resources \u003d []",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d13c8377_b78648e6",
+        "filename": "dciqueue/run_cmd.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "os.path.join(available_dir, res)",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "52760af2_a126b7e9",
+        "filename": "dciqueue/schedule_cmd.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "the help is wrong ?",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "170ef598_a78b410c",
+        "filename": "dciqueue/test_lib.py",
+        "patchSetId": 21
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-14T23:29:50Z",
+      "side": 1,
+      "message": "Maybe a better test would be to create N forks, each fork read a file that contains a number (initialized at 0), increment the number and save the file.\n\nThis operation would be protected by the lock. At the end the number within the file must be equal to N.\n\nA random sleep can be added within each fork as well.",
+      "revId": "4ca61f041bd84579f1373e70907a17b9907f2a55",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
