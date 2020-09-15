@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c1793874_41645073",
+        "filename": "README.md",
+        "patchSetId": 23
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-15T12:56:30Z",
+      "side": 1,
+      "message": "is the location ever going to change? if it\u0027s *not* going to change and it\u0027s required, we shouldn\u0027t ask the user for it and just pick it up from the standard location",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "39d5225e_6218edc7",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-15T12:56:30Z",
+      "side": 1,
+      "message": "if you use ArgumentDefaultsHelpFormatter for the formatter_class you don\u0027t have to print the defaults yourself",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "10becef5_c5dfdd6e",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-15T12:56:30Z",
+      "side": 1,
+      "message": "should have a try/catch block here",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d53efdbc_bd5899b2",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-15T12:56:30Z",
+      "side": 1,
+      "message": "try/catch here in case it can\u0027t write to the top_dir",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
