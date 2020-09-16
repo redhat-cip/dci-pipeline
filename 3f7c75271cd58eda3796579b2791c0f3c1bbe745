@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8ed80bf2_4023cd63",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 25
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-09-16T11:51:17Z",
+      "side": 1,
+      "message": "How about dci-pipepine-ctl ?  It matches what we use elsewhere in dci.  queue seems to generic to me and not specific enough to dci-pipeline.  Or even dci-pipeline-queue.",
+      "revId": "3f7c75271cd58eda3796579b2791c0f3c1bbe745",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
