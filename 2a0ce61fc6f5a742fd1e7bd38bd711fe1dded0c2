@@ -54,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "9415268b_55c997e1",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-16T06:58:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39d5225e_6218edc7",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "10becef5_c5dfdd6e",
         "filename": "dciqueue/main.py",
         "patchSetId": 23
@@ -71,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "a217a396_1fa2ad7f",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-16T06:58:26Z",
+      "side": 1,
+      "message": "I have added a global try/except in main.py",
+      "parentUuid": "10becef5_c5dfdd6e",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d53efdbc_bd5899b2",
         "filename": "dciqueue/main.py",
         "patchSetId": 23
@@ -82,6 +118,24 @@
       "writtenOn": "2020-09-15T12:56:30Z",
       "side": 1,
       "message": "try/catch here in case it can\u0027t write to the top_dir",
+      "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "62a85e56_0f0ac814",
+        "filename": "dciqueue/main.py",
+        "patchSetId": 23
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-16T06:58:26Z",
+      "side": 1,
+      "message": "I have added a global try/except in main.py",
+      "parentUuid": "d53efdbc_bd5899b2",
       "revId": "2a0ce61fc6f5a742fd1e7bd38bd711fe1dded0c2",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
