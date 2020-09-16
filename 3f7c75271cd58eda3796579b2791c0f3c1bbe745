@@ -34,6 +34,24 @@
       "revId": "3f7c75271cd58eda3796579b2791c0f3c1bbe745",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a5e43922_bc068fc2",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 25
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-09-16T14:12:36Z",
+      "side": 1,
+      "message": "ok - but it\u0027s in dciqueue dir and part of dci-pipeline package.  queue seems ambiguous to me.",
+      "parentUuid": "cf903ffb_fafe34be",
+      "revId": "3f7c75271cd58eda3796579b2791c0f3c1bbe745",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
