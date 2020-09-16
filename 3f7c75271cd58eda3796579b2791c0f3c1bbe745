@@ -16,6 +16,24 @@
       "revId": "3f7c75271cd58eda3796579b2791c0f3c1bbe745",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cf903ffb_fafe34be",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 25
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-16T13:58:58Z",
+      "side": 1,
+      "message": "there is nothing related to dci in this (no api call). That\u0027s why I kept it without the name dci in it.",
+      "parentUuid": "8ed80bf2_4023cd63",
+      "revId": "3f7c75271cd58eda3796579b2791c0f3c1bbe745",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
