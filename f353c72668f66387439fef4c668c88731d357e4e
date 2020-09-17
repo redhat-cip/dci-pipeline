@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ff26e702_e243394b",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-17T21:05:49Z",
+      "side": 1,
+      "message": "use the logging.DEBUG constant instead (or whatever level you want)",
+      "revId": "f353c72668f66387439fef4c668c88731d357e4e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
