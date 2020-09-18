@@ -76,12 +76,14 @@ def execute_command(args):
     found = False
     if not args.force:
         for cmdfile in [
-                p
-                for p in os.listdir(os.path.join(args.top_dir, "queue", args.pool))
-                if p not in ('.seq', '.seq.lck')
+            p
+            for p in os.listdir(os.path.join(args.top_dir, "queue", args.pool))
+            if p not in (".seq", ".seq.lck")
         ]:
             try:
-                with open(os.path.join(args.top_dir, "queue", args.pool, cmdfile), "r") as f:
+                with open(
+                    os.path.join(args.top_dir, "queue", args.pool, cmdfile), "r"
+                ) as f:
                     data = json.load(f)
                 if data["cmd"] == args.cmd and data["wd"] == os.getcwd():
                     found = True

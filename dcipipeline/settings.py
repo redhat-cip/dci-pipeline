@@ -27,9 +27,11 @@ log = logging.getLogger(__name__)
 
 
 def get_settings():
-    settings_path = os.getenv('DCI_PIPELINE_CONF', '/etc/dci-pipeline/dci_pipeline.conf')
+    settings_path = os.getenv(
+        "DCI_PIPELINE_CONF", "/etc/dci-pipeline/dci_pipeline.conf"
+    )
     if not os.path.exists(settings_path):
-        log.error('settings file %s not found' % settings_path)
+        log.error("settings file %s not found" % settings_path)
         return None
     with open(settings_path) as f:
         return yaml.load(f, Loader=yaml.SafeLoader)
@@ -42,6 +44,6 @@ def get(setting):
         return value
 
     if setting not in settings:
-        log.error('setting %s not found' % setting)
+        log.error("setting %s not found" % setting)
         return None
     return settings[settings]

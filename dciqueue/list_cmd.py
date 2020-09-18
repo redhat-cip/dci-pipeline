@@ -42,10 +42,20 @@ def execute_command(args):
 
     first, next = lib.get_seq(args)
 
-    print("Resources on the %s pool: %s" %
-          (args.pool, ' '.join(os.listdir(os.path.join(args.top_dir, "pool", args.pool)))))
-    print("Available resources on the %s pool: %s" %
-          (args.pool, ' '.join(os.listdir(os.path.join(args.top_dir, "available", args.pool)))))
+    print(
+        "Resources on the %s pool: %s"
+        % (
+            args.pool,
+            " ".join(os.listdir(os.path.join(args.top_dir, "pool", args.pool))),
+        )
+    )
+    print(
+        "Available resources on the %s pool: %s"
+        % (
+            args.pool,
+            " ".join(os.listdir(os.path.join(args.top_dir, "available", args.pool))),
+        )
+    )
     print("Executing commands on the %s pool:" % args.pool)
     for path in [
         p
@@ -61,8 +71,7 @@ def execute_command(args):
                 else:
                     cmd = data["cmd"]
                 print(
-                    "%s: %s (wd: %s)"
-                    % (path[: -len(EXT)], " ".join(cmd), data["wd"])
+                    "%s: %s (wd: %s)" % (path[: -len(EXT)], " ".join(cmd), data["wd"])
                 )
 
     print("Queued commands on the %s pool:" % args.pool)

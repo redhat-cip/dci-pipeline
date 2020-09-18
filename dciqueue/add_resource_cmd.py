@@ -45,10 +45,14 @@ def execute_command(args):
         open(f, "w").close()
 
     make_available = True
-    for cmd in [f for f in os.listdir(os.path.join(args.top_dir, "queue", args.pool)) if f.endswith(EXT)]:
+    for cmd in [
+        f
+        for f in os.listdir(os.path.join(args.top_dir, "queue", args.pool))
+        if f.endswith(EXT)
+    ]:
         with open(os.path.join(args.top_dir, "queue", args.pool, cmd)) as fd:
             data = json.load(fd)
-            if data['resource'] == args.name:
+            if data["resource"] == args.name:
                 make_available = False
                 break
 

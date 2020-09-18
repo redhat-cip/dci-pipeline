@@ -68,6 +68,7 @@ class TestQueue(unittest.TestCase):
                 self.assertTrue(os.path.exists(path) or os.path.islink(path), path)
             else:
                 self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
+
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         cmd = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
         with open(cmd, "w") as fd:
