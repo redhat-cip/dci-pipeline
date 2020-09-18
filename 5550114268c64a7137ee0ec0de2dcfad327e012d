@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "22b3a5dd_8a74001b",
+        "filename": "dcipipeline/agents/openshift-edge/dci_credentials.yml",
+        "patchSetId": 4
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-18T03:06:29Z",
+      "side": 1,
+      "message": "absolute path or add to gitignore if this is meant to be different for local dev and production",
+      "revId": "5550114268c64a7137ee0ec0de2dcfad327e012d",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
