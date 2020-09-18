@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "541862ab_8274c410",
+        "filename": "dcipipeline/agents/openshift-upgrade/dci_credentials.yml",
+        "patchSetId": 4
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-18T10:05:02Z",
+      "side": 1,
+      "message": "that\u0027s just a file used for testing and relative path makes the process much easier...",
+      "parentUuid": "d34abe5b_aea8d98a",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bd0c9fc0_d07c3fe8",
         "filename": "dev-setup/dci-telcoprovisioning",
         "patchSetId": 4
