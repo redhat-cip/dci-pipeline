@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d34abe5b_aea8d98a",
+        "filename": "dcipipeline/agents/openshift-upgrade/dci_credentials.yml",
+        "patchSetId": 4
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-18T03:02:17Z",
+      "side": 1,
+      "message": "this should be an absolute path",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bd0c9fc0_d07c3fe8",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-18T03:02:17Z",
+      "side": 1,
+      "message": "is the email going to be hardcoded like this?",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d76d0d6f_7f7fce95",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-18T03:02:17Z",
+      "side": 1,
+      "message": "if you are not reusing the teams tuple just remove it and do `for team_id in (tuple, goes, here,):`",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "03d20aca_0397a21d",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-18T03:02:17Z",
+      "side": 1,
+      "message": "is not your change, but this variable name is bad form",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
