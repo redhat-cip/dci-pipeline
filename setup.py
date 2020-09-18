@@ -19,28 +19,31 @@ import os
 import setuptools
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
-readme = open(os.path.join(root_dir, 'README.md')).read()
+readme = open(os.path.join(root_dir, "README.md")).read()
 
 setuptools.setup(
-    name='dci-pipeline',
-    version='0.0.2',
+    name="dci-pipeline",
+    version="0.0.2",
     packages=setuptools.find_packages(exclude=("tests")),
-    author='Distributed CI team',
-    author_email='distributed-ci@redhat.com',
-    description='DCI Pipeline',
+    author="Distributed CI team",
+    author_email="distributed-ci@redhat.com",
+    description="DCI Pipeline",
     long_description=readme,
     install_requires=[],
-    url='https://github.com/redhat-cip/dci-pipeline',
-    license='Apache v2.0',
+    url="https://github.com/redhat-cip/dci-pipeline",
+    license="Apache v2.0",
     classifiers=[
-        'Intended Audience :: Developers',
-        'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
     ],
     entry_points={
-        'console_scripts': ['dci-pipeline=dcipipeline.main:main', 'dci-queue=dciqueue.main:main'],
+        "console_scripts": [
+            "dci-pipeline=dcipipeline.main:main",
+            "dci-queue=dciqueue.main:main",
+        ],
     },
 )

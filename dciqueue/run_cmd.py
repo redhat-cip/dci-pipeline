@@ -83,10 +83,12 @@ def execute_command(args):
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
                     )
-                    out_fd.write('+ cd ' + data["wd"] + "\n")
-                    out_fd.write('+ ' + " ".join(data["real_cmd"]) + "\n")
+                    out_fd.write("+ cd " + data["wd"] + "\n")
+                    out_fd.write("+ " + " ".join(data["real_cmd"]) + "\n")
                     out_fd.flush()
-                    proc = subprocess.Popen(data["real_cmd"], stdout=out_fd, stderr=out_fd)
+                    proc = subprocess.Popen(
+                        data["real_cmd"], stdout=out_fd, stderr=out_fd
+                    )
                 else:
                     out_fd = None
                     proc = subprocess.Popen(data["real_cmd"])
