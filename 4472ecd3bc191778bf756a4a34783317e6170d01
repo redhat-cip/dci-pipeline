@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "b931eea2_67e40978",
+        "filename": "dcipipeline/agents/openshift-upgrade/dci_credentials.yml",
+        "patchSetId": 4
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-18T10:12:30Z",
+      "side": 1,
+      "message": "In production the dci_credentials.yml file should be a real file. We are using symlink here for testing along with the provisioning script.",
+      "parentUuid": "541862ab_8274c410",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bd0c9fc0_d07c3fe8",
         "filename": "dev-setup/dci-telcoprovisioning",
         "patchSetId": 4
@@ -48,6 +66,24 @@
       "writtenOn": "2020-09-18T03:02:17Z",
       "side": 1,
       "message": "is the email going to be hardcoded like this?",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cbe2538c_e08fd84e",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-18T10:12:30Z",
+      "side": 1,
+      "message": "yea, it\u0027s just to provision the DB for testing, the email is not used but needed by the API.",
+      "parentUuid": "bd0c9fc0_d07c3fe8",
       "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
@@ -71,6 +107,24 @@
     },
     {
       "key": {
+        "uuid": "e440eb52_b13cca02",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-18T10:12:30Z",
+      "side": 1,
+      "message": "It\u0027s not for reusing purpose but to be conform with our 99 mac length line. I guess we are going to use black in future patches.",
+      "parentUuid": "d76d0d6f_7f7fce95",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "03d20aca_0397a21d",
         "filename": "dev-setup/dci-telcoprovisioning",
         "patchSetId": 4
@@ -82,6 +136,24 @@
       "writtenOn": "2020-09-18T03:02:17Z",
       "side": 1,
       "message": "is not your change, but this variable name is bad form",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e1968e85_182d7bcc",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-18T10:12:30Z",
+      "side": 1,
+      "message": "why ?",
+      "parentUuid": "03d20aca_0397a21d",
       "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
