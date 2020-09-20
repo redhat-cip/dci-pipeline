@@ -19,35 +19,34 @@ from dcipipeline.main import process_args
 
 
 class TestMain(unittest.TestCase):
-
     def test_process_args_empty(self):
-        args = ['dci-pipeline']
+        args = ["dci-pipeline"]
         result, args = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, {})
 
     def test_process_args_single(self):
-        args = ['dci-pipeline', 'stage:key=value']
+        args = ["dci-pipeline", "stage:key=value"]
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': 'value'}})
+        self.assertEqual(result, {"stage": {"key": "value"}})
 
     def test_process_args_list(self):
-        args = ['dci-pipeline', 'stage:key=value=toto,value2']
+        args = ["dci-pipeline", "stage:key=value=toto,value2"]
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': ['value=toto', 'value2']}})
+        self.assertEqual(result, {"stage": {"key": ["value=toto", "value2"]}})
 
     def test_process_args_list1(self):
-        args = ['dci-pipeline', 'stage:key=value=toto,']
+        args = ["dci-pipeline", "stage:key=value=toto,"]
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': ['value=toto']}})
+        self.assertEqual(result, {"stage": {"key": ["value=toto"]}})
 
     def test_process_args_only_files(self):
-        args = ['dci-pipeline', 'file1', 'file2']
+        args = ["dci-pipeline", "file1", "file2"]
         result, args = process_args(args)
-        self.assertEqual(args, ['file1', 'file2'])
+        self.assertEqual(args, ["file1", "file2"])
         self.assertEqual(result, {})
 
 

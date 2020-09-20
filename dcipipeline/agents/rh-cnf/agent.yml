@@ -56,7 +56,7 @@
     tasks:
       - name: print the hosts input file path
         debug:
-          msg: " the hosts input file path: {{ job_info['inputs']['hosts'] }} "
+          msg: " the hosts input file path: {{ hosts_path }} "
 
       - name: install cnf
         shell: echo 'installing some cnf here'
