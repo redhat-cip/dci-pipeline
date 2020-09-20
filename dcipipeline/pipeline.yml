@@ -23,7 +23,9 @@
     prev_stages: openshift-vanilla
     ansible_playbook: agents/rh-cnf/agent.yml
     inputs:
-      hosts: hosts
+      hosts: hosts_path
+    ansible_extravars:
+      answer: 42
     topic: RH-CNF-0.1
     components:
       - rh-cnf

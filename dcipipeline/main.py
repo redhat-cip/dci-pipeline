@@ -32,7 +32,7 @@ if sys.version_info[0] == 2:
     PermissionError = IOError
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, os.getenv("DCI_PIPELINE_LOG_LEVEL", "INFO")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 log = logging.getLogger(__name__)
@@ -391,12 +391,18 @@ def create_inputs(config_dir, prev_stages, stage, job_info):
         prev_stage = lookup_stage_by_outputs(key, prev_stages)
         if prev_stage:
             prev_stage_outputs_key = prev_stage['job_info']['outputs'][key]
-            stage_inputs_key = '%s/%s' % (top_dir, stage['inputs'][key])
+            stage_inputs_key = '%s/%s' % (top_dir, os.path.basename(prev_stage_outputs_key))
             log.info('Copying %s into %s' % (prev_stage_outputs_key, stage_inputs_key))
             with open(stage_inputs_key, 'wb') as ofile:
                 with open(prev_stage_outputs_key, 'rb') as ifile:
                     ofile.write(ifile.read())
-            job_info['inputs'][key] = stage_inputs_key
+            if 'ansible_extravars' not in stage:
+                stage['ansible_extravars'] = {}
+            log.debug(
+                'setting ansible var %s to %s'
+                % (stage['inputs'][key], stage_inputs_key)
+            )
+            stage['ansible_extravars'][stage['inputs'][key]] = stage_inputs_key
         else:
             log.error('Unable to find outputs for key %s in stages %s'
                       % (key, ', '.join([s['name'] for s in prev_stages])))
