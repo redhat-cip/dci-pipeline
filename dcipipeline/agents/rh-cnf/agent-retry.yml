@@ -56,7 +56,7 @@
     tasks:
       - name: print the hosts input file path
         debug:
-          msg: " the hosts input file path: {{ job_info['inputs']['hosts'] }} "
+          msg: " the hosts input file path: {{ hosts_path }} "
 
       - name: install cnf
         shell: echo 'installing some cnf here'
@@ -76,4 +76,3 @@
       - name: success message
         debug:
           msg: 'The job is now finished. Review the log at: {{ dci_ui_url|default("https://www.distributed-ci.io") }}/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
-  
