@@ -21,7 +21,7 @@
   prev_stages: openshift-vanilla
   ansible_playbook: agents/rh-cnf/agent-retry.yml
   inputs:
-    hosts: hosts
+    hosts: hosts_path
   topic: RH-CNF-0.1
   components:
     - rh-cnf
@@ -48,7 +48,7 @@
   prev_stages: [openshift-upgrade, rh-cnf]
   ansible_playbook: agents/rh-cnf/agent-retry.yml
   inputs:
-    hosts: hosts
+    hosts: hosts_path
   topic: RH-CNF-0.2
   components:
     - rh-cnf
