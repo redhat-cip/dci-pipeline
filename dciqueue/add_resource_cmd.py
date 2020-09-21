@@ -16,10 +16,12 @@
 """
 """
 
+import json
 import logging
 import os
 
 from dciqueue import lib
+from dciqueue.run_cmd import EXT
 
 log = logging.getLogger(__name__)
 
@@ -41,10 +43,20 @@ def execute_command(args):
     if not os.path.exists(f):
         log.debug("Creating %s" % f)
         open(f, "w").close()
-    link = os.path.join(args.top_dir, "available", args.pool, args.name)
-    if not os.path.exists(link):
-        log.debug("Creating %s" % link)
-        os.symlink(f, link)
+
+    make_available = True
+    for cmd in [f for f in os.listdir(os.path.join(args.top_dir, "queue", args.pool)) if f.endswith(EXT)]:
+        with open(os.path.join(args.top_dir, "queue", args.pool, cmd)) as fd:
+            data = json.load(fd)
+            if data['resource'] == args.name:
+                make_available = False
+                break
+
+    if make_available:
+        link = os.path.join(args.top_dir, "available", args.pool, args.name)
+        if not os.path.islink(link):
+            log.debug("Creating symlink %s" % link)
+            os.symlink(f, link)
     return 0
 
 
