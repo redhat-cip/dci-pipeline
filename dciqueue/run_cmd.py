@@ -70,23 +70,26 @@ def execute_command(args):
             with open(to_exec) as f:
                 data = json.load(f)
 
-                cmd = [c.replace("@RESOURCE", res) for c in data["cmd"]]
+                data["cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
 
-                try:
-                    log.info("Running command %s (wd: %s)" % (cmd, data["wd"]))
-                    os.chdir(data["wd"])
-                    if not args.command_output:
-                        out_fd = open(
-                            os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
-                        )
-                        proc = subprocess.Popen(cmd, stdout=out_fd, stderr=out_fd)
-                    else:
-                        out_fd = None
-                        proc = subprocess.Popen(cmd)
-                    commands.append([res, proc, out_fd, cmd, idx, to_exec])
-                except Exception:
-                    log.exception("Unable to execute command")
-                    free_resource(res, args)
+            with open(to_exec, "w") as f:
+                json.dump(data, f)
+
+            try:
+                log.info("Running command %s (wd: %s)" % (data["cmd"], data["wd"]))
+                os.chdir(data["wd"])
+                if not args.command_output:
+                    out_fd = open(
+                        os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
+                    )
+                    proc = subprocess.Popen(data["cmd"], stdout=out_fd, stderr=out_fd)
+                else:
+                    out_fd = None
+                    proc = subprocess.Popen(data["cmd"])
+                commands.append([res, proc, out_fd, data["cmd"], idx, to_exec])
+            except Exception:
+                log.exception("Unable to execute command")
+                free_resource(res, args)
 
     for res, proc, fd, cmd, idx, to_exec in commands:
         if proc:
