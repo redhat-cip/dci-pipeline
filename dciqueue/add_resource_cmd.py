@@ -28,6 +28,12 @@ COMMAND = "add-resource"
 
 def register_command(subparsers):
     parser = subparsers.add_parser(COMMAND, help="Create a new resource in a pool")
+    parser.add_argument(
+        "-a",
+        "--available",
+        action="store_true",
+        help="Make the resource available",
+    )
     parser.add_argument("pool", help="Name of the pool")
     parser.add_argument("name", help="Name of the resource")
     return COMMAND
@@ -41,10 +47,11 @@ def execute_command(args):
     if not os.path.exists(f):
         log.debug("Creating %s" % f)
         open(f, "w").close()
-    link = os.path.join(args.top_dir, "available", args.pool, args.name)
-    if not os.path.exists(link):
-        log.debug("Creating %s" % link)
-        os.symlink(f, link)
+    if args.available:
+        link = os.path.join(args.top_dir, "available", args.pool, args.name)
+        if not os.path.islink(link):
+            log.debug("Creating symlink %s" % link)
+            os.symlink(f, link)
     return 0
 
 
