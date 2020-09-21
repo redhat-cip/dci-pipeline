@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a7bb9796_07703215",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-21T15:47:47Z",
+      "side": 1,
+      "message": "this doesn\u0027t look good to me as we will need to put credentials in /usr/lib/python*",
+      "revId": "7a3ba361db4a99583551dd33ea0b1fddb4167208",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
