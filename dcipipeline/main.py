@@ -312,6 +312,11 @@ def usage(ret, cmd):
 
 
 def process_args(args):
+    """process command line arguments
+
+return file names and overload parameters as a dict
+from <stage name>:<key>=<value> arguments
+"""
     overload = {}
     cmd = args[0]
     args = args[1:]
@@ -327,12 +332,19 @@ def process_args(args):
         if ':' not in arg:
             ret.append(arg)
             continue
-        # Allow these syntaxes:
+        # Allow these syntaxes to overload stage settings:
         # <name>:<key>=<value> value can be a list separated by ','
+        # <name>:<key>=<subkey>:<value> to return a dict
         try:
             name, rest = arg.split(':', 1)
             key, value = rest.split('=', 1)
-            if ',' in value:
+            if ':' in value:
+                res = {}
+                for pair in value.split(','):
+                    k, v = pair.split(':', 1)
+                    res[k] = v
+                value = res
+            elif ',' in value:
                 value = value.split(',')
                 if value[-1] == '':
                     value = value[:-1]
@@ -343,6 +355,38 @@ def process_args(args):
             log.error('Invalid syntax: "%s"' % arg)
             usage(3, cmd)
     return overload, ret
+
+
+def overload_dicts(overload, target):
+    """do a complex dict update
+
+overload_dicts({'components': ['ocp=12', 'cnf-tests'],
+                'ansible_extravars': {'dci_comment': 'universal answer'},
+               {'components': ['ocp', 'ose-tests'],
+                'ansible_extravars': {'answer': 42}})
+=> {'components': ['ocp=12', 'cnf-tests', 'ose-tests'],
+    'ansible_extravars': {'answer': 42', dci_comment': 'universal answer'}}
+"""
+    for key in overload:
+        if key not in target:
+            target[key] = overload[key]
+        else:
+            if type(overload[key]) is list and type(target[key]) is list:
+                to_add = []
+                for elt in overload[key]:
+                    eq_key = elt.split("=", 1)[0]
+                    for loop in range(len(target[key])):
+                        if target[key][loop].split("=", 1)[0] == eq_key:
+                            target[key][loop] = elt
+                            break
+                    else:
+                        to_add.append(elt)
+                target[key] = target[key] + to_add
+            elif type(overload[key]) is dict and type(target[key]) is dict:
+                target[key].update(overload[key])
+            else:
+                target[key] = overload[key]
+    return target
 
 
 def get_config(args):
@@ -359,7 +403,7 @@ def get_config(args):
         if not stage:
             log.error('No such stage %s' % name)
             sys.exit(3)
-        stage[0].update(overload[name])
+        overload_dicts(overload[name], stage[0])
     return config_dir, pipeline
 
 
