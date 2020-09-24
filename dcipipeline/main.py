@@ -64,7 +64,6 @@ def generate_ansible_cfg(dci_ansible_dir, config_dir):
 library            = {dci_ansible_dir}/modules/
 module_utils       = {dci_ansible_dir}/module_utils/
 callback_whitelist = dci
-log_path           = ansible.log
 '''.format(dci_ansible_dir=dci_ansible_dir))
 
 
@@ -291,6 +290,7 @@ def run_stage(stage, dci_credentials, data_dir):
               ' with inventory %s' % inventory if inventory else '',
               private_data_dir))
     envvars.update(dci_credentials)
+    envvars.update(ANSIBLE_LOG_PATH="ansible.log")
     extravars = stage.get('ansible_extravars', {})
     extravars['job_info'] = job_info
     run = ansible_runner.run(
