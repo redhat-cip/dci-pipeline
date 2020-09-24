@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "10dbb83c_f70e65cf",
+        "filename": "dciqueue/add_resource_cmd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 606
+      },
+      "writtenOn": "2020-09-24T15:49:24Z",
+      "side": 1,
+      "message": "So the idea is you can add a resource but not make it available right away?  How do you make it available?  just run the same command again but with -a?  Is there a way to temporary disable a resource?",
+      "revId": "3bd6c1d8f4f430606ed1287b59b27d89f4b37e4b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
