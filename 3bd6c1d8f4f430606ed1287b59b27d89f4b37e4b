@@ -16,6 +16,24 @@
       "revId": "3bd6c1d8f4f430606ed1287b59b27d89f4b37e4b",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "848b8597_5dc48f85",
+        "filename": "dciqueue/add_resource_cmd.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-24T15:54:18Z",
+      "side": 1,
+      "message": "yes it can be useful for the use case where it has been made unavailable because you want to debug the job that is running and you want to make it available while the job isn\u0027t finished yet. Not sure I\u0027m clear :-)",
+      "parentUuid": "10dbb83c_f70e65cf",
+      "revId": "3bd6c1d8f4f430606ed1287b59b27d89f4b37e4b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
