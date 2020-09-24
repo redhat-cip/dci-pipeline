@@ -90,6 +90,24 @@
     },
     {
       "key": {
+        "uuid": "2416a289_03b9c76f",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-24T16:37:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bd0c9fc0_d07c3fe8",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d76d0d6f_7f7fce95",
         "filename": "dev-setup/dci-telcoprovisioning",
         "patchSetId": 4
@@ -118,6 +136,24 @@
       "writtenOn": "2020-09-18T10:12:30Z",
       "side": 1,
       "message": "It\u0027s not for reusing purpose but to be conform with our 99 mac length line. I guess we are going to use black in future patches.",
+      "parentUuid": "d76d0d6f_7f7fce95",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d73a54ea_55ccc484",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-24T16:37:51Z",
+      "side": 1,
+      "message": "Done",
       "parentUuid": "d76d0d6f_7f7fce95",
       "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
@@ -154,6 +190,24 @@
       "side": 1,
       "message": "why ?",
       "parentUuid": "03d20aca_0397a21d",
+      "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f298966e_b3b33d29",
+        "filename": "dev-setup/dci-telcoprovisioning",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2020-09-24T16:37:51Z",
+      "side": 1,
+      "message": "naming any variable as \u0027foo2\u0027 or similar makes it harder to understand what it\u0027s supposed to do... I am not asking you to change it, just an observation",
+      "parentUuid": "e1968e85_182d7bcc",
       "revId": "4472ecd3bc191778bf756a4a34783317e6170d01",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
