@@ -5,3 +5,4 @@ include sysconfig/*
 include systemd/*
 include LICENSE
 include dci-pipeline.sudo
+include dciqueue/dci-queue.bash_completion
