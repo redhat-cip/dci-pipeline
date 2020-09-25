@@ -42,6 +42,10 @@ def execute_command(args):
 
     first, next = lib.get_seq(args)
 
+    print("Resources on the %s pool: %s" %
+          (args.pool, ' '.join(os.listdir(os.path.join(args.top_dir, "pool", args.pool)))))
+    print("Available resources on the %s pool: %s" %
+          (args.pool, ' '.join(os.listdir(os.path.join(args.top_dir, "available", args.pool)))))
     print("Executing commands on the %s pool:" % args.pool)
     for path in [
         p
@@ -52,9 +56,13 @@ def execute_command(args):
         if os.path.exists(cmdfile):
             with open(cmdfile) as f:
                 data = json.load(f)
+                if "real_cmd" in data:
+                    cmd = data["real_cmd"]
+                else:
+                    cmd = data["cmd"]
                 print(
                     "%s: %s (wd: %s)"
-                    % (path[: -len(EXT)], " ".join(data["cmd"]), data["wd"])
+                    % (path[: -len(EXT)], " ".join(cmd), data["wd"])
                 )
 
     print("Queued commands on the %s pool:" % args.pool)

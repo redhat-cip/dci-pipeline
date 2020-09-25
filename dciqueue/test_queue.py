@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
+import json
 import os
 import shutil
 import tempfile
@@ -61,17 +62,27 @@ class TestQueue(unittest.TestCase):
             self.assertFalse(os.path.exists(path) and os.path.isdir(path), path)
 
     def test_add_resource(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
-        self.assertEqual(
-            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
-        )
-        self.assertEqual(
-            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
-        )
-        path = os.path.join(self.queue_dir, "pool", "8nodes", "cluster4")
-        for key in ("pool", "available"):
+        def validate(key, exist):
             path = os.path.join(self.queue_dir, key, "8nodes", "cluster4")
-            self.assertTrue(os.path.exists(path) or os.path.islink(path), path)
+            if exist:
+                self.assertTrue(os.path.exists(path) or os.path.islink(path), path)
+            else:
+                self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        cmd = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
+        with open(cmd, "w") as fd:
+            json.dump({"resource": "cluster4"}, fd)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        for key, exist in (("pool", True), ("available", False)):
+            validate(key, exist)
+        os.unlink(cmd)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        for key, exist in (("pool", True), ("available", True)):
+            validate(key, exist)
 
     def test_remove_resource(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
