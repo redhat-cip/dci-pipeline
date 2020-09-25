@@ -1,0 +1,48 @@
+# bash completion for dci-queue
+#
+# usage: dci-queue [-h] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-t TOP_DIR]
+#                  [-c]
+#                  {add-pool,add-resource,list,log,remove-pool,remove-resource,run,schedule,unschedule}
+
+_dci_queue() {
+    local cur prev prev_prev opts opt
+    opt=-W
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    prev2="${COMP_WORDS[COMP_CWORD-2]}"
+
+    case $prev in
+        add-resource|list|log|remove-pool|remove-resource|run|schedule|unschedule)
+            opts="$(ls ~/.dci-queue/queue)"
+            ;;
+        -l)
+            opts="DEBUG INFO WARNING ERROR CRITICAL"
+            ;;
+        -t)
+            opt=-f
+            opts=""
+            ;;
+        *)
+            opts="-h -l -t -c add-pool add-resource list log remove-pool remove-resource run schedule unschedule"
+            ;;
+    esac
+
+    if [ "$prev2" == "log" ]; then
+        opts="-f $(ls ~/.dci-queue/log/$prev)"
+    fi
+
+    COMPREPLY=( $(compgen $opt "${opts}" -- ${cur}) )
+
+    return 0
+}
+
+complete -F _dci_queue dci-queue
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh

@@ -7,7 +7,7 @@
 %endif
 
 Name:           dci-pipeline
-Version:        0.0.2
+Version:        0.0.3
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -65,6 +65,8 @@ install -p -D -m 644 systemd/%{name}.service %{buildroot}%{_unitdir}/%{name}.ser
 install -p -D -m 644 systemd/%{name}.timer %{buildroot}%{_unitdir}/%{name}.timer
 install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
+install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
 install -d -m 700 %{buildroot}/var/lib/%{name}
 install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
 cat > %{buildroot}%{_sysconfdir}/%{name}/pipeline.yml <<EOF
@@ -103,12 +105,16 @@ exit 0
 %attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
+%config(noreplace) %{_sysconfdir}/bash_completion.d/dci-queue
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
-* Thu Sep 10 2020 Frederic Lepied <flepied@redhat.com> - 0.0.2-1.VERS
+* Fri Sep 25 2020 Frederic Lepied <flepied@redhat.com> 0.0.3-1.VERS
+- provide a bash completion file
+
+* Thu Sep 10 2020 Frederic Lepied <flepied@redhat.com> - 0.0.2-1
 - add dci-queue files
 
 * Fri Aug 21 2020 Frederic Lepied <flepied@redhat.com> - 0.0.1-2
