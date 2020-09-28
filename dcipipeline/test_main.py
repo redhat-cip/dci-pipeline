@@ -24,42 +24,44 @@ class TestMain(unittest.TestCase):
         args = ['dci-pipeline']
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {})
+        self.assertEqual(result, [])
 
     def test_process_args_single(self):
         args = ['dci-pipeline', 'stage:key=value']
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': 'value'}})
+        self.assertEqual(result, [{'stage': {'key': 'value'}}])
 
     def test_process_args_list(self):
         args = ['dci-pipeline', 'stage:key=value=toto,value2']
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': ['value=toto', 'value2']}})
+        self.assertEqual(result, [{'stage': {'key': ['value=toto', 'value2']}}])
 
     def test_process_args_dict(self):
-        args = ['dci-pipeline', 'stage:key=subkey:value,subkey2:value2']
+        args = ['dci-pipeline', 'stage:key=subkey:value', 'stage:key=subkey2:value2']
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': {'subkey': 'value', 'subkey2': 'value2'}}})
+        self.assertEqual(result, [{'stage': {'key': {'subkey': 'value'}}},
+                                  {'stage': {'key': {'subkey2': 'value2'}}}])
 
-    def test_process_args_dict_incomplete(self):
-        args = ['dci-pipeline', 'stage:key=subkey:value,subkey2']
-        with self.assertRaises(SystemExit):
-            result, args = process_args(args)
+    def test_process_args_dict_list(self):
+        args = ['dci-pipeline', 'stage:key=subkey:value,value2']
+        result, args = process_args(args)
+        self.assertEqual(args, [])
+        self.assertEqual(result, [{'stage': {'key': {'subkey': ['value', 'value2']}}}])
 
     def test_process_args_list1(self):
         args = ['dci-pipeline', 'stage:key=value=toto,']
         result, args = process_args(args)
         self.assertEqual(args, [])
-        self.assertEqual(result, {'stage': {'key': ['value=toto']}})
+        self.assertEqual(result, [{'stage': {'key': ['value=toto']}}])
 
     def test_process_args_only_files(self):
         args = ['dci-pipeline', 'file1', 'file2']
         result, args = process_args(args)
         self.assertEqual(args, ['file1', 'file2'])
-        self.assertEqual(result, {})
+        self.assertEqual(result, [])
 
     def test_overload_dicts_add(self):
         stage = {'first': 'value'}
@@ -74,6 +76,12 @@ class TestMain(unittest.TestCase):
                          {'components': ['ocp=12', 'cnf-tests', 'ose-tests'], 'topic': 'OCP-4.4'})
 
     def test_overload_dicts_add_dict(self):
+        overload = {'ansible_extravars': {'dci_comment': 'universal answer'}}
+        stage = {'ansible_extravars': {'answer': 42}}
+        self.assertEqual(overload_dicts(overload, stage),
+                         {'ansible_extravars': {'answer': 42, 'dci_comment': 'universal answer'}})
+
+    def test_overload_dicts_add_list_in_dict(self):
         overload = {'ansible_extravars': {'dci_comment': 'universal answer'}}
         stage = {'ansible_extravars': {'answer': 42}}
         self.assertEqual(overload_dicts(overload, stage),

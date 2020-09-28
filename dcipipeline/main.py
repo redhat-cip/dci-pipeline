@@ -317,10 +317,10 @@ def process_args(args):
 return file names and overload parameters as a dict
 from <stage name>:<key>=<value> arguments
 """
-    overload = {}
     cmd = args[0]
     args = args[1:]
     ret = []
+    lst = []
     while True:
         if len(args) == 0:
             break
@@ -336,12 +336,17 @@ from <stage name>:<key>=<value> arguments
         # <name>:<key>=<value> value can be a list separated by ','
         # <name>:<key>=<subkey>:<value> to return a dict
         try:
+            overload = {}
             name, rest = arg.split(':', 1)
             key, value = rest.split('=', 1)
             if ':' in value:
                 res = {}
-                for pair in value.split(','):
-                    k, v = pair.split(':', 1)
+                k, v = value.split(':', 1)
+                if ',' in v:
+                    res[k] = v.split(',')
+                    if res[k][-1] == '':
+                        res[k] = res[k][:-1]
+                else:
                     res[k] = v
                 value = res
             elif ',' in value:
@@ -351,10 +356,11 @@ from <stage name>:<key>=<value> arguments
             dct = overload.get(name, {})
             dct[key] = value
             overload[name] = dct
+            lst.append(overload)
         except ValueError:
             log.error('Invalid syntax: "%s"' % arg)
             usage(3, cmd)
-    return overload, ret
+    return lst, ret
 
 
 def overload_dicts(overload, target):
@@ -390,20 +396,21 @@ overload_dicts({'components': ['ocp=12', 'cnf-tests'],
 
 
 def get_config(args):
-    overload, args = process_args(args)
-    log.info("overload=%s" % overload)
+    lst, args = process_args(args)
+    log.info("overload=%s" % lst)
     if len(args) == 0:
         args = [os.path.join(TOPDIR, 'dcipipeline/pipeline.yml')]
     pipeline = []
     for config in args:
         config_dir = os.path.abspath(os.path.dirname(config))
         pipeline += load_yaml_file(config)
-    for name in overload:
-        stage = get_stages(name, pipeline)
-        if not stage:
-            log.error('No such stage %s' % name)
-            sys.exit(3)
-        overload_dicts(overload[name], stage[0])
+    for overload in lst:
+        for name in overload:
+            stage = get_stages(name, pipeline)
+            if not stage:
+                log.error('No such stage %s' % name)
+                sys.exit(3)
+            overload_dicts(overload[name], stage[0])
     return config_dir, pipeline
 
 
