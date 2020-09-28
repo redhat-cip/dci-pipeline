@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c2b73707_c140c806",
+        "filename": "tox.ini",
+        "patchSetId": 10
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-28T12:58:06Z",
+      "side": 0,
+      "message": "why did you remove the dci-queue tests?",
+      "revId": "e50c17117b2bc51a301bc11b1df304b815665ac1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
