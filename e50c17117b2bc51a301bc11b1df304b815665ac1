@@ -16,6 +16,24 @@
       "revId": "e50c17117b2bc51a301bc11b1df304b815665ac1",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bb15c2b3_73e4d146",
+        "filename": "tox.ini",
+        "patchSetId": 10
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2020-09-28T14:52:02Z",
+      "side": 0,
+      "message": "oh looks like my rebase failed somewhere",
+      "parentUuid": "c2b73707_c140c806",
+      "revId": "e50c17117b2bc51a301bc11b1df304b815665ac1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
