@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aba988e5_dacca654",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 5
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 526
+      },
+      "writtenOn": "2020-09-29T16:09:18Z",
+      "side": 1,
+      "message": "Requires: bash-completion WDYT ?",
+      "revId": "6ac52059cce352043f45d840639e72a6a4ae9166",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
