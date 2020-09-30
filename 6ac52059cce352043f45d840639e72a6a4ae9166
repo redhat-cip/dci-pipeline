@@ -16,6 +16,24 @@
       "revId": "6ac52059cce352043f45d840639e72a6a4ae9166",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d699726b_b1a4753c",
+        "filename": "dci-pipeline.spec",
+        "patchSetId": 5
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-09-30T10:52:54Z",
+      "side": 1,
+      "message": "I didn\u0027t want to force the installation. I was more in the concept of using it if it was present else it is not a big deal.",
+      "parentUuid": "aba988e5_dacca654",
+      "revId": "6ac52059cce352043f45d840639e72a6a4ae9166",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
