@@ -1,137 +1,141 @@
 ---
-  - name: Schedule a job
-    hosts: runner
-    gather_facts: false
-    tags:
-      - working
-    vars:
-        dci_status: "new"
-    tasks:
+- name: Schedule a job
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  vars:
+    dci_status: "new"
+  tasks:
 
-      - name: Read credentials from env vars
-        set_fact:
-          dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
-          dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
-          dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
-          dci_ui_url: "{{ lookup('env','DCI_UI_URL') }}"
-        no_log: true
+    - name: Read credentials from env vars
+      set_fact:
+        dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
+        dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
+        dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
+        dci_ui_url: "{{ lookup('env','DCI_UI_URL') }}"
+      no_log: true
 
-      - name: Schedule a new job
-        dci_job:
-          topic: '{{ dci_topic }}'
-        register: job_info
-        when: job_info is not defined
+    - name: Schedule a new job
+      dci_job:
+        topic: '{{ dci_topic }}'
+      register: job_info
+      when: job_info is not defined
 
-      - name: Print job_info
-        debug:
-          msg: "{{ job_info['job'] }}"
+    - name: Print job_info
+      debug:
+        msg: "{{ job_info['job'] }}"
 
-      - name: Set global variables
-        set_fact:
-          job_id: "{{ job_info['job']['id'] }}"
-          topic_id: "{{ job_info['job']['topic_id'] }}"
-          remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
-          components: "{{ job_info['job']['components'] }}"
-          product: "{{ job_info['job']['topic']['product_id'] }}"
+    - name: Set global variables
+      set_fact:
+        job_id: "{{ job_info['job']['id'] }}"
+        topic_id: "{{ job_info['job']['topic_id'] }}"
+        remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
+        components: "{{ job_info['job']['components'] }}"
+        product: "{{ job_info['job']['topic']['product_id'] }}"
 
-      - name: Print job id
-        debug:
-          msg: "dci_job_id: {{ job_id }}"
+    - name: Print job id
+      debug:
+        msg: "dci_job_id: {{ job_id }}"
 
-      - name: Print components
-        debug:
-          msg: "{{ item }}"
-        with_items: "{{ job_info['job']['components'] }}"
+    - name: Print components
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{ job_info['job']['components'] }}"
 
-      - name: 'Set tags for the current job'
-        dci_job:
-          id: "{{ job_id }}"
-          tags: 'ocp-vanilla-conf'
+    - name: 'Set tags for the current job'
+      dci_job:
+        id: "{{ job_id }}"
+        tags: 'ocp-vanilla-conf'
 
-  - name: Preparation tasks
-    hosts: runner
-    gather_facts: false
-    tags:
-      - working
-    vars:
-      dci_status: "pre-run"
-    tasks:
+- name: Preparation tasks
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  vars:
+    dci_status: "pre-run"
+  tasks:
 
-      - name: get OCP version from job_info
-        set_fact:
-          ocp_version: "{{ item.name }}"
-        with_items: "{{ job_info.job.components }}"
-        when: item["type"] == "ocp"
+    - name: get OCP version from job_info
+      set_fact:
+        ocp_version: "{{ item.name }}"
+      with_items: "{{ job_info.job.components }}"
+      when: item["type"] == "ocp"
 
-      - name: do some checks
-        assert:
-          success_msg: "All components are present and ocp_version is defined"
-          fail_msg: "There are missing components or ocp_version cannot be found"
-          that:
-            - "components|length == 3"
-            - ocp_version is defined
+    - name: do some checks
+      assert:
+        success_msg: "All components are present and ocp_version is defined"
+        fail_msg: "There are missing components or ocp_version cannot be found"
+        that:
+          - "components|length == 3"
+          - ocp_version is defined
 
-      - name: display ocp_version
-        debug:
-          msg: "OCP version {{ ocp_version }}"
+    - name: display ocp_version
+      debug:
+        msg: "OCP version {{ ocp_version }}"
 
-      - name: validate extravars
-        assert:
-          that:
-            - "answer == 42"
+    - name: validate extravars
+      assert:
+        that:
+          - "answer == 42"
 
-  - name: Running ocp deployment
-    hosts: runner
-    gather_facts: false
-    tags:
-      - working
-    vars:
-      dci_status: "running"
-    tasks:
-      - name: install ocp
-        shell: echo 'installing some ocp here'
+- name: Running ocp deployment
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  vars:
+    dci_status: "running"
+  tasks:
+    - name: install ocp
+      shell: echo 'installing some ocp here'
 
-      - name: fail on ocp-4.4-4.4.0-0.nightly-20200703
-        fail:
-          msg: 'ocp-4.4.0-0.nightly-20200703 is buggy'
-        when: ocp_version == "ocp-4.4.0-0.nightly-20200703"
+    - name: fail on ocp-4.4-4.4.0-0.nightly-20200703
+      fail:
+        msg: 'ocp-4.4.0-0.nightly-20200703 is buggy'
+      when: ocp_version == "ocp-4.4.0-0.nightly-20200703"
 
-  - name: Broken tasks
-    hosts: runner
-    gather_facts: false
-    tags:
-      - broken
-    tasks:
-      - name: Broken task
-        fail:
-          msg: "broken task"
+- name: Broken tasks
+  hosts: runner
+  gather_facts: false
+  tags:
+    - broken
+  tasks:
+    - name: Broken task
+      fail:
+        msg: "broken task"
 
-  - name: Post-run tasks
-    hosts: runner
-    gather_facts: false
-    tags:
-      - working
-    vars:
-      dci_status: "post-run"
-    tasks:
-      - name: Print job outputs location
-        debug:
-          msg: "{{ job_info['outputs'] }}"
+- name: Post-run tasks
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  vars:
+    dci_status: "post-run"
+  tasks:
+    - name: Print job outputs location
+      debug:
+        msg: "{{ job_info['outputs'] }}"
 
-      - name: Copy /etc/hosts file to the outputs location
-        fetch:
-          flat: yes
-          src: "/etc/hosts"
-          dest: "{{ job_info['outputs']['hosts'] }}"
+    - name: Copy /etc/hosts file to the outputs location
+      fetch:
+        flat: true
+        src: "/etc/hosts"
+        dest: "{{ job_info['outputs']['hosts'] }}"
 
-  - name: Success tasks
-    hosts: runner
-    gather_facts: false
-    tags:
-      - working
-    vars:
-      dci_status: "success"
-    tasks:
-      - name: success message
-        debug:
-          msg: 'The job is now finished. Review the log at: {{ dci_ui_url|default("https://www.distributed-ci.io") }}/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
+- name: Success tasks
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  vars:
+    dci_status: "success"
+  tasks:
+    - name: success message
+      debug:
+        msg: >
+          'The job is now finished.
+          Review the log at:
+          {{ dci_ui_url|default("https://www.distributed-ci.io")
+          }}/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
