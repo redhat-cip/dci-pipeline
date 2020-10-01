@@ -4,8 +4,7 @@
     gather_facts: false
     tags:
       - working
-    vars:
-        dci_status: "new"
+      - init
     tasks:
 
       - name: Read credentials from env vars
@@ -34,6 +33,11 @@
           components: "{{ job_info['job']['components'] }}"
           product: "{{ job_info['job']['topic']['product_id'] }}"
 
+      - name: set job state
+        dci_job:
+          id: "{{ job_id }}"
+          status: "new"
+
       - name: Print job id
         debug:
           msg: "dci_job_id: {{ job_id }}"
@@ -53,10 +57,23 @@
     gather_facts: false
     tags:
       - working
-    vars:
-      dci_status: "pre-run"
     tasks:
 
+      - name: pre-run
+        dci_job:
+          id: "{{ job_id }}"
+          status: "pre-run"
+
+      - name: get status
+        dci_job:
+          id: "{{ job_id }}"
+        register: dci_status
+          
+      - name: validate status
+        assert:
+          that:
+            - dci_status.job.status == "pre-run"
+          
       - name: get OCP version from job_info
         set_fact:
           ocp_version: "{{ item.name }}"
@@ -85,30 +102,47 @@
     gather_facts: false
     tags:
       - working
-    vars:
-      dci_status: "running"
     tasks:
+      - name: running
+        dci_job:
+          id: "{{ job_id }}"
+          status: "running"
+
       - name: install ocp
         shell: echo 'installing some ocp here'
 
-  - name: Broken tasks
+  - name: Rescue construct
     hosts: runner
     gather_facts: false
     tags:
-      - broken
+      - working
     tasks:
-      - name: Broken task
-        fail:
-          msg: "broken task"
+    - block:
+        - name: Broken task to rescue
+          fail:
+            msg: "broken task"
+      rescue:
+        - name: get status
+          dci_job:
+            id: "{{ job_id }}"
+          register: dci_status
+
+        - name: validate status
+          assert:
+            that:
+              - dci_status.job.status == "running"
 
   - name: Post-run tasks
     hosts: runner
     gather_facts: false
     tags:
       - working
-    vars:
-      dci_status: "post-run"
     tasks:
+      - name: post-run
+        dci_job:
+          id: "{{ job_id }}"
+          status: "post-run"
+
       - name: Print job outputs location
         debug:
           msg: "{{ job_info['outputs'] }}"
@@ -124,9 +158,12 @@
     gather_facts: false
     tags:
       - working
-    vars:
-      dci_status: "success"
     tasks:
+      - name: success
+        dci_job:
+          id: "{{ job_id }}"
+          status: "success"
+
       - name: success message
         debug:
           msg: 'The job is now finished. Review the log at: {{ dci_ui_url|default("https://www.distributed-ci.io") }}/jobs/{{ hostvars.localhost.job_info.job.id }}/jobStates'
