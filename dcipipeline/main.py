@@ -353,6 +353,7 @@ def find_dci_ansible_dir(stage):
             log.info("Found dci.py in %s" % os.path.join(dci_ansible_dir, "callback"))
             envvars = {
                 "ANSIBLE_CALLBACK_PLUGINS": os.path.join(dci_ansible_dir, "callback"),
+                "DCI_CALLBACK_EXPLICIT": "true",
             }
             return dci_ansible_dir, envvars
     else:
