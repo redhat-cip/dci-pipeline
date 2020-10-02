@@ -57,7 +57,11 @@ def load_credentials(stage, config_dir):
 
 
 def load_pipeline_user_credentials(pipeline_user_path):
-    dci_credentials = load_yaml_file(os.path.abspath(pipeline_user_path))
+    pipeline_user_abs_path = os.path.abspath(pipeline_user_path)
+    if not os.path.exists(pipeline_user_abs_path):
+        log.error('unable to find pipeline user file at %s' % pipeline_user_abs_path)
+        sys.exit(1)
+    dci_credentials = load_yaml_file(pipeline_user_abs_path)
     if 'DCI_CS_URL' not in dci_credentials:
         dci_credentials['DCI_CS_URL'] = 'https://api.distributed-ci.io/'
     return dci_credentials

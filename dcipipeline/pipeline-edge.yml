@@ -1,0 +1,35 @@
+---
+  - name: openshift-edge
+    type: ocp
+    ansible_playbook: agents/openshift-edge/agent.yml
+    ansible_inventory: agents/openshift-edge/inventory
+    ansible_extravars:
+      answer: 42
+    ansible_tags:
+      - working
+    outputs:
+      hosts: etc/hosts
+    topic: OCP-4.4
+    pipeline_user: ./dcipipeline/pipeline_user.yml
+    components:
+      - ocp
+      - ose-tests
+      - cnf-tests
+      - storage-plugin
+      - network-plugin
+    success_tag: ocp-edge-4.4-ok
+    fallback_last_success: ocp-edge-4.4-ok
+
+  - name: rh-cnf
+    type: cnf
+    prev_stages: openshift-edge
+    ansible_playbook: agents/rh-cnf/agent.yml
+    ansible_extravars:
+        answer: 42
+    inputs:
+      hosts: hosts_path
+    topic: RH-CNF-0.1
+    components:
+      - rh-cnf
+    success_tag: ocp-edge-4.4-ok
+    fallback_last_success: ocp-edge-4.4-ok
