@@ -1,0 +1,9 @@
+Code-Review+2: Frederic Lepied <flepied@redhat.com>
+Code-Review+2: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Workflow+1: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Fri, 02 Oct 2020 13:43:05 +0000
+Reviewed-on: https://softwarefactory-project.io/r/19381
+Project: dci-pipeline
+Branch: refs/heads/master
