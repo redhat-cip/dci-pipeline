@@ -73,6 +73,12 @@ def execute_command(args):
                 data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
                 data["resource"] = res
 
+                if "remove" in data and data["remove"]:
+                    log.info("Removing resource %s" % res)
+                    path = os.path.join(args.top_dir, "pool", args.pool, res)
+                    if os.path.exists(path):
+                        os.unlink(path)
+
             with open(to_exec, "w") as f:
                 json.dump(data, f)
 
@@ -83,10 +89,12 @@ def execute_command(args):
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
                     )
-                    out_fd.write('+ cd ' + data["wd"] + "\n")
-                    out_fd.write('+ ' + " ".join(data["real_cmd"]) + "\n")
+                    out_fd.write("+ cd " + data["wd"] + "\n")
+                    out_fd.write("+ " + " ".join(data["real_cmd"]) + "\n")
                     out_fd.flush()
-                    proc = subprocess.Popen(data["real_cmd"], stdout=out_fd, stderr=out_fd)
+                    proc = subprocess.Popen(
+                        data["real_cmd"], stdout=out_fd, stderr=out_fd
+                    )
                 else:
                     out_fd = None
                     proc = subprocess.Popen(data["real_cmd"])

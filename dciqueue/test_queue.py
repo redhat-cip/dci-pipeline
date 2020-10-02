@@ -68,6 +68,7 @@ class TestQueue(unittest.TestCase):
                 self.assertTrue(os.path.exists(path) or os.path.islink(path), path)
             else:
                 self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
+
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         cmd = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
         with open(cmd, "w") as fd:
@@ -130,6 +131,18 @@ class TestQueue(unittest.TestCase):
         for seq in ("1", "2"):
             path = os.path.join(self.queue_dir, "queue", "8nodes", seq)
             self.assertTrue(os.path.exists(path) and os.path.isfile(path), path)
+
+    def test_schedule_remove(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "schedule", "-r", "8nodes", "echo", "@RESOURCE"]), 0
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        path = os.path.join(self.queue_dir, "pool", "8nodes", "cluster4")
+        self.assertFalse(os.path.exists(path), path)
 
     def test_unschedule(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
