@@ -49,6 +49,7 @@ def execute_command(args):
             " ".join(os.listdir(os.path.join(args.top_dir, "pool", args.pool))),
         )
     )
+
     print(
         "Available resources on the %s pool: %s"
         % (
@@ -56,33 +57,40 @@ def execute_command(args):
             " ".join(os.listdir(os.path.join(args.top_dir, "available", args.pool))),
         )
     )
+
     print("Executing commands on the %s pool:" % args.pool)
     for path in [
         p
         for p in os.listdir(os.path.join(args.top_dir, "queue", args.pool))
         if p.endswith(EXT)
     ]:
-        cmdfile = os.path.join(args.top_dir, "queue", args.pool, path)
-        if os.path.exists(cmdfile):
-            with open(cmdfile) as f:
-                data = json.load(f)
-                if "real_cmd" in data:
-                    cmd = data["real_cmd"]
-                else:
-                    cmd = data["cmd"]
-                print(
-                    "%s: %s (wd: %s)" % (path[: -len(EXT)], " ".join(cmd), data["wd"])
-                )
+        display_cmd(args, path, EXT)
 
     print("Queued commands on the %s pool:" % args.pool)
     for idx in range(first, next):
-        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
-        if os.path.exists(cmdfile):
-            with open(cmdfile) as f:
-                data = json.load(f)
-                print("%d: %s (wd: %s)" % (idx, " ".join(data["cmd"]), data["wd"]))
+        display_cmd(args, str(idx))
 
     return 0
+
+
+def display_cmd(args, filename, ext=None):
+    cmdfile = os.path.join(args.top_dir, "queue", args.pool, filename)
+    if os.path.exists(cmdfile):
+        with open(cmdfile) as f:
+            data = json.load(f)
+            if "real_cmd" in data:
+                cmd = data["real_cmd"]
+            else:
+                cmd = data["cmd"]
+            print(
+                "%s: %s (wd: %s)%s"
+                % (
+                    filename[: -len(ext)] if ext else filename,
+                    " ".join(cmd),
+                    data["wd"],
+                    " [REMOVE]" if "remove" in data and data["remove"] else "",
+                )
+            )
 
 
 # list_pool_cmd.py ends here

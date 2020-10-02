@@ -53,6 +53,12 @@ def register_command(subparsers):
         action="store_true",
         help="Force the command to be scheduled even if it's duplicated",
     )
+    parser.add_argument(
+        "-r",
+        "--remove-resource",
+        action="store_true",
+        help="Remove the resource once the job starts",
+    )
     parser.add_argument("pool", help="Name of the pool")
     parser.add_argument("cmd", nargs="*")
     return COMMAND
@@ -96,7 +102,9 @@ def execute_command(args):
     else:
         queuefile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
         with open(queuefile, "w") as f:
-            json.dump({"cmd": args.cmd, "wd": os.getcwd()}, f)
+            json.dump(
+                {"cmd": args.cmd, "wd": os.getcwd(), "remove": args.remove_resource}, f
+            )
         log.info("Command queued as %s" % queuefile)
         seq_obj.set(first, idx + 1)
 
