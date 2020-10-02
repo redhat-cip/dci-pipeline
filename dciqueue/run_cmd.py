@@ -73,6 +73,12 @@ def execute_command(args):
                 data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
                 data["resource"] = res
 
+                if "remove" in data and data["remove"]:
+                    log.info("Removing resource %s" % res)
+                    path = os.path.join(args.top_dir, "pool", args.pool, res)
+                    if os.path.exists(path):
+                        os.unlink(path)
+
             with open(to_exec, "w") as f:
                 json.dump(data, f)
 
