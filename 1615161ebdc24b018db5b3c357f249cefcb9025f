@@ -1,0 +1,8 @@
+Code-Review+2: Frederic Lepied <flepied@redhat.com>
+Workflow+1: Frederic Lepied <flepied@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Tue, 06 Oct 2020 06:03:22 +0000
+Reviewed-on: https://softwarefactory-project.io/r/19646
+Project: dci-pipeline
+Branch: refs/heads/master
