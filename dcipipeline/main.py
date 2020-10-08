@@ -243,6 +243,9 @@ def schedule_job(stage, remoteci_context, pipeline_user_context, tag=None):
                     return None
             job_info = scheduled_job.json()
             get_data_dir(job_info, stage)
+
+            log.info("Scheduled DCI job %s" % job_id)
+
             return job_info
         else:
             log.error("error getting schedule info: %s" % scheduled_job.text)
