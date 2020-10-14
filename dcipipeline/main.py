@@ -18,6 +18,7 @@ from dciclient.v1.api import job as dci_job
 from dciclient.v1.api import jobstate as dci_jobstate
 from dciclient.v1.api import topic as dci_topic
 from dciclient.v1.api import context as dci_context
+from dciclient.v1.api import file as dci_file
 
 import ansible_runner
 
@@ -334,7 +335,21 @@ def find_dci_ansible_dir(stage):
         return dci_ansible_dir, {}
 
 
-def run_stage(stage, dci_credentials, data_dir):
+def upload_ansible_log(context, ansible_log_dir, stage):
+    ansible_log = os.path.join(ansible_log_dir, "ansible.log")
+    if os.path.exists(ansible_log):
+        log.info("Uploading ansible.log from %s" % ansible_log)
+        dci_file.create(
+            context,
+            "ansible.log",
+            file_path=ansible_log,
+            job_id=stage["job_info"]["job"]["id"],
+        )
+    else:
+        log.error("ansible.log not found in %s" % ansible_log)
+
+
+def run_stage(context, stage, dci_credentials, data_dir):
     job_info = stage["job_info"]
     private_data_dir = job_info["data_dir"]
     inventory = stage_check_path(stage, "ansible_inventory", data_dir)
@@ -366,6 +381,7 @@ def run_stage(stage, dci_credentials, data_dir):
         quiet=False,
     )
     log.info(run.stats)
+    upload_ansible_log(context, private_data_dir, stage)
     return run.rc == 0 and check_stats(run.stats)
 
 
@@ -590,7 +606,7 @@ def run_stages(stage_type, pipeline, config_dir):
         tags = compute_tags(stage, prev_stages)
         add_tags_to_job(stage["job_info"]["job"]["id"], tags, dci_remoteci_context)
 
-        if run_stage(stage, dci_credentials, config_dir):
+        if run_stage(dci_remoteci_context, stage, dci_credentials, config_dir):
             set_success_tag(stage, stage["job_info"], dci_remoteci_context)
         else:
             log.error("Unable to run successfully job %s" % stage["name"])
@@ -617,7 +633,9 @@ def run_stages(stage_type, pipeline, config_dir):
                     )
                     create_inputs(config_dir, prev_stages, stage, stage["job_info"])
                     add_outputs_paths(stage["job_info"], stage)
-                    if run_stage(stage, dci_credentials, config_dir):
+                    if run_stage(
+                        dci_remoteci_context, stage, dci_credentials, config_dir
+                    ):
                         set_success_tag(stage, stage["job_info"], dci_remoteci_context)
                     else:
                         log.error(
