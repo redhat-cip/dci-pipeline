@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "00f1565c_cbde799a",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "rephrased it. let me know if this is clearer.",
+      "parentUuid": "dfa720f0_611f09db",
+      "range": {
+        "startLine": 48,
+        "startChar": 39,
+        "endLine": 48,
+        "endChar": 54
+      },
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1176af8a_9bc0a7d4",
         "filename": "README.md",
         "patchSetId": 1
@@ -36,6 +60,30 @@
       "writtenOn": "2020-10-22T03:54:28Z",
       "side": 1,
       "message": "I dont understand what this kubeconfig refers too.",
+      "range": {
+        "startLine": 60,
+        "startChar": 19,
+        "endLine": 60,
+        "endChar": 29
+      },
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c9450a7e_eae72e19",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "reworked this section for clarity. let me know if this is better.",
+      "parentUuid": "1176af8a_9bc0a7d4",
       "range": {
         "startLine": 60,
         "startChar": 19,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "cfba624c_dbecaa56",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4e0bdff3_3c7475ef",
+      "range": {
+        "startLine": 63,
+        "startChar": 47,
+        "endLine": 63,
+        "endChar": 58
+      },
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4d14b57b_6104abe3",
         "filename": "README.md",
         "patchSetId": 1
@@ -82,6 +154,24 @@
       "writtenOn": "2020-10-22T03:54:28Z",
       "side": 1,
       "message": "Can you align the example with above pipeline config? hosts is missing in pipeline.",
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3b5dad53_6d617b16",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "yes it\u0027s confusing. I have removed it.",
+      "parentUuid": "4d14b57b_6104abe3",
       "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
@@ -105,6 +195,24 @@
     },
     {
       "key": {
+        "uuid": "ae8fc873_a25468b0",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "only a file",
+      "parentUuid": "73f693e9_0192a1f6",
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1cb62637_3c853eb5",
         "filename": "README.md",
         "patchSetId": 1
@@ -116,6 +224,30 @@
       "writtenOn": "2020-10-22T03:54:28Z",
       "side": 1,
       "message": "alignment",
+      "range": {
+        "startLine": 93,
+        "startChar": 2,
+        "endLine": 93,
+        "endChar": 13
+      },
+      "revId": "0925afa6e491c7a30285fc904e7b257fc509b6b2",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "16071f39_27840dbb",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2020-10-22T06:53:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1cb62637_3c853eb5",
       "range": {
         "startLine": 93,
         "startChar": 2,
