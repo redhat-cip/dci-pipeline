@@ -380,6 +380,8 @@ def run_stage(context, stage, dci_credentials, data_dir):
         inventory=inventory,
         quiet=False,
     )
+    stage["job_info"]["stats"] = run.stats
+    stage["job_info"]["rc"] = run.rc
     log.info(run.stats)
     upload_ansible_log(context, private_data_dir, stage)
     return run.rc == 0 and check_stats(run.stats)
@@ -614,6 +616,7 @@ def run_stages(stage_type, pipeline, config_dir):
                 stage
             ):
                 log.info("Retrying with tag %s" % stage["fallback_last_success"])
+                stage["failed_job_info"] = stage["job_info"]
                 stage["job_info"] = schedule_job(
                     stage,
                     dci_remoteci_context,
@@ -648,8 +651,14 @@ def run_stages(stage_type, pipeline, config_dir):
     return errors
 
 
+PIPELINE = []
+
+
 def main(args=sys.argv):
+    global PIPELINE
+    del PIPELINE[:]
     config_dir, pipeline = get_config(args)
+    PIPELINE += pipeline
 
     for stage_type in get_types_of_stage(pipeline):
         job_in_errors = run_stages(stage_type, pipeline, config_dir)
