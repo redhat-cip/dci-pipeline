@@ -200,7 +200,9 @@ def get_data_dir(job_info, stage):
     return d
 
 
-def schedule_job(stage, remoteci_context, pipeline_user_context, tag=None):
+def schedule_job(
+    stage, remoteci_context, pipeline_user_context, tag=None, prev_components=None
+):
     log.info(
         "scheduling job %s on topic %s%s"
         % (stage["name"], stage["topic"], " with tag %s" % tag if tag else "")
@@ -218,6 +220,21 @@ def schedule_job(stage, remoteci_context, pipeline_user_context, tag=None):
             % (len(components), len(stage["components"]))
         )
         return None
+
+    if prev_components:
+        prev_comp_names = [c["name"] for c in prev_components]
+        for comp in components:
+            if comp["name"] not in prev_comp_names:
+                log.info(
+                    "Found a different component to retry %s from %s"
+                    % (comp["name"], prev_comp_names)
+                )
+                break
+        else:
+            log.info(
+                "No different components with tag %s. Not restarting the job." % tag
+            )
+            return None
 
     schedule = dci_job.create(
         remoteci_context,
@@ -619,6 +636,7 @@ def run_stages(stage_type, pipeline, config_dir):
                     dci_remoteci_context,
                     dci_pipeline_user_context,
                     stage["fallback_last_success"],
+                    stage["job_info"]["job"]["components"],
                 )
 
                 if not stage["job_info"]:
