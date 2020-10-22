@@ -7,18 +7,26 @@
 
     - name: Build and launch docker images from dci-dev-env
       become: yes
-      shell: docker-compose up -d --build api
+      command: docker-compose up -d --build api
+      environment:
+        DCI_GIT_REPO_DIR: ..
+      args:
+        chdir: '{{ dcidevenv_path }}'
+
+    - name: Get docket-compose status
+      become: yes
+      command: docker-compose ps
       environment:
         DCI_GIT_REPO_DIR: ..
       args:
         chdir: '{{ dcidevenv_path }}'
 
     - name: Provision data
-      shell: set -x; ./dev-setup/dci-telcoprovisioning
+      command: ./dev-setup/dci-telcoprovisioning
       args:
         chdir: "{{ zuul.project.src_dir }}"
 
     - name: Run the example pipeline in Python 3
-      shell: set -x; tox -epy3
+      command: tox -epy3
       args:
         chdir: "{{ zuul.project.src_dir }}"
