@@ -12,6 +12,14 @@
       args:
         chdir: '{{ dcidevenv_path }}'
 
+    - name: Get docket-compose logs
+      become: yes
+      shell: docker-compose logs
+      environment:
+        DCI_GIT_REPO_DIR: ..
+      args:
+        chdir: '{{ dcidevenv_path }}'
+
     - name: Provision data
       shell: set -x; ./dev-setup/dci-telcoprovisioning
       args:
