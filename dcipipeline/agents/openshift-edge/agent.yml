@@ -48,6 +48,21 @@
           id: "{{ job_id }}"
           tags: 'ocp-edge-conf'
 
+      - name: 'Create git repo component'
+        dci_component:
+          name: "Edgy_v1_baremetal"
+          team_id: "{{ job_info['job']['team_id'] }}"
+          topic_id: "{{ job_info['job']['topic_id'] }}"
+          type: edgy
+          state: present
+        register: baremetal_repo
+
+      - name: 'Attach git repo to the job'
+        dci_job_component:
+          component_id: " {{ baremetal_repo.component.id }} "
+          job_id: " {{ job_id }} "
+
+
   - name: Preparation tasks
     hosts: runner
     gather_facts: false
