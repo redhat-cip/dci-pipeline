@@ -239,7 +239,7 @@ def schedule_job(
     schedule = dci_job.create(
         remoteci_context,
         topic_id,
-        comment=stage["name"],
+        comment=stage.get("comment", stage["name"]),
         components=[c["id"] for c in components],
     )
     if schedule.status_code == 201:
@@ -434,7 +434,7 @@ def process_args(args):
             overload = {}
             name, rest = arg.split(":", 1)
             key, value = rest.split("=", 1)
-            if ":" in value:
+            if ":" in value and value[:4] != "http":
                 res = {}
                 k, v = value.split(":", 1)
                 if "," in v:
