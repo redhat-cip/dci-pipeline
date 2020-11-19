@@ -67,6 +67,18 @@ class TestMain(unittest.TestCase):
         self.assertEqual(args, ["file1", "file2"])
         self.assertEqual(result, [])
 
+    def test_process_args_http(self):
+        args = ["dci-pipeline", "stage:key=http://lwn.net/"]
+        result, args = process_args(args)
+        self.assertEqual(args, [])
+        self.assertEqual(result, [{"stage": {"key": "http://lwn.net/"}}])
+
+    def test_process_args_https(self):
+        args = ["dci-pipeline", "stage:key=https://lwn.net/"]
+        result, args = process_args(args)
+        self.assertEqual(args, [])
+        self.assertEqual(result, [{"stage": {"key": "https://lwn.net/"}}])
+
     def test_overload_dicts_add(self):
         stage = {"first": "value"}
         overload = {"key": ["value=toto", "value2"]}
