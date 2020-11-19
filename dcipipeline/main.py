@@ -239,7 +239,7 @@ def schedule_job(
     schedule = dci_job.create(
         remoteci_context,
         topic_id,
-        comment=stage["name"],
+        comment=stage.get("comment", stage["name"]),
         components=[c["id"] for c in components],
     )
     if schedule.status_code == 201:
