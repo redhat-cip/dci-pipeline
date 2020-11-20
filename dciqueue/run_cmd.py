@@ -102,6 +102,8 @@ def execute_command(args):
             except Exception:
                 log.exception("Unable to execute command")
                 free_resource(res, args)
+                log.debug("Removing %s" % to_exec)
+                os.remove(to_exec)
 
     for res, proc, fd, cmd, idx, to_exec in commands:
         if proc:
