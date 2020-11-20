@@ -180,6 +180,24 @@ class TestQueue(unittest.TestCase):
         path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
         self.assertTrue(os.path.exists(path), path)
 
+    def test_run_invalid_command(self):
+        run_cmd.subprocess.Popen = self.original_call
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                ["dci-queue", "schedule", "8nodes", "no-such-command", "@RESOURCE"]
+            ),
+            0,
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        path = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
+        self.assertFalse(os.path.exists(path), path)
+        path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
+        self.assertTrue(os.path.exists(path), path)
+
     def test_run_no_resource(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(
