@@ -575,7 +575,7 @@ def add_outputs_paths(job_info, stage):
 
 
 def compute_tags(stage, prev_stages):
-    tags = ["job:" + stage["name"]]
+    tags = ["job:" + stage["name"], "job-type:" + stage["type"]]
 
     if "ansible_inventory" in stage:
         tags.append("inventory:" + os.path.basename(stage["ansible_inventory"]))
@@ -589,6 +589,7 @@ def compute_tags(stage, prev_stages):
                     % (component["type"], prev_stage["topic"], component["name"])
                 )
             tags.append("prev-job:" + prev_stage["job_info"]["job"]["id"])
+            break
     return tags
 
 
