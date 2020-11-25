@@ -109,6 +109,17 @@ def get_stages(names, pipeline):
     return stages
 
 
+def get_prev_stages(stage, pipeline):
+    stages = get_stages(stage.get("prev_stages"), pipeline)
+    try:
+        idx = stages.index(stage)
+        stages = stages[:idx]
+    except ValueError:
+        pass
+    stages.reverse()
+    return stages
+
+
 def build_remoteci_context(dci_credentials):
     return dci_context.build_signature_context(
         dci_client_id=dci_credentials["DCI_CLIENT_ID"],
@@ -617,7 +628,7 @@ def run_stages(stage_type, pipeline, config_dir):
             errors += 1
             continue
 
-        prev_stages = get_stages(stage.get("prev_stages"), pipeline)
+        prev_stages = get_prev_stages(stage, pipeline)
         create_inputs(config_dir, prev_stages, stage, stage["job_info"])
         add_outputs_paths(stage["job_info"], stage)
 
@@ -678,6 +689,7 @@ def main(args=sys.argv):
                 % (job_in_errors, "s" if job_in_errors > 1 else "", stage_type)
             )
             return 1
+    log.info("Successful end of pipeline")
     return 0
 
 
