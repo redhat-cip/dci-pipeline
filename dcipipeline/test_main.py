@@ -15,7 +15,7 @@
 
 import unittest
 
-from dcipipeline.main import process_args, overload_dicts
+from dcipipeline.main import process_args, overload_dicts, get_prev_stages
 
 
 class TestMain(unittest.TestCase):
@@ -110,6 +110,23 @@ class TestMain(unittest.TestCase):
             overload_dicts(overload, stage),
             {"ansible_extravars": {"answer": 42, "dci_comment": "universal answer"}},
         )
+
+    def test_prev_stages(self):
+        stage1 = {"name": "1", "type": "ocp"}
+        stage2 = {
+            "name": "2",
+            "type": "ocp-upgrade",
+            "prev_stages": ["ocp-upgrade", "ocp"],
+        }
+        stage3 = {
+            "name": "3",
+            "type": "ocp-upgrade2",
+            "prev_stages": ["ocp-upgrade", "ocp"],
+        }
+        stage4 = {"name": "4", "type": "cnf2"}
+        pipeline = [stage1, stage2, stage3, stage4]
+        prev_stages = get_prev_stages(stage3, pipeline)
+        self.assertEqual(prev_stages, [stage2, stage1])
 
 
 if __name__ == "__main__":
