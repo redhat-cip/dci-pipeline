@@ -102,6 +102,7 @@ exit 0
 %endif
 %{_bindir}/%{name}
 %{_bindir}/dci-queue
+%{_bindir}/dci-rebuild-pipeline
 %attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
@@ -111,6 +112,9 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
+* Mon Jan 11 2021 Yassine Lamgarchal <ylamgarc@redhat.com> 0.0.3-2.VERS
+- add dci-rebuild-pipeline
+
 * Fri Sep 25 2020 Frederic Lepied <flepied@redhat.com> 0.0.3-1.VERS
 - provide a bash completion file
 

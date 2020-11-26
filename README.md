@@ -208,3 +208,37 @@ Remove the `8nodes` pool:
 ```ShellSession
 $ dci-queue remove-pool 8nodes
 ```
+
+## How to rebuild a pipeline
+
+In case of a pipeline failure, one might need to rebuild the original one. The command `bin/rebuild-pipeline` can
+be used for this purpose. To do so, you need to get any job id that was part of the pipeline you want to rebuild.
+
+Once this is get. You need to run, for example, the following command:
+```ShellSession
+$ bin/rebuild-pipeline 2441f3a5-aa97-45e9-8122-36dfc6f17d84
+```
+
+At the end of the command you will get a file `rebuilt-pipeline.yml` in the current directory.
+
+The rebuilt pipeline will pin the components version to the original one.
+
+For instance instead of having this component list from the original pipeline:
+
+```
+components:
+  - ocp
+  - ose-tests
+  - cnf-tests
+```
+
+You will got:
+
+```
+components:
+  - ocp=ocp-4.4.0-0.nightly-20200701
+  - ose-tests=ose-tests-20200628
+  - cnf-tests=cnf-tests-20200628
+```
+
+This rebuilt pipeline can be used as a regular one with the `dci-pipeline` command.
