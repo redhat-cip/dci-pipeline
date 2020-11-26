@@ -247,11 +247,21 @@ def schedule_job(
             )
             return None
 
+    pipeline_data = dict(stage)
+    if "job_info" in pipeline_data:
+        del pipeline_data["job_info"]
+    if (
+        "ansible_extravars" in pipeline_data
+        and "job_info" in pipeline_data["ansible_extravars"]
+    ):
+        del pipeline_data["ansible_extravars"]["job_info"]
+
     schedule = dci_job.create(
         remoteci_context,
         topic_id,
         comment=stage.get("comment", stage["name"]),
         components=[c["id"] for c in components],
+        data={"pipeline": pipeline_data},
     )
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()["job"]["id"]
