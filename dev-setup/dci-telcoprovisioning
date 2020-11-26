@@ -181,7 +181,8 @@ DCI_CS_URL: http://127.0.0.1:5000/
 DCI_UI_URL: http://127.0.0.1:8000""")
 
     with open('./pipeline_user_dci_credentials.sh', 'w') as f:
-        f.write("""DCI_PIPELINE_USERNAME='pipeline-user'
+        f.write("""
+DCI_PIPELINE_USERNAME='pipeline-user'
 DCI_PIPELINE_PASSWORD='pipeline-user'
 DCI_CS_URL='http://127.0.0.1:5000/'
 DCI_UI_URL='http://127.0.0.1:8000'
