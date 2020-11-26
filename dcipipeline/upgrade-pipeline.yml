@@ -30,7 +30,7 @@
 
 - name: openshift-upgrade
   type: ocp-upgrade
-  prev_stages: openshift-vanilla
+  prev_stages: rh-cnf
   ansible_playbook: agents/openshift-upgrade/agent.yml
   ansible_inventory: agents/openshift-vanilla/inventory
   outputs:
@@ -45,7 +45,7 @@
 
 - name: rh-cnf2
   type: cnf2
-  prev_stages: [openshift-upgrade, rh-cnf]
+  prev_stages: [openshift-upgrade]
   ansible_playbook: agents/rh-cnf/agent-retry.yml
   inputs:
     hosts: hosts_path
