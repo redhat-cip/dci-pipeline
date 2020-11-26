@@ -252,6 +252,7 @@ def schedule_job(
         topic_id,
         comment=stage.get("comment", stage["name"]),
         components=[c["id"] for c in components],
+        data={"pipeline": stage}
     )
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()["job"]["id"]
