@@ -43,6 +43,7 @@ setuptools.setup(
     entry_points={
         "console_scripts": [
             "dci-pipeline=dcipipeline.main:main",
+            "dci-rebuild-pipeline=dcipipeline.rebuild_pipeline:main",
             "dci-queue=dciqueue.main:main",
         ],
     },
