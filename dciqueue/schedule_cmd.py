@@ -101,11 +101,12 @@ def execute_command(args):
         log.info("Not scheduling a duplicated command")
     else:
         queuefile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
+        cwd = os.getcwd()
         with open(queuefile, "w") as f:
             json.dump(
-                {"cmd": args.cmd, "wd": os.getcwd(), "remove": args.remove_resource}, f
+                {"cmd": args.cmd, "wd": cwd, "remove": args.remove_resource}, f
             )
-        log.info("Command queued as %s" % queuefile)
+        log.info("Command %s (wd: %s) queued as %s" % (args.cmd, cwd, queuefile))
         seq_obj.set(first, idx + 1)
 
     seq_obj.unlock()

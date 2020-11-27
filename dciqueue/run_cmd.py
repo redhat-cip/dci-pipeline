@@ -105,16 +105,29 @@ def execute_command(args):
                 log.debug("Removing %s" % to_exec)
                 os.remove(to_exec)
 
-    for res, proc, fd, cmd, idx, to_exec in commands:
-        if proc:
-            proc.wait()
-            if fd:
-                fd.close()
-            log.info("%s returned %d" % (cmd, proc.returncode))
-            RET_CODE[idx] = proc.returncode
-            log.debug("Removing %s" % to_exec)
-            os.remove(to_exec)
-        free_resource(res, args)
+    if commands != []:
+        log.info("Waiting for commands: %s" % commands)
+
+        number = len(commands)
+        while number > 0:
+            log.debug("Waiting %d commands" % number)
+            status = os.wait()
+            for res, proc, fd, cmd, idx, to_exec in commands:
+                if proc and proc.pid == status[0]:
+                    number -= 1
+                    break
+            else:
+                continue
+            if proc:
+                proc.wait()
+                if fd:
+                    fd.close()
+                log.info("%s returned %d" % (cmd, os.WEXITSTATUS(status[1])))
+                RET_CODE[idx] = os.WEXITSTATUS(status[1])
+                log.debug("Removing %s" % to_exec)
+                os.remove(to_exec)
+            if res and args:
+                free_resource(res, args)
 
     return 0
 

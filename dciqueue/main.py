@@ -41,7 +41,7 @@ def main(cmdargs=sys.argv):
         prog=os.path.basename(cmdargs[0]),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    default_log_level = os.getenv("DCI_QUEUE_LOG_LEVEL", "WARNING")
+    default_log_level = os.getenv("DCI_QUEUE_LOG_LEVEL", "INFO")
     parser.add_argument(
         "-l",
         "--log-level",
