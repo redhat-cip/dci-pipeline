@@ -16,6 +16,7 @@
 
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import job as dci_job
+from dcipipeline import pipeline_utils as pu
 
 import os
 import sys
@@ -28,74 +29,9 @@ def save_pipeline(pipeline_jobs):
         yaml.dump(pipeline, f, default_flow_style=False)
 
 
-def get_job(context, job_id):
-    j = dci_job.get(context, job_id)
-    if j.status_code == 200:
-        return j.json()["job"]
-    else:
-        print("get_job error: %s" % j.text)
-        sys.exit(1)
-
-
-def get_stage_components(context, job_id):
-    c = dci_job.get_components(context, job_id)
-    if c.status_code == 200:
-        components = c.json()["components"]
-        return ["%s=%s" % (c["type"], c["name"]) for c in components]
-    else:
-        print("get_stage_components error: %s" % c.text)
-        sys.exit(1)
-
-
-def get_previous_job_id(job):
-    for t in job["tags"]:
-        if t.startswith("prev-job"):
-            return t.split(":")[1]
-    return None
-
-
-def get_previous_jobs(context, job):
-    _current_job = job
-    previous_jobs = []
-    while True:
-        prev_job_id = get_previous_job_id(_current_job)
-        if not prev_job_id:
-            break
-        prev_job = get_job(context, prev_job_id)
-        previous_jobs.append(prev_job)
-        _current_job = prev_job
-    return previous_jobs[::-1]
-
-
-def get_next_job(context, job):
-    j = dci_job.list(context, where="tags:prev-job:%s" % job["id"])
-    if j.status_code == 200:
-        if len(j.json()["jobs"]) > 0:
-            _job_id = j.json()["jobs"][0]["id"]
-            return get_job(context, _job_id)
-        else:
-            return None
-    else:
-        print("get_next_job_id error: %s" % j.text)
-        sys.exit(1)
-
-
-def get_next_jobs(context, job):
-    next_jobs = []
-    _current_job = job
-    while True:
-        next_job = get_next_job(context, _current_job)
-        if not next_job:
-            break
-        next_jobs.append(next_job)
-        _current_job = next_job
-    return next_jobs
-
-
 def update_pipeline_with_component_version(context, pipeline_jobs):
     for pj in pipeline_jobs:
-        job_id = pj["id"]
-        components = get_stage_components(context, job_id)
+        components = pu.get_stage_components(context, pj["id"])
         pj["data"]["pipeline"]["components"] = components
 
 
@@ -130,21 +66,16 @@ def main(args=sys.argv):
             dci_api_secret=os.getenv("DCI_API_SECRET"),
         )
 
-    if os.getenv("DCI_CS_URL"):
-        print("using environment %s" % os.getenv("DCI_CS_URL"))
-        if len(sys.argv) < 2:
-            print("usage: %s <job-id>" % sys.argv[0])
-            sys.exit(1)
-
-    if not os.getenv("DCI_CS_URL"):
+    if not u_context:
         print(
-            "using local development environmen with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000"
+            "using local development environment with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000"
         )
         u_context = dci_context.build_dci_context(
             dci_cs_url="http://127.0.0.1:5000/",
             dci_login="pipeline-user",
             dci_password="pipeline-user",
         )
+        job_id = None
         if len(sys.argv) < 2:
             print("no job id provided, getting latest known job")
             jobs = dci_job.list(u_context, limit=1, offset=0)
@@ -159,13 +90,7 @@ def main(args=sys.argv):
             job_id = sys.argv[1]
             print("job id: %s" % job_id)
 
-    initial_job = get_job(u_context, job_id)
-    previous_jobs = get_previous_jobs(u_context, initial_job)
-    next_jobs = get_next_jobs(u_context, initial_job)
-
-    pipeline_jobs = previous_jobs
-    pipeline_jobs.append(initial_job)
-    pipeline_jobs.extend(next_jobs)
+    pipeline_jobs = pu.get_pipeline_from_job(u_context, job_id)
 
     update_pipeline_with_component_version(u_context, pipeline_jobs)
 

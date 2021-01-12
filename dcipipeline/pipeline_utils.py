@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) Red Hat, Inc
@@ -15,18 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import job as dci_job
 
-import os
 import sys
-import yaml
-
-
-def save_pipeline(pipeline_jobs):
-    pipeline = [pj["data"]["pipeline"] for pj in pipeline_jobs]
-    with open("./rebuilt-pipeline.yml", "w") as f:
-        yaml.dump(pipeline, f, default_flow_style=False)
 
 
 def get_job(context, job_id):
@@ -35,6 +25,15 @@ def get_job(context, job_id):
         return j.json()["job"]
     else:
         print("get_job error: %s" % j.text)
+        sys.exit(1)
+
+
+def get_job_components(context, job_id):
+    c = dci_job.get_components(context, job_id)
+    if c.status_code == 200:
+        return c.json()["components"]
+    else:
+        print("get_job_components error: %s" % c.text)
         sys.exit(1)
 
 
@@ -93,64 +92,13 @@ def get_next_jobs(context, job):
     return next_jobs
 
 
-def update_pipeline_with_component_version(context, pipeline_jobs):
-    for pj in pipeline_jobs:
-        job_id = pj["id"]
-        components = get_stage_components(context, job_id)
-        pj["data"]["pipeline"]["components"] = components
-
-
-def main(args=sys.argv):
-
-    u_context = dci_context.build_dci_context(
-        dci_cs_url="http://127.0.0.1:5000/",
-        dci_login="pipeline-user",
-        dci_password="pipeline-user",
-    )
-
-    if os.getenv("DCI_LOGIN") and os.getenv("DCI_PASSWORD") and os.getenv("DCI_CS_URL"):
-        u_context = dci_context.build_dci_context(
-            dci_cs_url=os.getenv("DCI_CS_URL"),
-            dci_login=os.getenv("DCI_LOGIN"),
-            dci_password=os.getenv("DCI_PASSWORD"),
-        )
-
-    if os.getenv("DCI_CS_URL"):
-        print("using environment %s" % os.getenv("DCI_CS_URL"))
-        if len(sys.argv) < 2:
-            print("usage: %s <job-id>" % sys.argv[0])
-            sys.exit(1)
-
-    if not os.getenv("DCI_CS_URL"):
-        print("using local development environment http://127.0.0.1:5000")
-        if len(sys.argv) < 2:
-            print("no job id provided, getting latest known job")
-            jobs = dci_job.list(u_context, limit=1, offset=0)
-            if jobs.status_code == 200:
-                if len(jobs.json()["jobs"]) > 0:
-                    job_id = jobs.json()["jobs"][0]["id"]
-                    print("job id: %s" % job_id)
-                else:
-                    print("no job found")
-                    sys.exit(1)
-        else:
-            job_id = sys.argv[1]
-            print("job id: %s" % job_id)
-
-    initial_job = get_job(u_context, job_id)
-    previous_jobs = get_previous_jobs(u_context, initial_job)
-    next_jobs = get_next_jobs(u_context, initial_job)
+def get_pipeline_from_job(context, job_id):
+    initial_job = get_job(context, job_id)
+    previous_jobs = get_previous_jobs(context, initial_job)
+    next_jobs = get_next_jobs(context, initial_job)
 
     pipeline_jobs = previous_jobs
     pipeline_jobs.append(initial_job)
     pipeline_jobs.extend(next_jobs)
 
-    update_pipeline_with_component_version(u_context, pipeline_jobs)
-
-    save_pipeline(pipeline_jobs)
-
-    print("pipeline rebuilt successfully, please see the 'rebuilt-pipeline.yml' file")
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    return pipeline_jobs
