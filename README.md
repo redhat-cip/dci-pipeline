@@ -211,12 +211,12 @@ $ dci-queue remove-pool 8nodes
 
 ## How to rebuild a pipeline
 
-In case of a pipeline failure, one might need to rebuild the original one. The command `bin/rebuild-pipeline` can
+In case of a pipeline failure, one might need to rebuild the original one. The command `dci-rebuild-pipeline` can
 be used for this purpose. To do so, you need to get any job id that was part of the pipeline you want to rebuild.
 
 Once this is get. You need to run, for example, the following command:
 ```ShellSession
-$ bin/rebuild-pipeline 2441f3a5-aa97-45e9-8122-36dfc6f17d84
+$ dci-rebuild-pipeline 2441f3a5-aa97-45e9-8122-36dfc6f17d84
 ```
 
 At the end of the command you will get a file `rebuilt-pipeline.yml` in the current directory.
@@ -242,3 +242,25 @@ components:
 ```
 
 This rebuilt pipeline can be used as a regular one with the `dci-pipeline` command.
+
+
+## How to see components diff between two pipelines
+
+In case of a pipeline failulre, one might check if some components has changed from the previous run. The
+command `dci-diff-pipeline` can be used for this purpose. To do so, you need to get two jobs that are part
+of each pipeline (it can be any of the pipeline's job).
+
+Once you got the two job ids, you need to use a user that has access to every components of the pipelines, including
+teams components.
+
+You can see the component differentiation with the following command:
+```ShellSession
+$ dci-diff-pipeline 610953f7-ad4a-442c-a934-cd5506127ec9 f7677627-5780-46f8-b35f-c4bd1f781d90
+using local development environment with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000
++--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
+|              pipeline 1              |              pipeline 2              |       stage       |  component type  |          component 1           |          component 2           |
++--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
+| 94a4b04f-4aa5-413b-a86f-eb651b563e0b | ef493b57-a02e-4c74-9f60-e951b181f1d4 | openshift-vanilla |       ocp        |  ocp-4.4.0-0.nightly-20200703  |  ocp-4.4.0-0.nightly-20200701  |
+| 610953f7-ad4a-442c-a934-cd5506127ec9 | f7677627-5780-46f8-b35f-c4bd1f781d90 |       rh-cnf      |      rh-cnf      |  rh-cnf-0.1.nightly-20200708   |  rh-cnf-0.1.nightly-20200703   |
++--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
+```
