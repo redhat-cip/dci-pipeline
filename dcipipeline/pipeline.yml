@@ -28,6 +28,6 @@
       answer: 42
     topic: RH-CNF-0.1
     components:
-      - rh-cnf
+      - rh-cnf=rh-cnf-0.1.nightly-20200703
     success_tag: ocp-vanilla-4.4-simple-ok
     fallback_last_success: ocp-vanilla-4.4-simple-ok
