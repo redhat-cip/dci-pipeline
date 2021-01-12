@@ -44,6 +44,7 @@ setuptools.setup(
         "console_scripts": [
             "dci-pipeline=dcipipeline.main:main",
             "dci-rebuild-pipeline=dcipipeline.rebuild_pipeline:main",
+            "dci-diff-pipeline=dcipipeline.diff_pipeline:main",
             "dci-queue=dciqueue.main:main",
         ],
     },

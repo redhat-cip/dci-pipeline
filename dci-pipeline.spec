@@ -22,6 +22,7 @@ BuildRequires:  python2-setuptools
 Requires:       PyYAML
 Requires:       python2-dciclient
 Requires:       python2-ansible-runner
+Requires:       python-prettytable
 %endif
 
 %if 0%{?with_python3}
@@ -103,6 +104,7 @@ exit 0
 %{_bindir}/%{name}
 %{_bindir}/dci-queue
 %{_bindir}/dci-rebuild-pipeline
+%{_bindir}/dci-diff-pipeline
 %attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
@@ -112,6 +114,9 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
+* Mon Jan 12 2021 Yassine Lamgarchal <ylamgarc@redhat.com> 0.0.3-3.VERS
+- add dci-diff-pipeline
+
 * Mon Jan 11 2021 Yassine Lamgarchal <ylamgarc@redhat.com> 0.0.3-2.VERS
 - add dci-rebuild-pipeline
 
