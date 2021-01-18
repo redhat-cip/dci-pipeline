@@ -241,4 +241,4 @@ components:
   - cnf-tests=cnf-tests-20200628
 ```
 
-This rebuilt pipeline can be used as a regular one with the `dci-pipeline` command.
+TTTThis rebuilt pipeline can be used as a regular one with the `dci-pipeline` command.
