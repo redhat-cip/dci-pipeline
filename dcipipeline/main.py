@@ -668,6 +668,7 @@ def run_stages(stage_type, pipeline, config_dir):
                     )
                     errors += 1
                 else:
+                    tags.append("fallback")
                     add_tags_to_job(
                         stage["job_info"]["job"]["id"], tags, dci_remoteci_context
                     )
