@@ -16,6 +16,24 @@
       "revId": "fb15c46c2405897bdea13ce486af2ff04e75894d",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0953be56_835dff76",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 674,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-02-10T20:33:27Z",
+      "side": 1,
+      "message": "Why ?\n\nCalling this function in run_stage() will not respect the Single Responsibility Principle. If the playbook didn\u0027t succeed, that should be the right place to update its state not within run_stage() imo.",
+      "parentUuid": "2e8b11b8_f1b5dcf6",
+      "revId": "fb15c46c2405897bdea13ce486af2ff04e75894d",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
