@@ -42,6 +42,9 @@ TOPDIR = os.getenv(
     "DCI_PIPELINE_TOPDIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
+_JOB_FINAL_STATUSES = {"error", "success", "failure", "killed"}
+_JOB_PRODUCT_STATUSES = {"running"}
+
 
 def load_yaml_file(path):
     with open(path) as file:
@@ -614,6 +617,25 @@ def compute_tags(stage, prev_stages):
     return tags
 
 
+def set_job_to_final_state(context, job_info):
+    j_id = job_info["job"]["id"]
+    j = dci_job.get(context, j_id)
+    if j.status_code != 200:
+        log.error("Unable to get job %s, error: %s" % (j_id, j.text))
+        return
+    if j.json()["job"]["status"] not in _JOB_FINAL_STATUSES:
+        j_states = dci_job.list_jobstates(context, j_id)
+        if j_states.status_code != 200:
+            log.error(
+                "Unable to list jobstates of job %s, error: %s" % (j_id, j_states.text)
+            )
+            return
+        if j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
+            dci_jobstate.create(context, "failure", job_id=j_id)
+        else:
+            dci_jobstate.create(context, "error", job_id=j_id)
+
+
 def run_stages(stage_type, pipeline, config_dir):
     stages = get_stages(stage_type, pipeline)
     errors = 0
@@ -686,6 +708,7 @@ def run_stages(stage_type, pipeline, config_dir):
                         errors += 1
             else:
                 errors += 1
+        set_job_to_final_state(dci_remoteci_context, stage["job_info"])
     return errors
 
 
