@@ -42,6 +42,9 @@ TOPDIR = os.getenv(
     "DCI_PIPELINE_TOPDIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
+_JOB_FINAL_STATUSES = {"error", "success", "failure", "killed"}
+_JOB_PRODUCT_STATUSES = {"running"}
+
 
 def load_yaml_file(path):
     with open(path) as file:
@@ -614,6 +617,25 @@ def compute_tags(stage, prev_stages):
     return tags
 
 
+def set_job_to_final_state(context, job_id):
+    j = dci_job.get(context, job_id)
+    if j.status_code != 200:
+        log.error("Unable to get job %s, error: %s" % (job_id, j.text))
+        return
+    if j.json()["job"]["status"] not in _JOB_FINAL_STATUSES:
+        j_states = dci_job.list_jobstates(context, job_id)
+        if j_states.status_code != 200:
+            log.error(
+                "Unable to list jobstates of job %s, error: %s"
+                % (job_id, j_states.text)
+            )
+            return
+        if j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
+            dci_jobstate.create(context, "failure", job_id=job_id)
+        else:
+            dci_jobstate.create(context, "error", job_id=job_id)
+
+
 def run_stages(stage_type, pipeline, config_dir):
     stages = get_stages(stage_type, pipeline)
     errors = 0
@@ -638,12 +660,13 @@ def run_stages(stage_type, pipeline, config_dir):
             errors += 1
             continue
 
+        _job_id = stage["job_info"]["job"]["id"]
         prev_stages = get_prev_stages(stage, pipeline)
         create_inputs(config_dir, prev_stages, stage, stage["job_info"])
         add_outputs_paths(stage["job_info"], stage)
 
         tags = compute_tags(stage, prev_stages)
-        add_tags_to_job(stage["job_info"]["job"]["id"], tags, dci_remoteci_context)
+        add_tags_to_job(_job_id, tags, dci_remoteci_context)
 
         if run_stage(dci_remoteci_context, stage, dci_credentials, config_dir):
             set_success_tag(stage, stage["job_info"], dci_remoteci_context)
@@ -668,10 +691,9 @@ def run_stages(stage_type, pipeline, config_dir):
                     )
                     errors += 1
                 else:
+                    _job_id_2 = stage["job_info"]["job"]["id"]
                     tags.append("fallback")
-                    add_tags_to_job(
-                        stage["job_info"]["job"]["id"], tags, dci_remoteci_context
-                    )
+                    add_tags_to_job(_job_id_2, tags, dci_remoteci_context)
                     create_inputs(config_dir, prev_stages, stage, stage["job_info"])
                     add_outputs_paths(stage["job_info"], stage)
                     if run_stage(
@@ -684,8 +706,10 @@ def run_stages(stage_type, pipeline, config_dir):
                             % (stage["name"], stage["fallback_last_success"])
                         )
                         errors += 1
+                    set_job_to_final_state(dci_remoteci_context, _job_id_2)
             else:
                 errors += 1
+        set_job_to_final_state(dci_remoteci_context, _job_id)
     return errors
 
 
