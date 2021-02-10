@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2e8b11b8_f1b5dcf6",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 674,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-02-10T18:09:36Z",
+      "side": 1,
+      "message": "it should be called in run_stage not at this point.",
+      "revId": "fb15c46c2405897bdea13ce486af2ff04e75894d",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
