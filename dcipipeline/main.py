@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -212,11 +212,11 @@ def get_data_dir(job_info, stage):
 
 
 def schedule_job(
-    stage, remoteci_context, pipeline_user_context, tag=None, prev_components=None
+        stage, remoteci_context, pipeline_user_context, tag=None, prev_components=None, previous_job_id=None
 ):
     log.info(
-        "scheduling job %s on topic %s%s"
-        % (stage["name"], stage["topic"], " with tag %s" % tag if tag else "")
+        "scheduling job %s on topic %s%s previous_job_id=%s"
+        % (stage["name"], stage["topic"], " with tag %s" % tag if tag else "", previous_job_id)
     )
 
     topic_id = get_topic_id(remoteci_context, stage)
@@ -262,6 +262,7 @@ def schedule_job(
         comment=stage.get("comment", stage["name"]),
         components=[c["id"] for c in components],
         data={"pipeline": pipeline_data},
+        previous_job_id=previous_job_id,
     )
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()["job"]["id"]
@@ -614,7 +615,7 @@ def compute_tags(stage, prev_stages):
     return tags
 
 
-def run_stages(stage_type, pipeline, config_dir):
+def run_stages(stage_type, pipeline, config_dir, previous_job_id):
     stages = get_stages(stage_type, pipeline)
     errors = 0
     for stage in stages:
@@ -630,7 +631,7 @@ def run_stages(stage_type, pipeline, config_dir):
                 dci_pipeline_user_credentials
             )
         stage["job_info"] = schedule_job(
-            stage, dci_remoteci_context, dci_pipeline_user_context
+            stage, dci_remoteci_context, dci_pipeline_user_context, previous_job_id=previous_job_id
         )
 
         if not stage["job_info"]:
@@ -659,6 +660,7 @@ def run_stages(stage_type, pipeline, config_dir):
                     dci_pipeline_user_context,
                     stage["fallback_last_success"],
                     stage["job_info"]["job"]["components"],
+                    previous_job_id=previous_job_id,
                 )
 
                 if not stage["job_info"]:
@@ -686,20 +688,23 @@ def run_stages(stage_type, pipeline, config_dir):
                         errors += 1
             else:
                 errors += 1
-    return errors
+    return errors, stages
 
 
 def main(args=sys.argv):
     config_dir, pipeline = get_config(args)
 
+    previous_job_id = None
     for stage_type in get_types_of_stage(pipeline):
-        job_in_errors = run_stages(stage_type, pipeline, config_dir)
+        job_in_errors, stages = run_stages(stage_type, pipeline, config_dir, previous_job_id)
         if job_in_errors != 0:
             log.error(
                 "%d job%s in error at stage %s"
                 % (job_in_errors, "s" if job_in_errors > 1 else "", stage_type)
             )
             return 1
+        if len(stages) > 0:
+            previous_job_id = stages[0]["job_info"]["job"]["id"]
     log.info("Successful end of pipeline")
     return 0
 
