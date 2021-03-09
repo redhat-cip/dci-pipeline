@@ -64,6 +64,7 @@ def test_dci_pipeline():
     assert len(PIPELINE) == 2
     jobs2 = get_jobs()
     assert len(jobs) + 2 == len(jobs2)
+    assert jobs2[0]["previous_job_id"] == jobs2[1]["id"]
 
 
 def test_dci_pipeline_edge():
