@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -25,6 +25,7 @@ import ansible_runner
 import logging
 import os
 import shutil
+import signal
 import sys
 import yaml
 
@@ -44,6 +45,20 @@ TOPDIR = os.getenv(
 
 _JOB_FINAL_STATUSES = {"error", "success", "failure", "killed"}
 _JOB_PRODUCT_STATUSES = {"running"}
+
+
+class SignalHandler:
+    def __init__(self):
+        self._called = False
+        signal.signal(signal.SIGTERM, self._handler)
+        signal.signal(signal.SIGINT, self._handler)
+
+    def _handler(self, signum, frame):
+        self._called = True
+        log.error("Catched %s signal" % signal.strsignal(signum))
+
+    def called(self):
+        return self._called
 
 
 def load_yaml_file(path):
@@ -390,7 +405,7 @@ def upload_ansible_log(context, ansible_log_dir, stage):
         log.error("ansible.log not found in %s" % ansible_log)
 
 
-def run_stage(context, stage, dci_credentials, data_dir):
+def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     job_info = stage["job_info"]
     private_data_dir = job_info["data_dir"]
     inventory = stage_check_path(stage, "ansible_inventory", data_dir)
@@ -420,6 +435,7 @@ def run_stage(context, stage, dci_credentials, data_dir):
         extravars=extravars,
         inventory=inventory,
         quiet=False,
+        cancel_callback=cancel_cb,
     )
     log.info(run.stats)
     upload_ansible_log(context, private_data_dir, stage)
@@ -631,12 +647,12 @@ def set_job_to_final_state(context, job_id):
             )
             return
         if j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
-            dci_jobstate.create(context, "failure", job_id=job_id)
+            dci_jobstate.create(context, "failure", job_id=job_id, comment="failure")
         else:
-            dci_jobstate.create(context, "error", job_id=job_id)
+            dci_jobstate.create(context, "error", job_id=job_id, comment="error")
 
 
-def run_stages(stage_type, pipeline, config_dir):
+def run_stages(stage_type, pipeline, config_dir, cancel_cb):
     stages = get_stages(stage_type, pipeline)
     errors = 0
     for stage in stages:
@@ -668,7 +684,9 @@ def run_stages(stage_type, pipeline, config_dir):
         tags = compute_tags(stage, prev_stages)
         add_tags_to_job(_job_id, tags, dci_remoteci_context)
 
-        if run_stage(dci_remoteci_context, stage, dci_credentials, config_dir):
+        if run_stage(
+            dci_remoteci_context, stage, dci_credentials, config_dir, cancel_cb
+        ):
             set_success_tag(stage, stage["job_info"], dci_remoteci_context)
         else:
             log.error("Unable to run successfully job %s" % stage["name"])
@@ -697,7 +715,11 @@ def run_stages(stage_type, pipeline, config_dir):
                     create_inputs(config_dir, prev_stages, stage, stage["job_info"])
                     add_outputs_paths(stage["job_info"], stage)
                     if run_stage(
-                        dci_remoteci_context, stage, dci_credentials, config_dir
+                        dci_remoteci_context,
+                        stage,
+                        dci_credentials,
+                        config_dir,
+                        cancel_cb,
                     ):
                         set_success_tag(stage, stage["job_info"], dci_remoteci_context)
                     else:
@@ -714,10 +736,13 @@ def run_stages(stage_type, pipeline, config_dir):
 
 
 def main(args=sys.argv):
+    signal_handler = SignalHandler()
     config_dir, pipeline = get_config(args)
 
     for stage_type in get_types_of_stage(pipeline):
-        job_in_errors = run_stages(stage_type, pipeline, config_dir)
+        job_in_errors = run_stages(
+            stage_type, pipeline, config_dir, signal_handler.called
+        )
         if job_in_errors != 0:
             log.error(
                 "%d job%s in error at stage %s"
