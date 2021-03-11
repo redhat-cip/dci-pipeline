@@ -15,9 +15,10 @@
 
 from dcipipeline.main import main, PIPELINE
 
+import signal
 import os
 import requests
-
+import time
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 
@@ -87,3 +88,19 @@ def test_dci_pipeline_skip():
 def test_dci_pipeline_upgrade():
     rc = main(["dci-pipeline", p("upgrade-pipeline.yml")])
     assert rc == 0
+
+
+def test_dci_pipeline_sigterm():
+    jobs = get_jobs()
+    pid = os.fork()
+
+    if pid == 0:
+        os.execvp("dci-pipeline", ["dci-pipeline", "dcipipeline/pipeline-pause.yml"])
+    else:
+        time.sleep(10)
+        os.kill(pid, signal.SIGTERM)
+        time.sleep(10)
+
+        jobs2 = get_jobs()
+        assert len(jobs) + 1 == len(jobs2)
+        assert jobs2[0]["status"] == "error"
