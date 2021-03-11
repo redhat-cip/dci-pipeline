@@ -7,6 +7,10 @@
     - init
   tasks:
 
+    - name: Pause
+      pause:
+        minutes: 2
+
     - name: Read credentials from env vars
       set_fact:
         dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
