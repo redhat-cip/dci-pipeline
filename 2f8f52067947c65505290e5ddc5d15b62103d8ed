@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "323cb7d3_3889e032",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-03-12T12:51:59Z",
+      "side": 1,
+      "message": "What do you think instead of having a global variable to have a callback function as a parameter of main(), this will be called with a dict that summarize the run ?",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c280475e_48818857",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-03-12T12:51:59Z",
+      "side": 1,
+      "message": "how this test differ from the above ?",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d358bebf_95e78de9",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-03-12T12:51:59Z",
+      "side": 1,
+      "message": "maybe better would be to first test without ansible_skip_tags to check rc !\u003d 0 and then to run with tags skipped to check rc \u003d\u003d 0 ?",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    }
+  ]
+}
