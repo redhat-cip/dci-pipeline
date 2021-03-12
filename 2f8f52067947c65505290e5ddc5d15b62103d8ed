@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "02bd6075_c56f59c0",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-03-12T13:20:49Z",
+      "side": 1,
+      "message": "not sure it would be clearer.",
+      "parentUuid": "323cb7d3_3889e032",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c280475e_48818857",
         "filename": "tests/e2e/test_dci_pipeline.py",
         "patchSetId": 6
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "a34d3210_ccf0e31e",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-03-12T13:20:49Z",
+      "side": 1,
+      "message": "good catch. removing it.",
+      "parentUuid": "c280475e_48818857",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d358bebf_95e78de9",
         "filename": "tests/e2e/test_dci_pipeline.py",
         "patchSetId": 6
@@ -47,6 +83,24 @@
       "writtenOn": "2021-03-12T12:51:59Z",
       "side": 1,
       "message": "maybe better would be to first test without ansible_skip_tags to check rc !\u003d 0 and then to run with tags skipped to check rc \u003d\u003d 0 ?",
+      "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "86a64b6e_3e578713",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-03-12T13:20:49Z",
+      "side": 1,
+      "message": "I was just reproducing the tests we had in tox.ini. let\u0027s improve later.",
+      "parentUuid": "d358bebf_95e78de9",
       "revId": "2f8f52067947c65505290e5ddc5d15b62103d8ed",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": false
