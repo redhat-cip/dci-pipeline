@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6ac77713_02915c17",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2021-03-17T18:13:16Z",
+      "side": 1,
+      "message": "s/Catched/Caught/",
+      "revId": "ce1a9df02b655207d3446459cd41e5bb77a1b8e5",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cf848057_d320e4b1",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2021-03-17T18:13:16Z",
+      "side": 1,
+      "message": "this seems like potentially dangerous test, not sure if it matters but if more than the previous pipeline is running this would SIGTERM them all.",
+      "revId": "ce1a9df02b655207d3446459cd41e5bb77a1b8e5",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
