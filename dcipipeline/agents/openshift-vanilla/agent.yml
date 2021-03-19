@@ -13,7 +13,15 @@
         dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
         dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
         dci_ui_url: "{{ lookup('env','DCI_UI_URL') }}"
+        envvar_42: "{{ lookup('env','ENVVAR_42') }}"
+        envvar_43: "{{ lookup('env','ENVVAR_43') }}"
       no_log: true
+
+    - name: validate environment variables
+      assert:
+        that:
+          - envvar_42 == "42"
+          - envvar_43 == "43"
 
     - name: Schedule a new job
       dci_job:

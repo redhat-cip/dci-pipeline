@@ -367,6 +367,10 @@ def find_dci_ansible_dir(stage):
             envvars = {
                 "ANSIBLE_CALLBACK_PLUGINS": os.path.join(dci_ansible_dir, "callback"),
             }
+            if stage.get("ansible_envvars"):
+                if not isinstance(stage.get("ansible_envvars"), dict):
+                    log.error("The 'ansible_envvars' stage key is not a dict.")
+                envvars.update(stage.get("ansible_envvars"))
             return dci_ansible_dir, envvars
     else:
         log.warning(
