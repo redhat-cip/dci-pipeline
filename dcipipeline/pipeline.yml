@@ -5,6 +5,9 @@
     ansible_inventory: agents/openshift-vanilla/inventory
     ansible_extravars:
       answer: 42
+    ansible_envvars:
+      ENVVAR_42: 42
+      ENVVAR_43: 43
     ansible_tags:
       - working
     outputs:
