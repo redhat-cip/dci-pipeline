@@ -151,6 +151,27 @@ continue testing the next layers in the pipeline. Example:
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
 
+If you want to pass environment variables to the agent. Example:
+
+```YAML
+---
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: agents/openshift-vanilla/agent.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_extravars:
+      answer: 42
+    ansible_envvars:
+      ENVVAR_42: 42
+      ENVVAR_43: 43
+    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    topic: OCP-4.5
+    components:
+      - ocp
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.5-ok
+```
+
 ## dci-queue command
 
 The `dci-queue` command allows to execute commands consuming resources
