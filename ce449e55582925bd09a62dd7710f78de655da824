@@ -1,0 +1,9 @@
+Code-Review+2: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Code-Review+1: Jorge Gallegos <jgallego@redhat.com>
+Workflow+1: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Mon, 22 Mar 2021 16:26:50 +0000
+Reviewed-on: https://softwarefactory-project.io/r/c/dci-pipeline/+/21286
+Project: dci-pipeline
+Branch: refs/heads/master
