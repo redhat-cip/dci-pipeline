@@ -16,6 +16,24 @@
       "revId": "a1f91d1f77a657ba5a215e49260e3ad20d970e3d",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ca70e2e_2c1f7209",
+        "filename": "tests/e2e/test_dci_pipeline.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 667
+      },
+      "writtenOn": "2021-03-23T00:47:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "01c28430_c8f24746",
+      "revId": "a1f91d1f77a657ba5a215e49260e3ad20d970e3d",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
