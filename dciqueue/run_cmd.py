@@ -98,6 +98,9 @@ def execute_command(args):
                 else:
                     out_fd = None
                     proc = subprocess.Popen(data["real_cmd"])
+                data["pid"] = proc.pid
+                with open(to_exec, "w") as f:
+                    json.dump(data, f)
                 commands.append([res, proc, out_fd, data["real_cmd"], idx, to_exec])
             except Exception:
                 log.exception("Unable to execute command")
@@ -125,7 +128,10 @@ def execute_command(args):
                 log.info("%s returned %d" % (cmd, os.WEXITSTATUS(status[1])))
                 RET_CODE[idx] = os.WEXITSTATUS(status[1])
                 log.debug("Removing %s" % to_exec)
-                os.remove(to_exec)
+                try:
+                    os.remove(to_exec)
+                except FileNotFoundError:
+                    pass
             if res and args:
                 free_resource(res, args)
 

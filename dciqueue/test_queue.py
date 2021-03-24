@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import unittest
 
 from dciqueue import main
@@ -180,6 +181,34 @@ class TestQueue(unittest.TestCase):
         path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
         self.assertTrue(os.path.exists(path), path)
 
+    def test_run_unschedule(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    "sleep 3000; echo @RESOURCE",
+                ]
+            ),
+            0,
+        )
+        os.system("dci-queue run 8nodes &")
+        time.sleep(5)
+        self.assertEqual(main.main(["dci-queue", "unschedule", "8nodes", "1"]), 0)
+        time.sleep(5)
+        path = os.path.join(self.queue_dir, "schedule", "8nodes", "1" + run_cmd.EXT)
+        self.assertFalse(os.path.exists(path), path)
+        path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
+        self.assertTrue(os.path.exists(path), path)
+
     def test_run_invalid_command(self):
         run_cmd.subprocess.Popen = self.original_call
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
@@ -241,6 +270,19 @@ class TestQueue(unittest.TestCase):
         main.main(["dci-queue", "log", "8nodes", "1"])
         self.assertEqual(self.arg, "tail")
         os.execlp = saved
+
+    def test_search(self):
+        self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "search", "8nodes", "echo", "@RESOURCE"]), 0
+        )
 
 
 if __name__ == "__main__":
