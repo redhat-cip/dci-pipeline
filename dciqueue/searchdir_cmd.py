@@ -25,15 +25,15 @@ from dciqueue.run_cmd import EXT
 
 log = logging.getLogger(__name__)
 
-COMMAND = "search"
+COMMAND = "searchdir"
 
 
 def register_command(subparsers):
     parser = subparsers.add_parser(
-        COMMAND, help="Search the commands scheduled on a pool of resources"
+        COMMAND, help="Search the command scheduled from its working directory on a pool of resources"
     )
     parser.add_argument("pool", help="Name of the pool")
-    parser.add_argument("cmd", nargs="*")
+    parser.add_argument("dir", help="Directory to search")
     return COMMAND
 
 
@@ -52,9 +52,10 @@ def execute_command(args):
         if p:
             with open(p) as f:
                 data = json.load(f)
-                if data["cmd"] == args.cmd:
+                if data["wd"] == args.dir:
                     print(idx)
-    return 0
+                    return 0
+    return 1
 
 
-# search_cmd.py ends here
+# searchdir_cmd.py ends here
