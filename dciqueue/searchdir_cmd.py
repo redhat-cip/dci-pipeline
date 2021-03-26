@@ -21,7 +21,6 @@ import logging
 import os
 
 from dciqueue import lib
-from dciqueue.run_cmd import EXT
 
 log = logging.getLogger(__name__)
 
@@ -42,20 +41,14 @@ def execute_command(args):
     if not lib.check_pool(args):
         return 1
 
-    first, next = lib.get_seq(args)
-
-    for idx in range(first, next):
-        p = os.path.join(args.top_dir, "queue", args.pool, str(idx))
-        if not os.path.exists(p):
-            p = os.path.join(args.top_dir, "queue", args.pool, str(idx) + EXT)
-            if not os.path.exists(p):
-                p = None
-        if p:
-            with open(p) as f:
-                data = json.load(f)
-                if data["wd"] == args.dir:
-                    print(idx)
-                    return 0
+    for p in os.listdir(os.path.join(args.top_dir, "queue", args.pool)):
+        if p.endswith(".seq") or p.endswith(".seq.lck"):
+            continue
+        with open(os.path.join(args.top_dir, "queue", args.pool, p)) as f:
+            data = json.load(f)
+            if data["wd"] == args.dir:
+                print(os.path.basename(p).split(".")[0])
+                return 0
     return 1
 
 

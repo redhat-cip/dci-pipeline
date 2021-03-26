@@ -21,6 +21,7 @@ import logging
 import os
 import signal
 import sys
+import time
 
 from dciqueue import lib
 from dciqueue.run_cmd import EXT
@@ -60,10 +61,27 @@ def execute_command(args):
                         % (args.id, args.pool, data["pid"])
                     )
                     os.kill(data["pid"], signal.SIGTERM)
-                    try:
-                        os.unlink(queuefile)
-                    except FileNotFoundError:
-                        pass
+                    # wait for the process to exit
+                    sec = 300
+                    while sec > 0:
+                        try:
+                            log.info("Waiting for process %d to finish" % data["pid"])
+                            os.kill(data["pid"], 0)
+                            time.sleep(1)
+                            sec = sec - 1
+                        except ProcessLookupError:
+                            log.info(
+                                "Process %d is finished, removing %s"
+                                % (data["pid"], queuefile)
+                            )
+                            try:
+                                os.unlink(queuefile)
+                            except FileNotFoundError:
+                                pass
+                            break
+                    if sec <= 0:
+                        sys.stderr.write("Unable to finish command %d\n" % args.id)
+                        return 1
                 else:
                     sys.stderr.write("Unable to stop command %d\n" % args.id)
                     return 1
