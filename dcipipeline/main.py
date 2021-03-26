@@ -452,7 +452,7 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     stage["job_info"]["rc"] = run.rc
     log.info("stats=%s" % run.stats)
     upload_ansible_log(context, private_data_dir, stage)
-    return run.rc == 0 and run.stats and check_stats(run.stats)
+    return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
 def usage(ret, cmd):
@@ -706,8 +706,10 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb):
             set_success_tag(stage, stage["job_info"], dci_remoteci_context)
         else:
             log.error("Unable to run successfully job %s" % stage["name"])
-            if "fallback_last_success" in stage and not is_stage_with_fixed_components(
-                stage
+            if (
+                "fallback_last_success" in stage
+                and not is_stage_with_fixed_components(stage)
+                and not cancel_cb()
             ):
                 log.info("Retrying with tag %s" % stage["fallback_last_success"])
                 stage["failed_job_info"] = stage["job_info"]

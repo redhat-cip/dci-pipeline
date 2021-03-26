@@ -271,6 +271,19 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(self.arg, "tail")
         os.execlp = saved
 
+    def test_search(self):
+        self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "search", "8nodes", "echo", "@RESOURCE"]), 0
+        )
+
     def test_searchdir(self):
         self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
