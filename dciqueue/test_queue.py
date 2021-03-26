@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -271,18 +271,17 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(self.arg, "tail")
         os.execlp = saved
 
-    def test_search(self):
+    def test_searchdir(self):
         self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
+        os.chdir("/tmp")
         self.assertEqual(
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
-        self.assertEqual(
-            main.main(["dci-queue", "search", "8nodes", "echo", "@RESOURCE"]), 0
-        )
+        self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
 
 
 if __name__ == "__main__":
