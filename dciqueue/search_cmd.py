@@ -21,19 +21,19 @@ import logging
 import os
 
 from dciqueue import lib
+from dciqueue.run_cmd import EXT
 
 log = logging.getLogger(__name__)
 
-COMMAND = "searchdir"
+COMMAND = "search"
 
 
 def register_command(subparsers):
     parser = subparsers.add_parser(
-        COMMAND,
-        help="Search the command scheduled from its working directory on a pool of resources",
+        COMMAND, help="Search the commands scheduled on a pool of resources"
     )
     parser.add_argument("pool", help="Name of the pool")
-    parser.add_argument("dir", help="Directory to search")
+    parser.add_argument("cmd", nargs="*")
     return COMMAND
 
 
@@ -41,15 +41,20 @@ def execute_command(args):
     if not lib.check_pool(args):
         return 1
 
-    for p in os.listdir(os.path.join(args.top_dir, "queue", args.pool)):
-        if p.endswith(".seq") or p.endswith(".seq.lck"):
-            continue
-        with open(os.path.join(args.top_dir, "queue", args.pool, p)) as f:
-            data = json.load(f)
-            if data["wd"] == args.dir:
-                print(os.path.basename(p).split(".")[0])
-                return 0
-    return 1
+    first, next = lib.get_seq(args)
+
+    for idx in range(first, next):
+        p = os.path.join(args.top_dir, "queue", args.pool, str(idx))
+        if not os.path.exists(p):
+            p = os.path.join(args.top_dir, "queue", args.pool, str(idx) + EXT)
+            if not os.path.exists(p):
+                p = None
+        if p:
+            with open(p) as f:
+                data = json.load(f)
+                if data["cmd"] == args.cmd:
+                    print(idx)
+    return 0
 
 
-# searchdir_cmd.py ends here
+# search_cmd.py ends here
