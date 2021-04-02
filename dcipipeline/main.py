@@ -299,9 +299,6 @@ def schedule_job(
         )
         if scheduled_job.status_code == 200:
             job_id = scheduled_job.json()["job"]["id"]
-            dci_jobstate.create(
-                remoteci_context, status="new", comment="job scheduled", job_id=job_id
-            )
             for c in scheduled_job.json()["job"]["components"]:
                 if c["id"] not in [c["id"] for c in components]:
                     log.error(
