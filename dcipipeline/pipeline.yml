@@ -8,6 +8,7 @@
     ansible_envvars:
       ENVVAR_42: 42
       ENVVAR_43: 43
+      ENVVAR_TMPDIR: /@tmpdir
     ansible_tags:
       - working
     outputs:

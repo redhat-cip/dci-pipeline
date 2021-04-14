@@ -13,9 +13,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import mock
 import unittest
+import os
 
-from dcipipeline.main import process_args, overload_dicts, get_prev_stages
+from dcipipeline.main import (
+    process_args,
+    overload_dicts,
+    get_prev_stages,
+    pre_process_stage,
+    post_process_stage,
+)
 
 
 class TestMain(unittest.TestCase):
@@ -127,6 +135,29 @@ class TestMain(unittest.TestCase):
         pipeline = [stage1, stage2, stage3, stage4]
         prev_stages = get_prev_stages(stage3, pipeline)
         self.assertEqual(prev_stages, [stage2, stage1])
+
+    @mock.patch("dcipipeline.main.tempfile.mkdtemp")
+    def test_pre_process_stage(self, m):
+        stage = {"ansible_envvars": {"envvar": "/@tmpdir"}}
+        m.return_value = "/tmp/tmppath"
+        stage_metas, stage = pre_process_stage(stage)
+        self.assertEqual(stage_metas["tmpdirs"][0], "/tmp/tmppath")
+
+    @mock.patch("dcipipeline.main.dci_file.create")
+    def test_post_process_stage(self, m):
+        os.makedirs("/tmp/tmppath/")
+        f = open("/tmp/tmppath/fake.xml", "a+")
+        metas = {"tmpdirs": ["/tmp/tmppath"]}
+        stage = {"job_info": {"job": {"id": "1"}}}
+        context = {"job": {"id": "1"}}
+        f.close()
+        post_process_stage(context, stage, metas)
+        m.assert_called_with(
+            context,
+            "junit_fake.xml",
+            file_path="/tmp/tmppath/fake.xml",
+            mime="application/junit",
+            job_id="1")
 
 
 if __name__ == "__main__":
