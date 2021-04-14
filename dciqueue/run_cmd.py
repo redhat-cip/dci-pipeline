@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -72,6 +72,7 @@ def execute_command(args):
 
                 data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
                 data["resource"] = res
+                data["jobid"] = idx
 
                 if "remove" in data and data["remove"]:
                     log.info("Removing resource %s" % res)
@@ -85,6 +86,7 @@ def execute_command(args):
             try:
                 log.info("Running command %s (wd: %s)" % (data["cmd"], data["wd"]))
                 os.chdir(data["wd"])
+                os.environ["DCI_QUEUE_JOBID"] = str(idx)
                 if not args.command_output:
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
@@ -98,10 +100,11 @@ def execute_command(args):
                 else:
                     out_fd = None
                     proc = subprocess.Popen(data["real_cmd"])
-                data["pid"] = proc.pid
+                if proc:
+                    data["pid"] = proc.pid
+                    commands.append([res, proc, out_fd, data["real_cmd"], idx, to_exec])
                 with open(to_exec, "w") as f:
                     json.dump(data, f)
-                commands.append([res, proc, out_fd, data["real_cmd"], idx, to_exec])
             except Exception:
                 log.exception("Unable to execute command")
                 free_resource(res, args)

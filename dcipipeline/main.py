@@ -635,6 +635,9 @@ def add_outputs_paths(job_info, stage):
 def compute_tags(stage, prev_stages):
     tags = ["job:" + stage["name"], "job-type:" + stage["type"]]
 
+    if "DCI_QUEUE_JOBID" in os.environ:
+        tags.append("pipeline-id:%s" % os.environ["DCI_QUEUE_JOBID"])
+
     if "ansible_inventory" in stage:
         tags.append("inventory:" + os.path.basename(stage["ansible_inventory"]))
 

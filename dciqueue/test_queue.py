@@ -30,13 +30,9 @@ class TestQueue(unittest.TestCase):
         os.environ["DCI_QUEUE_DIR"] = self.queue_dir
         os.environ["DCI_QUEUE_LOG_LEVEL"] = "DEBUG"
         os.environ["DCI_QUEUE_CONSOLE_OUTPUT"] = "t"
-        self.original_call = run_cmd.subprocess.Popen
-        run_cmd.subprocess.Popen = self.call
-        self.arg = None
 
     def tearDown(self):
         shutil.rmtree(self.queue_dir)
-        run_cmd.subprocess.Popen = self.original_call
 
     def call(self, arg, stdout=None, stderr=None, *args, **kwargs):
         self.arg = arg
@@ -44,6 +40,7 @@ class TestQueue(unittest.TestCase):
             stdout.close()
         if stderr:
             stderr.close()
+        return None
 
     def fork(self, arg, *args, **kwargs):
         self.arg = arg
@@ -156,7 +153,6 @@ class TestQueue(unittest.TestCase):
         self.assertFalse(os.path.exists(path) and os.path.isfile(path), path)
 
     def test_schedule_block(self):
-        run_cmd.subprocess.Popen = self.original_call
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
@@ -175,11 +171,32 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
-        self.assertEqual(self.arg, ["echo", "cluster4"])
         path = os.path.join(self.queue_dir, "queue", "8nodes", "1")
         self.assertFalse(os.path.exists(path), path)
         path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
         self.assertTrue(os.path.exists(path), path)
+
+    def test_jobid(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    'test -n "$DCI_QUEUE_JOBID" || exit 1; echo @RESOURCE',
+                ]
+            ),
+            0,
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        self.assertEqual(run_cmd.RET_CODE[1], 0)
 
     def test_run_unschedule(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
@@ -210,7 +227,6 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(os.path.exists(path), path)
 
     def test_run_invalid_command(self):
-        run_cmd.subprocess.Popen = self.original_call
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
@@ -233,7 +249,6 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
-        self.assertEqual(self.arg, None)
         path = os.path.join(self.queue_dir, "queue", "8nodes", "1")
         self.assertTrue(os.path.exists(path), path)
 
@@ -263,7 +278,6 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
-        run_cmd.subprocess.Popen = self.original_call
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         saved = os.execlp
         os.execlp = self.fork

@@ -60,12 +60,15 @@ def p(pname):
 
 def test_dci_pipeline():
     jobs = get_jobs()
+    os.environ["DCI_QUEUE_JOBID"] = "12"
     rc = main(["dci-pipeline", p("pipeline.yml")])
     assert rc == 0
     assert len(PIPELINE) == 2
     jobs2 = get_jobs()
     assert len(jobs) + 2 == len(jobs2)
     assert jobs2[0]["previous_job_id"] == jobs2[1]["id"]
+    tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
+    assert "pipeline-id" in tags
 
 
 def test_dci_pipeline_edge():
