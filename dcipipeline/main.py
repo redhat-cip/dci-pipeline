@@ -27,6 +27,7 @@ import os
 import shutil
 import signal
 import sys
+import tempfile
 import yaml
 
 if sys.version_info[0] == 2:
@@ -59,6 +60,30 @@ class SignalHandler:
 
     def called(self):
         return self._called
+
+
+def pre_process_stage(stage):
+    metas = {}
+    if "ansible_envvars" not in stage:
+        return metas, stage
+    for k, v in stage["ansible_envvars"].items():
+        if v == "/@tmpdir":
+            stage["ansible_envvars"][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
+            if "tmpdirs" not in metas:
+                metas["tmpdirs"] = [stage["ansible_envvars"][k]]
+            else:
+                metas["tmpdirs"].append(stage["ansible_envvars"][k])
+    return metas, stage
+
+
+def post_process_stage(metas):
+    for k, v in metas.items():
+        if k == "tmpdirs":
+            for tmpdir in metas["tmpdirs"]:
+                try:
+                    shutil.rmtree(tmpdir)
+                except OSError as e:
+                    print("unable to delete %s: %s" % (tmpdir, str(e)))
 
 
 def load_yaml_file(path):
@@ -422,6 +447,8 @@ def upload_ansible_log(context, ansible_log_dir, stage):
 
 
 def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
+    stage = dict(stage)
+    stage_metas, stage = pre_process_stage(stage)
     job_info = stage["job_info"]
     private_data_dir = job_info["data_dir"]
     inventory = stage_check_path(stage, "ansible_inventory", data_dir)
@@ -457,6 +484,7 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     stage["job_info"]["rc"] = run.rc
     log.info("stats=%s" % run.stats)
     upload_ansible_log(context, private_data_dir, stage)
+    post_process_stage(stage_metas)
     return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
