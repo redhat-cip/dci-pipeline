@@ -27,6 +27,7 @@ import os
 import shutil
 import signal
 import sys
+import tempfile
 import yaml
 
 if sys.version_info[0] == 2:
@@ -61,9 +62,20 @@ class SignalHandler:
         return self._called
 
 
+def pre_process_yaml(stages):
+    for stage in stages:
+        if 'ansible_envvars' not in stage:
+            continue
+        for k, v in stage['ansible_envvars'].items():
+            if v == '/@tmpdir':
+                stage['ansible_envvars'][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
+    return stages
+
+
 def load_yaml_file(path):
     with open(path) as file:
-        return yaml.load(file, Loader=yaml.SafeLoader)
+        stages = yaml.load(file, Loader=yaml.SafeLoader)
+        return pre_process_yaml(stages)
 
 
 def load_credentials(stage, config_dir):
