@@ -27,6 +27,7 @@ import os
 import shutil
 import signal
 import sys
+import tempfile
 import yaml
 
 if sys.version_info[0] == 2:
@@ -59,6 +60,50 @@ class SignalHandler:
 
     def called(self):
         return self._called
+
+
+def pre_process_stage(stage):
+    metas = {}
+    if "ansible_envvars" not in stage:
+        return metas, stage
+    for k, v in stage["ansible_envvars"].items():
+        if v != "/@tmpdir":
+            continue
+        stage["ansible_envvars"][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
+        if "tmpdirs" not in metas:
+            metas["tmpdirs"] = [{"name": k, "path": stage["ansible_envvars"][k]}]
+        else:
+            metas["tmpdirs"].append({"name": k, "path": stage["ansible_envvars"][k]})
+    return metas, stage
+
+
+def post_process_stage(context, stage, metas):
+    if "tmpdirs" not in metas:
+        return
+
+    for tmpdir in metas["tmpdirs"]:
+        if tmpdir["name"] == "JUNIT_OUTPUT_DIR":
+            upload_junit_files_from_dir(context, stage, tmpdir["path"])
+        try:
+            shutil.rmtree(tmpdir["path"])
+        except OSError as e:
+            log.warning("unable to delete %s: %s" % (tmpdir, str(e)))
+
+
+def upload_junit_files_from_dir(context, stage, dir):
+    for f in os.listdir(dir):
+        _abs_file_path = os.path.join(dir, f)
+        if os.path.isfile(_abs_file_path) and f.endswith(".xml"):
+            log.info("Uploading junit file: %s" % _abs_file_path)
+            dci_file.create(
+                context,
+                f,
+                file_path=_abs_file_path,
+                mime="application/junit",
+                job_id=stage["job_info"]["job"]["id"],
+            )
+        else:
+            log.warning("%s is not a junit file" % _abs_file_path)
 
 
 def load_yaml_file(path):
@@ -422,6 +467,8 @@ def upload_ansible_log(context, ansible_log_dir, stage):
 
 
 def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
+    stage = dict(stage)
+    stage_metas, stage = pre_process_stage(stage)
     job_info = stage["job_info"]
     private_data_dir = job_info["data_dir"]
     inventory = stage_check_path(stage, "ansible_inventory", data_dir)
@@ -457,6 +504,7 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     stage["job_info"]["rc"] = run.rc
     log.info("stats=%s" % run.stats)
     upload_ansible_log(context, private_data_dir, stage)
+    post_process_stage(context, stage, stage_metas)
     return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
