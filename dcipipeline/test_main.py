@@ -13,9 +13,18 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import mock
 import unittest
+import os
 
-from dcipipeline.main import process_args, overload_dicts, get_prev_stages
+from dcipipeline.main import (
+    process_args,
+    overload_dicts,
+    get_prev_stages,
+    pre_process_stage,
+    post_process_stage,
+    upload_junit_files_from_dir,
+)
 
 
 class TestMain(unittest.TestCase):
@@ -127,6 +136,48 @@ class TestMain(unittest.TestCase):
         pipeline = [stage1, stage2, stage3, stage4]
         prev_stages = get_prev_stages(stage3, pipeline)
         self.assertEqual(prev_stages, [stage2, stage1])
+
+    @mock.patch("dcipipeline.main.tempfile.mkdtemp")
+    def test_pre_process_stage(self, m):
+        stage = {"ansible_envvars": {"envvar": "/@tmpdir"}}
+        m.return_value = "/tmp/tmppath"
+        stage_metas, stage = pre_process_stage(stage)
+        self.assertEqual(stage_metas["tmpdirs"][0]["path"], "/tmp/tmppath")
+
+    @mock.patch("dcipipeline.main.shutil.rmtree")
+    @mock.patch("dcipipeline.main.upload_junit_files_from_dir")
+    def test_post_process_stage(self, m_upload_junit, m_rmtree):
+        metas = {
+            "tmpdirs": [{"name": "JUNIT_OUTPUT_DIR", "path": "/tmp/junit_tmppath"}]
+        }
+        post_process_stage("context", "stage", metas)
+        m_upload_junit.assert_called_with("context", "stage", "/tmp/junit_tmppath")
+        m_rmtree.assert_called_with("/tmp/junit_tmppath")
+
+        m_upload_junit.reset_mock()
+        m_rmtree.reset_mock()
+        metas = {"tmpdirs": [{"name": "envvar1", "path": "/tmp/tmppath"}]}
+        post_process_stage("context", "stage", metas)
+        self.assertTrue(not m_upload_junit.called)
+        m_rmtree.assert_called_with("/tmp/tmppath")
+
+    @mock.patch("dcipipeline.main.dci_file.create")
+    def test_upload_junit_files_from_dir(self, m):
+        try:
+            os.makedirs("/tmp/junit-tmppath")
+        except Exception:
+            pass
+        f = open("/tmp/junit-tmppath/junit-tests.xml", "a+").close()
+        metas = {"junit-tmpdir": ["/tmp/junit-tmppath"]}
+        stage = {"job_info": {"job": {"id": "1"}}}
+        upload_junit_files_from_dir("context", stage, "/tmp/junit-tmppath")
+        m.assert_called_with(
+            "context",
+            "junit-tests.xml",
+            file_path="/tmp/junit-tmppath/junit-tests.xml",
+            mime="application/junit",
+            job_id="1",
+        )
 
 
 if __name__ == "__main__":
