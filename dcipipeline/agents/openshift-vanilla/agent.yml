@@ -23,6 +23,26 @@
           - envvar_42 == "42"
           - envvar_43 == "43"
 
+    - name: stat the tmpdir environment variable
+      stat:
+        path: "{{ lookup('env','ENVVAR_TMPDIR') }}"
+      register: tmpdir
+
+    - name: check the existence of the temporary directory
+      assert:
+        that:
+          - tmpdir.stat.exists
+
+    - name: stat the junit tmpdir environment variable
+      stat:
+        path: "{{ lookup('env','ENVVAR_JUNIT_TMPDIR') }}"
+      register: junit_tmpdir
+
+    - name: check the existence of the temporary directory
+      assert:
+        that:
+          - junit_tmpdir.stat.exists
+
     - name: Schedule a new job
       dci_job:
         topic: '{{ dci_topic }}'

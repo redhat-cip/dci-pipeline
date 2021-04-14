@@ -151,6 +151,8 @@ continue testing the next layers in the pipeline. Example:
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
 
+### passing environment variables
+
 If you want to pass environment variables to the agent. Example:
 
 ```YAML
@@ -171,6 +173,39 @@ If you want to pass environment variables to the agent. Example:
     success_tag: ocp-vanilla-4.4-ok
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
+
+### instrument the pipeline with temporary directories
+
+You can specify the meta value "/@tmpdir" or "/@junit-tmpdir" that will be replaced
+by an actual path of a temporary directory. Example:
+
+```YAML
+---
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: agents/openshift-vanilla/agent.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_extravars:
+      answer: 42
+    ansible_envvars:
+      ENVVAR_42: 42
+      ENVVAR_43: 43
+      MY_TMP_DIR: /@tmpdir
+      MY_JUNIT_TMP_DIR: /@junit-tmpdir
+    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    topic: OCP-4.5
+    components:
+      - ocp
+    success_tag: ocp-vanilla-4.4-ok
+    fallback_last_success: ocp-vanilla-4.5-ok
+```
+
+This will create a new temporary directory before running the stage, at the end of
+the stage the directory is removed.
+
+When using "/@junit-tmpdir" meta value, it's expecting to have junit files at the end
+of the stage, these junit file will be uploaded to the dci control server.
+
 
 ## dci-queue command
 
