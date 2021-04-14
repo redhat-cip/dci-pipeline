@@ -23,6 +23,16 @@
           - envvar_42 == "42"
           - envvar_43 == "43"
 
+    - name: stat the tmpdir environment variable
+      stat:
+        path: "{{ lookup('env','ENVVAR_TMPDIR') }}"
+      register: tmpdir
+
+    - name: check the existence of the temporary directory
+      assert:
+        that:
+          - tmpdir.stat.exists
+
     - name: Schedule a new job
       dci_job:
         topic: '{{ dci_topic }}'

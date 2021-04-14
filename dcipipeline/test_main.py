@@ -13,9 +13,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import mock
 import unittest
 
-from dcipipeline.main import process_args, overload_dicts, get_prev_stages
+from dcipipeline.main import (
+    process_args,
+    overload_dicts,
+    get_prev_stages,
+    pre_process_stage,
+    post_process_stage,
+)
 
 
 class TestMain(unittest.TestCase):
@@ -127,6 +134,19 @@ class TestMain(unittest.TestCase):
         pipeline = [stage1, stage2, stage3, stage4]
         prev_stages = get_prev_stages(stage3, pipeline)
         self.assertEqual(prev_stages, [stage2, stage1])
+
+    @mock.patch("dcipipeline.main.tempfile.mkdtemp")
+    def test_pre_process_stage(self, m):
+        stage = {"ansible_envvars": {"envvar": "/@tmpdir"}}
+        m.return_value = "/tmp/tmppath"
+        stage_metas, stage = pre_process_stage(stage)
+        self.assertEqual(stage_metas["tmpdirs"][0], "/tmp/tmppath")
+
+    @mock.patch("dcipipeline.main.shutil.rmtree")
+    def test_post_process_stage(self, m):
+        metas = {"tmpdirs": ["/tmp/tmppath"]}
+        post_process_stage(metas)
+        m.assert_called_with("/tmp/tmppath")
 
 
 if __name__ == "__main__":
