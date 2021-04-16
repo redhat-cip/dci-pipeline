@@ -203,6 +203,8 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
+        path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
+        self.assertTrue(os.path.exists(path), path)
         self.assertEqual(
             main.main(
                 [
@@ -221,7 +223,7 @@ class TestQueue(unittest.TestCase):
         time.sleep(5)
         self.assertEqual(main.main(["dci-queue", "unschedule", "8nodes", "1"]), 0)
         time.sleep(5)
-        path = os.path.join(self.queue_dir, "schedule", "8nodes", "1" + run_cmd.EXT)
+        path = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
         self.assertFalse(os.path.exists(path), path)
         path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
         self.assertTrue(os.path.exists(path), path)
