@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -83,9 +83,10 @@ def display_cmd(args, filename, ext=None):
             else:
                 cmd = data["cmd"]
             print(
-                "%s: %s (wd: %s)%s"
+                "%s%s: %s (wd: %s)%s"
                 % (
                     filename[: -len(ext)] if ext else filename,
+                    " [%s]" % data["resource"] if "resource" in data else "",
                     " ".join(cmd),
                     data["wd"],
                     " [REMOVE]" if "remove" in data and data["remove"] else "",
