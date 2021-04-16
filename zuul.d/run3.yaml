@@ -27,6 +27,6 @@
         chdir: "{{ zuul.project.src_dir }}"
 
     - name: Run the example pipeline in Python 3
-      command: tox -epy3
+      command: tox
       args:
         chdir: "{{ zuul.project.src_dir }}"
