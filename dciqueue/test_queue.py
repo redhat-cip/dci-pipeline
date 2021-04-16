@@ -190,7 +190,7 @@ class TestQueue(unittest.TestCase):
                     "--",
                     "bash",
                     "-c",
-                    'test -n "$DCI_QUEUE_JOBID" || exit 1; echo @RESOURCE',
+                    'test "$DCI_QUEUE_JOBID" = "8nodes.1" || exit 1; echo @RESOURCE',
                 ]
             ),
             0,
