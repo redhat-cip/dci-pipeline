@@ -28,6 +28,7 @@ from dciqueue.run_cmd import EXT
 
 if sys.version_info[0] == 2:
     FileNotFoundError = OSError
+    ProcessLookupError = OSError
 
 log = logging.getLogger(__name__)
 
