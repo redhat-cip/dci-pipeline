@@ -219,12 +219,14 @@ class TestQueue(unittest.TestCase):
         )
         os.system("dci-queue run 8nodes &")
         time.sleep(5)
+        res_file = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
+        job_file = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
+        self.assertFalse(os.path.exists(res_file), res_file)
+        self.assertTrue(os.path.exists(job_file), job_file)
         self.assertEqual(main.main(["dci-queue", "unschedule", "8nodes", "1"]), 0)
         time.sleep(5)
-        path = os.path.join(self.queue_dir, "schedule", "8nodes", "1" + run_cmd.EXT)
-        self.assertFalse(os.path.exists(path), path)
-        path = os.path.join(self.queue_dir, "available", "8nodes", "cluster4")
-        self.assertTrue(os.path.exists(path), path)
+        self.assertFalse(os.path.exists(job_file), job_file)
+        self.assertTrue(os.path.exists(res_file), res_file)
 
     def test_run_invalid_command(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
