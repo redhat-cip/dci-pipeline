@@ -86,7 +86,7 @@ def execute_command(args):
             try:
                 log.info("Running command %s (wd: %s)" % (data["cmd"], data["wd"]))
                 os.chdir(data["wd"])
-                os.environ["DCI_QUEUE_JOBID"] = str(idx)
+                os.environ["DCI_QUEUE_JOBID"] = "%s.%d" % (args.pool, idx)
                 if not args.command_output:
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
