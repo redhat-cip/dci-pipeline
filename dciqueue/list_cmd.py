@@ -58,6 +58,20 @@ def execute_command(args):
         )
     )
 
+    reasondir = os.path.join(args.top_dir, "reason", args.pool)
+    if os.path.exists(reasondir):
+        reasons = []
+        for fname in os.listdir(reasondir):
+            reasonfile = os.path.join(reasondir, fname)
+            if os.path.exists(reasonfile):
+                with open(reasonfile) as f:
+                    data = json.load(f)
+                    reasons.append(data)
+        if reasons != []:
+            print("Removed resources on the %s pool:" % args.pool)
+            for d in reasons:
+                print(" %s: %s [%s]" % (d["resource"], d["reason"], d["date"]))
+
     print("Executing commands on the %s pool:" % args.pool)
     for path in [
         p
@@ -83,7 +97,7 @@ def display_cmd(args, filename, ext=None):
             else:
                 cmd = data["cmd"]
             print(
-                "%s%s: %s (wd: %s)%s"
+                " %s%s: %s (wd: %s)%s"
                 % (
                     filename[: -len(ext)] if ext else filename,
                     " [%s]" % data["resource"] if "resource" in data else "",

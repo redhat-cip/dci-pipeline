@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -61,6 +61,12 @@ def execute_command(args):
         if not os.path.islink(link):
             log.debug("Creating symlink %s" % link)
             os.symlink(f, link)
+
+    reason = os.path.join(args.top_dir, "reason", args.pool, args.name)
+    if os.path.exists(reason):
+        log.debug("Removing reason file %s" % reason)
+        os.unlink(reason)
+
     return 0
 
 

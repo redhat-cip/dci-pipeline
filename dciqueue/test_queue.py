@@ -23,6 +23,8 @@ import unittest
 from dciqueue import main
 from dciqueue import run_cmd
 
+ALL_DIRS = ("pool", "queue", "available", "log", "reason")
+
 
 class TestQueue(unittest.TestCase):
     def setUp(self):
@@ -48,14 +50,14 @@ class TestQueue(unittest.TestCase):
     def test_add_pool(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
-        for key in ("pool", "queue", "available", "log"):
+        for key in ALL_DIRS:
             path = os.path.join(self.queue_dir, key, "8nodes")
             self.assertTrue(os.path.exists(path) and os.path.isdir(path), path)
 
     def test_remove_pool(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
         self.assertEqual(main.main(["dci-queue", "remove-pool", "8nodes"]), 0)
-        for key in ("pool", "queue", "available", "log"):
+        for key in ALL_DIRS:
             path = os.path.join(self.queue_dir, key, "8nodes")
             self.assertFalse(os.path.exists(path) and os.path.isdir(path), path)
 
@@ -88,12 +90,30 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
+        with self.assertRaises(SystemExit):
+            main.main(["dci-queue", "remove-resource", "8nodes", "cluster4"])
         self.assertEqual(
-            main.main(["dci-queue", "remove-resource", "8nodes", "cluster4"]), 0
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "8nodes",
+                    "cluster4",
+                    "reserved to debug blabla (fred)",
+                ]
+            ),
+            0,
         )
         for key in ("pool", "available"):
             path = os.path.join(self.queue_dir, key, "8nodes", "cluster4")
             self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
+        reason = os.path.join(self.queue_dir, "reason", "8nodes", "cluster4")
+        self.assertTrue(os.path.exists(reason), reason)
+        self.assertEqual(main.main(["dci-queue", "list", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertFalse(os.path.exists(reason), reason)
 
     def test_schedule(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)

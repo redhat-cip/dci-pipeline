@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -33,7 +33,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    for key in ("pool", "queue", "available", "log"):
+    for key in ("pool", "queue", "available", "log", "reason"):
         d = os.path.join(args.top_dir, key, args.pool)
         log.debug("Creating %s %s" % (key, d))
         if not os.path.exists(d):

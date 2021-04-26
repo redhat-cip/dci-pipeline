@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -102,7 +102,7 @@ def main(cmdargs=sys.argv):
             logging.basicConfig(
                 level=getattr(logging, args.log_level.upper()),
                 format=LOG_FORMAT,
-                filename=os.path.join(args.top_dir, "queue.log"),
+                filename=os.path.join(args.top_dir, "dci-queue.log"),
             )
 
         log.debug("Launching %s" % args.command)
