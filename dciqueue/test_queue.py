@@ -312,6 +312,18 @@ class TestQueue(unittest.TestCase):
         )
         self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
 
+    def test_add_crontab(self):
+        crontab_file = os.path.join(self.queue_dir, "crontab")
+        with open(crontab_file, "w"):
+            pass
+        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-crontab", "8nodes", crontab_file]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "remove-crontab", "8nodes", crontab_file]), 0
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
