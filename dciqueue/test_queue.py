@@ -46,15 +46,15 @@ class TestQueue(unittest.TestCase):
         self.arg = arg
 
     def test_add_pool(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         for key in ("pool", "queue", "available", "log"):
             path = os.path.join(self.queue_dir, key, "8nodes")
             self.assertTrue(os.path.exists(path) and os.path.isdir(path), path)
 
     def test_remove_pool(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
-        self.assertEqual(main.main(["dci-queue", "remove-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "remove-pool", "-n", "8nodes"]), 0)
         for key in ("pool", "queue", "available", "log"):
             path = os.path.join(self.queue_dir, key, "8nodes")
             self.assertFalse(os.path.exists(path) and os.path.isdir(path), path)
@@ -67,7 +67,7 @@ class TestQueue(unittest.TestCase):
             else:
                 self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
 
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         cmd = os.path.join(self.queue_dir, "queue", "8nodes", "1" + run_cmd.EXT)
         with open(cmd, "w") as fd:
             json.dump({"resource": "cluster4"}, fd)
@@ -84,7 +84,7 @@ class TestQueue(unittest.TestCase):
             validate(key, exist)
 
     def test_remove_resource(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -96,7 +96,7 @@ class TestQueue(unittest.TestCase):
             self.assertFalse(os.path.exists(path) or os.path.islink(path), path)
 
     def test_schedule(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -116,7 +116,7 @@ class TestQueue(unittest.TestCase):
         self.assertFalse(os.path.exists(path) and os.path.isfile(path), path)
 
     def test_schedule_force(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -131,7 +131,7 @@ class TestQueue(unittest.TestCase):
             self.assertTrue(os.path.exists(path) and os.path.isfile(path), path)
 
     def test_schedule_remove(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -143,7 +143,7 @@ class TestQueue(unittest.TestCase):
         self.assertFalse(os.path.exists(path), path)
 
     def test_unschedule(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -153,7 +153,7 @@ class TestQueue(unittest.TestCase):
         self.assertFalse(os.path.exists(path) and os.path.isfile(path), path)
 
     def test_schedule_block(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -163,7 +163,7 @@ class TestQueue(unittest.TestCase):
         )
 
     def test_run(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -177,7 +177,7 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(os.path.exists(path), path)
 
     def test_jobid(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -199,7 +199,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(run_cmd.RET_CODE[1], 0)
 
     def test_run_unschedule(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -229,7 +229,7 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(os.path.exists(res_file), res_file)
 
     def test_run_invalid_command(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -246,7 +246,7 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(os.path.exists(path), path)
 
     def test_run_no_resource(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
@@ -255,7 +255,7 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(os.path.exists(path), path)
 
     def test_list(self):
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -266,14 +266,14 @@ class TestQueue(unittest.TestCase):
 
     def test_log_level(self):
         self.assertEqual(
-            main.main(["dci-queue", "-l", "CRITICAL", "add-pool", "8nodes"]), 0
+            main.main(["dci-queue", "-l", "CRITICAL", "add-pool", "-n", "8nodes"]), 0
         )
         with self.assertRaises(SystemExit):
-            main.main(["dci-queue", "-l", "TOTO", "add-pool", "8nodes"])
+            main.main(["dci-queue", "-l", "TOTO", "add-pool", "-n", "8nodes"])
 
     def test_log(self):
         self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -289,7 +289,7 @@ class TestQueue(unittest.TestCase):
 
     def test_search(self):
         self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -302,7 +302,7 @@ class TestQueue(unittest.TestCase):
 
     def test_searchdir(self):
         self.assertEqual(main.main(["dci-queue", "log", "8nodes", "1"]), 1)
-        self.assertEqual(main.main(["dci-queue", "add-pool", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -311,6 +311,18 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
         self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
+
+    def test_add_crontab(self):
+        crontab_file = os.path.join(self.queue_dir, "crontab")
+        with open(crontab_file, "w"):
+            pass
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-crontab", "8nodes", crontab_file]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "remove-crontab", "8nodes", crontab_file]), 0
+        )
 
 
 if __name__ == "__main__":

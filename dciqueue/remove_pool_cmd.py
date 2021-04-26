@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,6 +20,8 @@ import logging
 import os
 import shutil
 
+from dciqueue import uninstall_cmd
+
 log = logging.getLogger(__name__)
 
 COMMAND = "remove-pool"
@@ -27,11 +29,20 @@ COMMAND = "remove-pool"
 
 def register_command(subparsers):
     parser = subparsers.add_parser(COMMAND, help="Remove a pool of resources")
+    parser.add_argument(
+        "-n",
+        "--no-uninstall",
+        help="Do not run the uninstall phase",
+        action="store_true",
+    )
     parser.add_argument("pool", help="Name of the pool")
     return COMMAND
 
 
 def execute_command(args):
+    if not args.no_uninstall:
+        uninstall_cmd.execute_command(args)
+
     for key in ("pool", "queue", "available", "log"):
         d = os.path.join(args.top_dir, key, args.pool)
         log.debug(" Removing %s" % d)

@@ -25,6 +25,8 @@ import time
 
 log = logging.getLogger(__name__)
 
+CRONTAB_LINE_FMT = "  *  *  *  *  *         dci-queue run %s"
+
 
 class Seq(object):
     def __init__(self, args):

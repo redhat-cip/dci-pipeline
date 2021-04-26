@@ -175,7 +175,8 @@ If you want to pass environment variables to the agent. Example:
 ## dci-queue command
 
 The `dci-queue` command allows to execute commands consuming resources
-from pools.
+from pools. These pools are specific to the user executing the
+commands.
 
 Create a pool named `8nodes`:
 ```ShellSession

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -19,6 +19,7 @@
 import logging
 import os
 
+from dciqueue import install_cmd
 from dciqueue import lib
 
 log = logging.getLogger(__name__)
@@ -28,6 +29,12 @@ COMMAND = "add-pool"
 
 def register_command(subparsers):
     parser = subparsers.add_parser(COMMAND, help="Create a pool of resources")
+    parser.add_argument(
+        "-n",
+        "--no-install",
+        help="Do not run the install phase",
+        action="store_true",
+    )
     parser.add_argument("pool", help="Name of the pool")
     return COMMAND
 
@@ -48,7 +55,10 @@ def execute_command(args):
 
     seq.unlock()
 
-    return 0
+    if args.no_install:
+        return 0
+
+    return install_cmd.execute_command(args)
 
 
 # add_pool_cmd.py ends here
