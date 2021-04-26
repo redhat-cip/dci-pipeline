@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "08b1d86c_05c87bc5",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-04-26T10:42:52Z",
+      "side": 1,
+      "message": "should we rather look at the JUNIT_OUTPUT_DIR instead of uploading from any directory?",
+      "revId": "a7509f2cf24f69566da17501d5582748cec7111c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
