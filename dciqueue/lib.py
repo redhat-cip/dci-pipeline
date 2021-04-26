@@ -26,6 +26,7 @@ import time
 log = logging.getLogger(__name__)
 
 DIRS = ("pool", "queue", "available", "log", "reason")
+CRONTAB_LINE_FMT = "  *  *  *  *  *         dci-queue run %s"
 
 
 class Seq(object):

@@ -1,56 +1,48 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2021 Red Hat, Inc.
+#
+# Author: Frederic Lepied <flepied@redhat.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
+# under the License.
 
 """
 """
 
 import logging
 import os
-import shutil
 
 from dciqueue import lib
-from dciqueue import uninstall_cmd
 
 log = logging.getLogger(__name__)
 
-COMMAND = "remove-pool"
+COMMAND = "uninstall"
 
 
 def register_command(subparsers):
-    parser = subparsers.add_parser(COMMAND, help="Remove a pool of resources")
-    parser.add_argument(
-        "-n",
-        "--no-uninstall",
-        help="Do not run the uninstall phase",
-        action="store_true",
-    )
+    parser = subparsers.add_parser(COMMAND, help="Uninstall dci-queue")
     parser.add_argument("pool", help="Name of the pool")
     return COMMAND
 
 
 def execute_command(args):
-    if not args.no_uninstall:
-        uninstall_cmd.execute_command(args)
+    if not lib.check_pool(args):
+        return 1
 
-    for key in lib.DIRS:
-        d = os.path.join(args.top_dir, key, args.pool)
-        log.debug(" Removing %s" % d)
-        if os.path.exists(d):
-            shutil.rmtree(d)
+    cmd = "env EDITOR='dci-queue remove-crontab %s' crontab -e" % args.pool
+    log.info("Editing crontab with: '%s'" % cmd)
+    os.system(cmd)
 
     return 0
 
 
-# remove_pool_cmd.py ends here
+# uninstall_cmd.py ends here
