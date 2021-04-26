@@ -222,7 +222,7 @@ $ dci-queue unschedule 8nodes 1
 
 Remove resource `cluster4` from the `8nodes` pool:
 ```ShellSession
-$ dci-queue remove-resource 8nodes cluster4
+$ dci-queue remove-resource 8nodes cluster4 'reserved to debug blabla (fred)'
 ```
 
 Remove the `8nodes` pool:

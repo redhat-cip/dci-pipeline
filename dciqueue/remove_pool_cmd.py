@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,6 +20,8 @@ import logging
 import os
 import shutil
 
+from dciqueue import lib
+
 log = logging.getLogger(__name__)
 
 COMMAND = "remove-pool"
@@ -32,7 +34,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    for key in ("pool", "queue", "available", "log"):
+    for key in lib.DIRS:
         d = os.path.join(args.top_dir, key, args.pool)
         log.debug(" Removing %s" % d)
         if os.path.exists(d):
