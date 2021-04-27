@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "af930d0c_d3854c25",
+        "filename": "dciqueue/test_queue.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 667
+      },
+      "writtenOn": "2021-04-27T15:29:08Z",
+      "side": 1,
+      "message": "Maybe this could be defined in dciqueue/main.py so it can be reused in other places, what do you think?",
+      "revId": "cd3c343f5639614dc906a6f819d21c19f58dd246",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
