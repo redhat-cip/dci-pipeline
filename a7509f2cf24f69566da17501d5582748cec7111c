@@ -16,6 +16,24 @@
       "revId": "a7509f2cf24f69566da17501d5582748cec7111c",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f306bb90_e3a39c32",
+        "filename": "dcipipeline/main.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-04-27T02:39:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "08b1d86c_05c87bc5",
+      "revId": "a7509f2cf24f69566da17501d5582748cec7111c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": false
     }
   ]
 }
