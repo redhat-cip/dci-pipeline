@@ -208,7 +208,8 @@ at the end of the stage (file extension as .xml), these junit files will be uplo
 ## dci-queue command
 
 The `dci-queue` command allows to execute commands consuming resources
-from pools.
+from pools. These pools are specific to the user executing the
+commands.
 
 Create a pool named `8nodes`:
 ```ShellSession

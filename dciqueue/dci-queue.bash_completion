@@ -13,7 +13,7 @@ _dci_queue() {
     prev2="${COMP_WORDS[COMP_CWORD-2]}"
 
     case $prev in
-        add-resource|list|log|remove-pool|remove-resource|run|schedule|search|searchdir|unschedule)
+        add-resource|install|list|log|remove-pool|remove-resource|run|schedule|search|searchdir|uninstall|unschedule)
             opts="$(ls ~/.dci-queue/queue)"
             ;;
         -l)
@@ -24,7 +24,7 @@ _dci_queue() {
             opts=""
             ;;
         *)
-            opts="-h -l -t -c add-pool add-resource list log remove-pool remove-resource run schedule search searchdir unschedule"
+            opts="-h -l -t -c add-pool add-resource install list log remove-pool remove-resource run schedule search searchdir uninstall unschedule"
             ;;
     esac
 
