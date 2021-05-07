@@ -65,11 +65,21 @@ class SignalHandler:
 def pre_process_stage(stage):
     metas = {}
     if "ansible_envvars" not in stage:
-        return metas, stage
+        stage["ansible_envvars"] = {}
+
+    # create sane default env variables
+    if "JUNIT_TEST_CASE_PREFIX" not in stage["ansible_envvars"]:
+        stage["ansible_envvars"]["JUNIT_TEST_CASE_PREFIX"] = "test_"
+    if "JUNIT_TASK_CLASS" not in stage["ansible_envvars"]:
+        stage["ansible_envvars"]["JUNIT_TASK_CLASS"] = "yes"
+    if "JUNIT_OUTPUT_DIR" not in stage["ansible_envvars"]:
+        stage["ansible_envvars"]["JUNIT_OUTPUT_DIR"] = "/@tmpdir"
+
     for k, v in stage["ansible_envvars"].items():
         if v != "/@tmpdir":
             continue
         stage["ansible_envvars"][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
+        log.info("Created %s for env var %s" % (stage["ansible_envvars"][k], k))
         if "tmpdirs" not in metas:
             metas["tmpdirs"] = [{"name": k, "path": stage["ansible_envvars"][k]}]
         else:
@@ -97,7 +107,7 @@ def upload_junit_files_from_dir(context, stage, dir):
             log.info("Uploading junit file: %s" % _abs_file_path)
             dci_file.create(
                 context,
-                f,
+                f[:-4],  # remove .xml at the end
                 file_path=_abs_file_path,
                 mime="application/junit",
                 job_id=stage["job_info"]["job"]["id"],

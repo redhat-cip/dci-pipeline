@@ -172,7 +172,7 @@ class TestMain(unittest.TestCase):
         upload_junit_files_from_dir("context", stage, "/tmp/junit-tmppath")
         m.assert_called_with(
             "context",
-            "junit-tests.xml",
+            "junit-tests",
             file_path="/tmp/junit-tmppath/junit-tests.xml",
             mime="application/junit",
             job_id="1",

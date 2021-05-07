@@ -202,8 +202,19 @@ by an actual path of a temporary directory. Example:
 This will create a new temporary directory before running the stage, at the end of
 the stage the directory is removed.
 
-If the environment variable name is "JUNIT_OUTPUT_DIR" then it's expecting to have junit files
-at the end of the stage (file extension as .xml), these junit files will be uploaded to the dci control server.
+### special environment variables
+
+`dci-pipeline` is setting the following environment variables to
+enable the `junit` Ansible callback to work out of the box:
+
+```YAML
+  ansible_envvars:
+      JUNIT_TEST_CASE_PREFIX: test_
+      JUNIT_TASK_CLASS: yes
+      JUNIT_OUTPUT_DIR: /@tmpdir
+```
+
+You can override them if you need.
 
 ## dci-queue command
 

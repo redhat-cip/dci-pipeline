@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 Version:        0.0.3
-Release:        1.VERS%{?dist}
+Release:        4.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
 # TODO: actually mirror on github
@@ -23,6 +23,7 @@ Requires:       PyYAML
 Requires:       python2-dciclient
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
+Requires:       python2-junit_xml
 %endif
 
 %if 0%{?with_python3}
@@ -31,6 +32,7 @@ BuildRequires:  python3-setuptools
 Requires:       python3-PyYAML
 Requires:       python3-dciclient
 Requires:       python3-ansible-runner
+Requires:       python3-junit_xml
 %endif
 
 BuildRequires:  systemd
@@ -114,13 +116,16 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
-* Mon Jan 12 2021 Yassine Lamgarchal <ylamgarc@redhat.com> 0.0.3-3.VERS
+* Fri May  7 2021 Frederic Lepied <flepied@redhat.com> - 0.0.3-4
+- requires junit-xml
+
+* Mon Jan 12 2021 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.0.3-3
 - add dci-diff-pipeline
 
-* Mon Jan 11 2021 Yassine Lamgarchal <ylamgarc@redhat.com> 0.0.3-2.VERS
+* Mon Jan 11 2021 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.0.3-2
 - add dci-rebuild-pipeline
 
-* Fri Sep 25 2020 Frederic Lepied <flepied@redhat.com> 0.0.3-1.VERS
+* Fri Sep 25 2020 Frederic Lepied <flepied@redhat.com> - 0.0.3-1
 - provide a bash completion file
 
 * Thu Sep 10 2020 Frederic Lepied <flepied@redhat.com> - 0.0.2-1
