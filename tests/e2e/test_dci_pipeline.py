@@ -67,6 +67,10 @@ def test_dci_pipeline():
     jobs2 = get_jobs()
     assert len(jobs) + 2 == len(jobs2)
     assert jobs2[0]["previous_job_id"] == jobs2[1]["id"]
+    assert jobs2[0]["name"] == "rh-cnf"
+    assert jobs2[1]["configuration"] == "myconf"
+    assert jobs2[1]["url"] == "https://lwn.net/"
+    assert jobs2[1]["name"] == "openshift-vanilla"
     tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
     assert "pipeline-id" in tags
 

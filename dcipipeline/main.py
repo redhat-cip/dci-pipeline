@@ -341,8 +341,11 @@ def schedule_job(
 
     schedule = dci_job.create(
         remoteci_context,
-        topic_id,
-        comment=stage.get("comment", stage["name"]),
+        topic_id=topic_id,
+        comment=stage.get("comment"),
+        name=stage.get("name"),
+        configuration=stage.get("configuration"),
+        url=stage.get("url"),
         components=[c["id"] for c in components],
         data={"pipeline": pipeline_data},
         previous_job_id=previous_job_id,

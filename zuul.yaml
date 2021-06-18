@@ -15,7 +15,7 @@
     nodeset:
       nodes:
         - name: testrunner
-          label: dib-dci-centos-7
+          label: dci-centos-7
 
 - job:
     name: dci-pipeline-tests-py3
@@ -38,14 +38,12 @@
 - project:
     check:
       jobs:
-        - dci-pipeline-tests-py2
         - dci-pipeline-tests-py3
         - dci-rpm-build
         - dci-rpm-build-el8
 
     gate:
       jobs:
-        - dci-pipeline-tests-py2
         - dci-pipeline-tests-py3
         - dci-rpm-build
         - dci-rpm-build-el8
@@ -53,13 +51,11 @@
     dci-post:
       queue: dci
       jobs:
-        - dci-pipeline-tests-py2
         - dci-pipeline-tests-py3
         - dci-rpm-build
         - dci-rpm-build-el8
         - dci-rpm-publish:
             dependencies:
-              - dci-pipeline-tests-py2
               - dci-pipeline-tests-py3
               - dci-rpm-build
               - dci-rpm-build-el8

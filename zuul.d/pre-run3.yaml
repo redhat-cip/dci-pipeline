@@ -8,7 +8,6 @@
         name: docker
         state: present
 
-
     - name: Install list of packages
       become: yes
       yum:
