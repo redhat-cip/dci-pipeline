@@ -18,7 +18,7 @@
     topic: OCP-4.4
     components:
       - ocp=ocp-4.4.0-0.nightly-20200701
-      - ose-tests
+      - ose-tests?tags:ocp-vanilla-4.4-ok&name:ose-tests-20200628
       - cnf-tests
     comment: debugging comment
     success_tag: ocp-vanilla-4.4-simple-ok

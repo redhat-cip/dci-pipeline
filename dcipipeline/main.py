@@ -222,7 +222,10 @@ def get_components(context, stage, topic_id, tag=None):
         c_type = component_type
         c_name = ""
         where_query = "type:%s%s" % (c_type, (",tags:%s" % tag) if tag else "")
-        if "=" in c_type:
+        if "?" in c_type:
+            c_type, c_query = c_type.split("?", 1)
+            where_query = "type:%s,%s" % (c_type, ",".join(c_query.split("&")))
+        elif "=" in c_type:
             c_type, c_name = c_type.split("=", 1)
             where_query = "type:%s,name:%s" % (c_type, c_name)
         resp = dci_topic.list_components(
