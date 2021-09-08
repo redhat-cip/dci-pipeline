@@ -234,9 +234,10 @@ $ dci-queue add-resource 8nodes cluster4
 $ dci-queue add-resource 8nodes cluster6
 ```
 
-Schedule a dci-pipeline command on the `8nodes` pool:
+Schedule a dci-pipeline command on the `8nodes` pool at priority 1
+(the highest the priority, the soonest it'll be executed):
 ```ShellSession
-$ dci-queue schedule 8nodes dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml
+$ dci-queue schedule -p 1 8nodes dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml
 ```
 
 The `@RESOURCE` is mandatory in the command line to be executed and it
@@ -253,7 +254,7 @@ List dci-queue:
 ```ShellSession
 $ dci-queue list 8nodes
 Commands on the 8nodes pool:
-1: dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml (wd: /home/dci-pipeline)
+1(p1): dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml (wd: /home/dci-pipeline)
 ```
 
 Run commands from a pool (using all the available resources):

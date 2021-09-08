@@ -81,8 +81,10 @@ def execute_command(args):
         display_cmd(args, path, EXT)
 
     print("Queued commands on the %s pool:" % args.pool)
-    for idx in range(first, next):
-        display_cmd(args, str(idx))
+    for fname in sorted(
+        range(first, next), key=lambda x: get_pri(args, x), reverse=True
+    ):
+        display_cmd(args, str(fname))
 
     return 0
 
@@ -97,15 +99,27 @@ def display_cmd(args, filename, ext=None):
             else:
                 cmd = data["cmd"]
             print(
-                " %s%s: %s (wd: %s)%s"
+                " %s%s%s: %s (wd: %s)%s"
                 % (
                     filename[: -len(ext)] if ext else filename,
+                    "(p%d)" % data["priority"]
+                    if "priority" in data and data["priority"] > 0
+                    else "",
                     " [%s]" % data["resource"] if "resource" in data else "",
                     " ".join(cmd),
                     data["wd"],
                     " [REMOVE]" if "remove" in data and data["remove"] else "",
                 )
             )
+
+
+def get_pri(args, filename):
+    cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(filename))
+    if os.path.exists(cmdfile):
+        with open(cmdfile) as f:
+            data = json.load(f)
+            return data["priority"] if "priority" in data else 0
+    return 0
 
 
 # list_pool_cmd.py ends here

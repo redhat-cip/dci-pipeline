@@ -59,6 +59,13 @@ def register_command(subparsers):
         action="store_true",
         help="Remove the resource once the job starts",
     )
+    parser.add_argument(
+        "-p",
+        "--priority",
+        help="priority level",
+        type=int,
+        default=0,
+    )
     parser.add_argument("pool", help="Name of the pool")
     parser.add_argument("cmd", nargs="*")
     return COMMAND
@@ -103,7 +110,15 @@ def execute_command(args):
         queuefile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
         cwd = os.getcwd()
         with open(queuefile, "w") as f:
-            json.dump({"cmd": args.cmd, "wd": cwd, "remove": args.remove_resource}, f)
+            json.dump(
+                {
+                    "cmd": args.cmd,
+                    "wd": cwd,
+                    "remove": args.remove_resource,
+                    "priority": args.priority,
+                },
+                f,
+            )
         log.info("Command %s (wd: %s) queued as %s" % (args.cmd, cwd, queuefile))
         seq_obj.set(first, idx + 1)
 

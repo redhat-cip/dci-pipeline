@@ -175,19 +175,28 @@ def get_command(args):
 
     to_exec = None
     indice = None
+    pri = -1
+    # first pass to find the highest priority job
     for idx in range(first, next):
         cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
-        try:
-            movedfile = cmdfile + EXT
-            os.rename(cmdfile, movedfile)
-            to_exec = movedfile
-            indice = idx
-            seq.set(idx + 1, next)
-            break
-        except FileNotFoundError:
-            continue
+        if os.path.exists(cmdfile):
+            log.debug("getting prority for %s" % cmdfile)
+            with open(cmdfile) as cmdfd:
+                data = json.load(cmdfd)
+                priority = data["priority"] if "priority" in data else 0
+                if priority > pri:
+                    log.debug("top priority so far %s => %d" % (cmdfile, priority))
+                    indice = idx
+    if indice:
+        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(indice))
+        movedfile = cmdfile + EXT
+        os.rename(cmdfile, movedfile)
+        to_exec = movedfile
+        if indice == first:
+            seq.set(indice + 1, next)
 
     seq.unlock()
+    log.debug("get_command %s %s" % (to_exec, indice))
     return to_exec, indice
 
 
