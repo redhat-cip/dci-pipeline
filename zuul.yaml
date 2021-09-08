@@ -33,7 +33,7 @@
     nodeset:
       nodes:
         - name: testrunner
-          label: cloud-fedora-30
+          label: cloud-fedora-34
 
 - project:
     check:
