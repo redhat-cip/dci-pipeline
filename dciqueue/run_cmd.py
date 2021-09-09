@@ -187,6 +187,7 @@ def get_command(args):
                 if priority > pri:
                     log.debug("top priority so far %s => %d" % (cmdfile, priority))
                     indice = idx
+                    pri = priority
     if indice:
         cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(indice))
         movedfile = cmdfile + EXT
