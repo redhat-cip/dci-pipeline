@@ -19,6 +19,7 @@
 import json
 import logging
 import os
+import sys
 
 from dciqueue import lib
 from dciqueue.run_cmd import EXT
@@ -32,11 +33,22 @@ def register_command(subparsers):
     parser = subparsers.add_parser(
         COMMAND, help="List the commands scheduled on a pool of resources"
     )
-    parser.add_argument("pool", help="Name of the pool")
+    parser.add_argument("pool", help="Name of the pool", nargs="?", default=None)
     return COMMAND
 
 
 def execute_command(args):
+    if args.pool == None:
+        print("The following pools were found:")
+        d = os.path.join(args.top_dir, "pool")
+        if os.path.exists(d):
+            p = os.listdir(d)
+            for pool in p:
+                print("  " + pool)
+        print("Run the command below for the list of commands scheduled on your target pool:")
+        print("  " + sys.argv[0] + " list <pool>")
+        return 0
+
     if not lib.check_pool(args):
         return 1
 
