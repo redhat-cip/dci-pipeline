@@ -36,7 +36,7 @@ previous example, use:
 $ dci-pipeline openshift-vanilla:ansible_playbook=/tmp/myplaybook.yml mypipeline.yml
 ```
 
-`dci-pipeline` runs the jobs in the own workspace in
+`dci-pipeline` runs the jobs in their own workspace in
 `/var/lib/dci-pipeline/<job name>/<job id>`. Various log files are
 saved in this directory to ease debugging the DCI jobs.
 
