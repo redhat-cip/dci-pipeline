@@ -250,6 +250,15 @@ console:
 $ dci-queue -c -l DEBUG schedule -b 8nodes dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml
 ```
 
+List pools in the host
+```ShellSession
+$ dci-queue list
+The following pools were found:
+  8nodes
+Run the command below for the list of commands scheduled on your target pool:
+  dci-queue list <pool>
+```
+
 List dci-queue:
 ```ShellSession
 $ dci-queue list 8nodes
