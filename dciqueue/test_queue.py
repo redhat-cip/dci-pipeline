@@ -318,7 +318,17 @@ class TestQueue(unittest.TestCase):
         self.file_exists("queue", "8nodes", "1")
 
     def test_list(self):
+        import io
+        from contextlib import redirect_stdout
+
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+
+        with io.StringIO() as buf, redirect_stdout(buf):
+            rc = main.main(["dci-queue", "list"])
+            output = buf.getvalue()
+        self.assertEqual(rc, 0)
+        self.assertIn("8nodes", output)
+
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
         )
@@ -326,6 +336,13 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
         self.assertEqual(main.main(["dci-queue", "list", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "remove-pool", "-n", "8nodes"]), 0)
+
+        with io.StringIO() as buf, redirect_stdout(buf):
+            rc = main.main(["dci-queue", "list"])
+            output = buf.getvalue()
+        self.assertEqual(rc, 0)
+        self.assertIn("No pool was found", output)
 
     def test_log_level(self):
         self.assertEqual(
