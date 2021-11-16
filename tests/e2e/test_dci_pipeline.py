@@ -50,7 +50,7 @@ def get(
 
 
 def get_jobs():
-    teams = get("jobs").json()["jobs"]
+    teams = get("jobs?embed=components").json()["jobs"]
     return teams
 
 
@@ -61,7 +61,13 @@ def p(pname):
 def test_dci_pipeline():
     jobs = get_jobs()
     os.environ["DCI_QUEUE_JOBID"] = "12"
-    rc = main(["dci-pipeline", p("pipeline.yml")])
+    rc = main(
+        [
+            "dci-pipeline",
+            "openshift-vanilla:components=ocp=ocp-4.4.0-0.nightly-20200703",
+            p("pipeline.yml"),
+        ]
+    )
     assert rc == 0
     assert len(PIPELINE) == 2
     jobs2 = get_jobs()
@@ -71,6 +77,11 @@ def test_dci_pipeline():
     assert jobs2[1]["configuration"] == "myconf"
     assert jobs2[1]["url"] == "https://lwn.net/"
     assert jobs2[1]["name"] == "openshift-vanilla"
+    ocp_component = [comp for comp in jobs2[1]["components"] if comp["type"] == "ocp"]
+    assert (
+        len(ocp_component) == 1
+        and ocp_component[0]["name"] == "ocp-4.4.0-0.nightly-20200703"
+    )
     tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
     assert "pipeline-id" in tags
 

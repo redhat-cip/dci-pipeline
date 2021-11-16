@@ -589,6 +589,9 @@ def overload_dicts(overload, target):
                     'ansible_extravars': {'answer': 42}})
     => {'components': ['ocp=12', 'cnf-tests', 'ose-tests'],
         'ansible_extravars': {'answer': 42', dci_comment': 'universal answer'}}"""
+    # special case for components with a single entry
+    if "components" in overload and isinstance(overload["components"], str):
+        overload["components"] = [overload["components"]]
     for key in overload:
         if key not in target:
             target[key] = overload[key]

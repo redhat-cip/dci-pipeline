@@ -104,6 +104,14 @@ class TestMain(unittest.TestCase):
             {"components": ["ocp=12", "cnf-tests", "ose-tests"], "topic": "OCP-4.4"},
         )
 
+    def test_overload_dicts_replace_string(self):
+        overload = {"components": "ocp=12"}
+        stage = {"components": ["ocp", "cnf-tests"], "topic": "OCP-4.4"}
+        self.assertEqual(
+            overload_dicts(overload, stage),
+            {"components": ["ocp=12", "cnf-tests"], "topic": "OCP-4.4"},
+        )
+
     def test_overload_dicts_add_dict(self):
         overload = {"ansible_extravars": {"dci_comment": "universal answer"}}
         stage = {"ansible_extravars": {"answer": 42}}
