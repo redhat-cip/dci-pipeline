@@ -13,12 +13,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from dcipipeline.main import main, PIPELINE
-
-import signal
 import os
-import requests
+import signal
 import time
+
+import requests
+
+from dcipipeline.main import PIPELINE, main
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 

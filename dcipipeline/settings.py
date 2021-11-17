@@ -16,8 +16,8 @@
 
 import logging
 import os
-import yaml
 
+import yaml
 
 logging.basicConfig(
     level=logging.INFO,

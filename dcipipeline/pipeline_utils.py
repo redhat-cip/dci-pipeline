@@ -14,9 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from dciclient.v1.api import job as dci_job
-
 import sys
+
+from dciclient.v1.api import job as dci_job
 
 
 def get_job(context, job_id):

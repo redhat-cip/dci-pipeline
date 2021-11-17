@@ -20,9 +20,7 @@ import tempfile
 import time
 import unittest
 
-from dciqueue import lib
-from dciqueue import main
-from dciqueue import run_cmd
+from dciqueue import lib, main, run_cmd
 
 
 class TestQueue(unittest.TestCase):

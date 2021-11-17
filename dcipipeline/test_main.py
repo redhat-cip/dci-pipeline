@@ -13,16 +13,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import mock
-import unittest
 import os
+import unittest
+
+import mock
 
 from dcipipeline.main import (
-    process_args,
-    overload_dicts,
     get_prev_stages,
-    pre_process_stage,
+    overload_dicts,
     post_process_stage,
+    pre_process_stage,
+    process_args,
     upload_junit_files_from_dir,
 )
 

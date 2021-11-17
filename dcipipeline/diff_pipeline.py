@@ -14,13 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+import sys
+
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import job as dci_job
-from dcipipeline import pipeline_utils as pu
-
-import os
 from prettytable import PrettyTable
-import sys
+
+from dcipipeline import pipeline_utils as pu
 
 
 def main(args=sys.argv):

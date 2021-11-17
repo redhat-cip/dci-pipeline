@@ -22,8 +22,7 @@ import os
 import sys
 import time
 
-from dciqueue import lib
-from dciqueue import run_cmd
+from dciqueue import lib, run_cmd
 
 if sys.version_info[0] == 2:
     FileNotFoundError = IOError

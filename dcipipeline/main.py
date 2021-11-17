@@ -13,22 +13,21 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
-from dciclient.v1.api import component as dci_component
-from dciclient.v1.api import job as dci_job
-from dciclient.v1.api import jobstate as dci_jobstate
-from dciclient.v1.api import topic as dci_topic
-from dciclient.v1.api import context as dci_context
-from dciclient.v1.api import file as dci_file
-
-import ansible_runner
-
 import logging
 import os
 import shutil
 import signal
 import sys
 import tempfile
+
+import ansible_runner
 import yaml
+from dciclient.v1.api import component as dci_component
+from dciclient.v1.api import context as dci_context
+from dciclient.v1.api import file as dci_file
+from dciclient.v1.api import job as dci_job
+from dciclient.v1.api import jobstate as dci_jobstate
+from dciclient.v1.api import topic as dci_topic
 
 if sys.version_info[0] == 2:
     FileNotFoundError = IOError
@@ -56,7 +55,7 @@ class SignalHandler:
 
     def _handler(self, signum, frame):
         self._called = True
-        log.error("Catched SIG %d" % signum)
+        log.error("Caught SIG %d" % signum)
 
     def called(self):
         return self._called

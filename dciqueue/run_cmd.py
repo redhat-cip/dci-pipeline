@@ -182,7 +182,7 @@ def get_command(args):
     for idx in range(first, next):
         cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
         if os.path.exists(cmdfile):
-            log.debug("getting prority for %s" % cmdfile)
+            log.debug("getting priority for %s" % cmdfile)
             with open(cmdfile) as cmdfd:
                 data = json.load(cmdfd)
                 priority = data["priority"] if "priority" in data else 0

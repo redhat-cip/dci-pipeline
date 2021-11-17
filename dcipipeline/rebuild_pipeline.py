@@ -14,13 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from dciclient.v1.api import context as dci_context
-from dciclient.v1.api import job as dci_job
-from dcipipeline import pipeline_utils as pu
-
 import os
 import sys
+
 import yaml
+from dciclient.v1.api import context as dci_context
+from dciclient.v1.api import job as dci_job
+
+from dcipipeline import pipeline_utils as pu
 
 
 def save_pipeline(pipeline_jobs):

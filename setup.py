@@ -16,6 +16,7 @@
 # under the License.
 
 import os
+
 import setuptools
 
 root_dir = os.path.dirname(os.path.abspath(__file__))

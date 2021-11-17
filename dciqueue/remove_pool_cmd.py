@@ -20,8 +20,7 @@ import logging
 import os
 import shutil
 
-from dciqueue import lib
-from dciqueue import uninstall_cmd
+from dciqueue import lib, uninstall_cmd
 
 log = logging.getLogger(__name__)
 

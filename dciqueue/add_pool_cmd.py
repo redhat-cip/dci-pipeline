@@ -19,8 +19,7 @@
 import logging
 import os
 
-from dciqueue import install_cmd
-from dciqueue import lib
+from dciqueue import install_cmd, lib
 
 log = logging.getLogger(__name__)
 

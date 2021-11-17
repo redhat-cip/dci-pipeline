@@ -21,10 +21,9 @@ import time
 
 import requests
 
-
-DCI_LOGIN = os.environ.get('DCI_LOGIN', 'admin')
-DCI_PASSWORD = os.environ.get('DCI_PASSWORD', 'admin')
-DCI_CS_URL = os.environ.get('DCI_CS_URL', 'http://127.0.0.1:5000')
+DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin")
+DCI_PASSWORD = os.environ.get("DCI_PASSWORD", "admin")
+DCI_CS_URL = os.environ.get("DCI_CS_URL", "http://127.0.0.1:5000")
 
 
 def check_return(response):
@@ -35,108 +34,144 @@ def check_return(response):
 
 
 def get_url(endpoint, subresource=None):
-    return '%s/api/v1/%s' % (DCI_CS_URL, endpoint)
+    return "%s/api/v1/%s" % (DCI_CS_URL, endpoint)
 
 
-def get(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def get(
+    endpoint,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = get_url(endpoint)
-    print('-------------')
-    print('GET %s' % url)
+    print("-------------")
+    print("GET %s" % url)
     return check_return(requests.get(url, auth=user))
 
 
-def post(endpoint, data, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def post(
+    endpoint,
+    data,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = get_url(endpoint)
-    print('-------------')
-    print('POST %s' % url)
+    print("-------------")
+    print("POST %s" % url)
     print(json.dumps(data, indent=2))
     return check_return(requests.post(url, json=data, auth=user))
 
 
-def associate_user_to_team(team_id, user_id, user=(DCI_LOGIN, DCI_PASSWORD,)):
-    url = '%s/api/v1/teams/%s/users/%s' % (DCI_CS_URL, team_id, user_id)
-    print('-------------')
-    print('POST %s' % url)
+def associate_user_to_team(
+    team_id,
+    user_id,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
+    url = "%s/api/v1/teams/%s/users/%s" % (DCI_CS_URL, team_id, user_id)
+    print("-------------")
+    print("POST %s" % url)
     return check_return(requests.post(url, json={}, auth=user))
 
 
-def delete(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def delete(
+    endpoint,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = get_url(endpoint)
-    print('DELETE %s' % url)
+    print("DELETE %s" % url)
     return check_return(requests.delete(url, auth=user))
 
 
 def get_teams():
     teams = {}
-    for team in get('teams').json()['teams']:
-        teams[team['name']] = team
+    for team in get("teams").json()["teams"]:
+        teams[team["name"]] = team
     return teams
 
 
 def create_team(name):
-    r = post('teams', {'name': name})
-    return r.json()['team']
+    r = post("teams", {"name": name})
+    return r.json()["team"]
 
 
 def create_product(product):
-    r = post('products', {
-        'name': product,
-        'label': product.upper(),
-        'description': 'description for %s' % product
-    })
-    return r.json()['product']
+    r = post(
+        "products",
+        {
+            "name": product,
+            "label": product.upper(),
+            "description": "description for %s" % product,
+        },
+    )
+    return r.json()["product"]
 
 
 def create_topic(name, component_types, product, next_topic=None):
-    topic = {'name': name, 'component_types': component_types,
-             'product_id': product['id']}
+    topic = {
+        "name": name,
+        "component_types": component_types,
+        "product_id": product["id"],
+    }
     if next_topic:
-        topic['next_topic_id'] = next_topic['id']
-    r = post('topics', topic)
-    return r.json()['topic']
+        topic["next_topic_id"] = next_topic["id"]
+    r = post("topics", topic)
+    return r.json()["topic"]
 
 
 def associate_topic_to_team(topic_id, team_id):
-    post('topics/%s/teams' % topic_id, {'team_id': team_id})
+    post("topics/%s/teams" % topic_id, {"team_id": team_id})
 
 
 def associate_product_to_team(product_id, team_id):
-    post('products/%s/teams' % product_id, {'team_id': team_id})
+    post("products/%s/teams" % product_id, {"team_id": team_id})
 
 
 def create_component(name, version, topic_id, tag=None, team_id=None):
-    data = {
-        'name': name + '-' + version,
-        'type': name,
-        'topic_id': topic_id
-    }
+    data = {"name": name + "-" + version, "type": name, "topic_id": topic_id}
     if team_id:
-        data['team_id'] = team_id
-    r = post('components', data)
+        data["team_id"] = team_id
+    r = post("components", data)
     print(r.json())
     if tag:
-        ret = tag_component(r.json()['component']['id'], tag)
+        ret = tag_component(r.json()["component"]["id"], tag)
         print(ret.text)
 
 
 def tag_component(component_id, tag):
-    return post('components/%s/tags' % component_id, {'name': tag})
+    return post("components/%s/tags" % component_id, {"name": tag})
 
 
 def create_remoteci(name, team_id):
-    r = post('remotecis', {'name': name, 'team_id': team_id})
-    return r.json()['remoteci']
+    r = post("remotecis", {"name": name, "team_id": team_id})
+    return r.json()["remoteci"]
 
 
 def create_user(name):
-    u = post('users', {'name': name, 'fullname': name, 'email': '%s@email.com' % name, 'password': name})
-    return u.json()['user']
+    u = post(
+        "users",
+        {
+            "name": name,
+            "fullname": name,
+            "email": "%s@email.com" % name,
+            "password": name,
+        },
+    )
+    return u.json()["user"]
 
 
 def wait_db_ready():
     while True:
         try:
-            r = get('identity')
+            r = get("identity")
             if r.status_code == 200:
                 break
         except requests.exceptions.ConnectionError:
@@ -146,10 +181,11 @@ def wait_db_ready():
 
 
 def generate_remoteci_rc_files():
-    remotecis = get('remotecis').json()['remotecis']
+    remotecis = get("remotecis").json()["remotecis"]
     for remoteci in remotecis:
-        with open('./%s.sh' % remoteci['name'], 'w') as f:
-            f.write("""DCI_CLIENT_ID='remoteci/{remoteci_id}'
+        with open("./%s.sh" % remoteci["name"], "w") as f:
+            f.write(
+                """DCI_CLIENT_ID='remoteci/{remoteci_id}'
 DCI_API_SECRET='{api_secret}'
 DCI_CS_URL='http://127.0.0.1:5000/'
 DCI_UI_URL='http://127.0.0.1:8000'
@@ -157,31 +193,41 @@ export DCI_CLIENT_ID
 export DCI_API_SECRET
 export DCI_CS_URL
 export DCI_UI_URL
-""".format(remoteci_id=remoteci['id'], api_secret=remoteci['api_secret']))
+""".format(
+                    remoteci_id=remoteci["id"], api_secret=remoteci["api_secret"]
+                )
+            )
 
 
 def generate_remoteci_yml_files():
-    remotecis = get('remotecis').json()['remotecis']
+    remotecis = get("remotecis").json()["remotecis"]
     for remoteci in remotecis:
-        with open('./%s_dci_credentials.yml' % remoteci['name'], 'w') as f:
-            f.write("""---
+        with open("./%s_dci_credentials.yml" % remoteci["name"], "w") as f:
+            f.write(
+                """---
 DCI_CLIENT_ID: remoteci/{remoteci_id}
 DCI_API_SECRET: {api_secret}
 DCI_CS_URL: http://127.0.0.1:5000/
 DCI_UI_URL: http://127.0.0.1:8000
-""".format(remoteci_id=remoteci['id'], api_secret=remoteci['api_secret']))
+""".format(
+                    remoteci_id=remoteci["id"], api_secret=remoteci["api_secret"]
+                )
+            )
 
 
 def generate_pipeline_user_files():
-    with open('./pipeline_user_dci_credentials.yml', 'w') as f:
-        f.write("""---
+    with open("./pipeline_user_dci_credentials.yml", "w") as f:
+        f.write(
+            """---
 DCI_PIPELINE_USERNAME: pipeline-user
 DCI_PIPELINE_PASSWORD: pipeline-user
 DCI_CS_URL: http://127.0.0.1:5000/
-DCI_UI_URL: http://127.0.0.1:8000""")
+DCI_UI_URL: http://127.0.0.1:8000"""
+        )
 
-    with open('./pipeline_user_dci_credentials.sh', 'w') as f:
-        f.write("""
+    with open("./pipeline_user_dci_credentials.sh", "w") as f:
+        f.write(
+            """
 DCI_PIPELINE_USERNAME='pipeline-user'
 DCI_PIPELINE_PASSWORD='pipeline-user'
 DCI_CS_URL='http://127.0.0.1:5000/'
@@ -189,51 +235,57 @@ DCI_UI_URL='http://127.0.0.1:8000'
 export DCI_PIPELINE_USERNAME
 export DCI_PIPELINE_PASSWORD
 export DCI_CS_URL
-export DCI_UI_URL""")
+export DCI_UI_URL"""
+        )
 
 
 def main():
     wait_db_ready()
 
     # Create the Openshift product
-    ocp = create_product('Openshift')
-    ocp_id = ocp['id']
+    ocp = create_product("Openshift")
+    ocp_id = ocp["id"]
 
     # Create the Openshift topics: OCP-4.4 and OCP-4.5
-    ocp44_topic = create_topic('OCP-4.4', ['ocp', 'ose-tests', 'cnf-tests'], ocp)
-    ocp44_topic_id = ocp44_topic['id']
-    ocp45_topic = create_topic('OCP-4.5', ['ocp', 'ose-tests', 'cnf-tests'], ocp)
-    ocp45_topic_id = ocp45_topic['id']
+    ocp44_topic = create_topic("OCP-4.4", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    ocp44_topic_id = ocp44_topic["id"]
+    ocp45_topic = create_topic("OCP-4.5", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    ocp45_topic_id = ocp45_topic["id"]
 
     # Create the CNF topics: RH-CNF-0.1 and RH-CNF-0.2
-    cnf01_topic = create_topic('RH-CNF-0.1', ['rh-cnf'], ocp)
-    cnf01_topic_id = cnf01_topic['id']
-    cnf02_topic = create_topic('RH-CNF-0.2', ['rh-cnf'], ocp)
-    cnf02_topic_id = cnf02_topic['id']
+    cnf01_topic = create_topic("RH-CNF-0.1", ["rh-cnf"], ocp)
+    cnf01_topic_id = cnf01_topic["id"]
+    cnf02_topic = create_topic("RH-CNF-0.2", ["rh-cnf"], ocp)
+    cnf02_topic_id = cnf02_topic["id"]
 
     # Create the teams
-    rh_telco_ci = create_team('rh-telco-ci')
-    rh_telco_ci_id = rh_telco_ci['id']
+    rh_telco_ci = create_team("rh-telco-ci")
+    rh_telco_ci_id = rh_telco_ci["id"]
 
-    cnf_telco_ci = create_team('cnf-telco-ci')
-    cnf_telco_ci_id = cnf_telco_ci['id']
+    cnf_telco_ci = create_team("cnf-telco-ci")
+    cnf_telco_ci_id = cnf_telco_ci["id"]
 
-    storage_plugin_telco_ci = create_team('storage-plugin-telco-ci')
-    storage_plugin_telco_ci_id = storage_plugin_telco_ci['id']
+    storage_plugin_telco_ci = create_team("storage-plugin-telco-ci")
+    storage_plugin_telco_ci_id = storage_plugin_telco_ci["id"]
 
-    network_plugin_telco_ci = create_team('network-plugin-telco-ci')
-    network_plugin_telco_ci_id = network_plugin_telco_ci['id']
+    network_plugin_telco_ci = create_team("network-plugin-telco-ci")
+    network_plugin_telco_ci_id = network_plugin_telco_ci["id"]
 
     # Create the pipeline user and remotecis
-    pipeline_user = create_user('pipeline-user')
-    pipeline_user_id = pipeline_user['id']
-    create_remoteci('rh-telco-pipeline', rh_telco_ci_id)
-    create_remoteci('cnf-telco-ci', cnf_telco_ci_id)
-    create_remoteci('storage-plugin-telco-ci', storage_plugin_telco_ci_id)
-    create_remoteci('network-plugin-telco-ci', network_plugin_telco_ci_id)
+    pipeline_user = create_user("pipeline-user")
+    pipeline_user_id = pipeline_user["id"]
+    create_remoteci("rh-telco-pipeline", rh_telco_ci_id)
+    create_remoteci("cnf-telco-ci", cnf_telco_ci_id)
+    create_remoteci("storage-plugin-telco-ci", storage_plugin_telco_ci_id)
+    create_remoteci("network-plugin-telco-ci", network_plugin_telco_ci_id)
 
     # Adds the permissions
-    teams = (rh_telco_ci_id, cnf_telco_ci_id, storage_plugin_telco_ci_id, network_plugin_telco_ci_id)
+    teams = (
+        rh_telco_ci_id,
+        cnf_telco_ci_id,
+        storage_plugin_telco_ci_id,
+        network_plugin_telco_ci_id,
+    )
     for team_id in teams:
         # the pipeline user must belongs to every teams
         associate_user_to_team(team_id, pipeline_user_id)
@@ -249,44 +301,74 @@ def main():
 
     # Create OCP components
     ocp44_components = (
-        ('ocp', '4.4.0-0.nightly-20200701', 'ocp-vanilla-4.4-ok'),
-        ('ose-tests', '20200628', 'ocp-vanilla-4.4-ok'),
-        ('cnf-tests', '20200628', 'ocp-vanilla-4.4-ok')
+        ("ocp", "4.4.0-0.nightly-20200701", "ocp-vanilla-4.4-ok"),
+        ("ose-tests", "20200628", "ocp-vanilla-4.4-ok"),
+        ("cnf-tests", "20200628", "ocp-vanilla-4.4-ok"),
     )
     for name, version, tag in ocp44_components:
         create_component(name, version, ocp44_topic_id, tag=tag)
 
     ocp44_components_2 = (
-        ('ocp', '4.4.0-0.nightly-20200703'),
-        ('ose-tests', '20200703'),
+        ("ocp", "4.4.0-0.nightly-20200703"),
+        ("ose-tests", "20200703"),
     )
     for name, version in ocp44_components_2:
         create_component(name, version, ocp44_topic_id)
 
     ocp45_components = (
-        ('ocp', '4.5.0-0.nightly-20200701'),
-        ('ose-tests', '20200729'),
-        ('cnf-tests', '20200728'),
+        ("ocp", "4.5.0-0.nightly-20200701"),
+        ("ose-tests", "20200729"),
+        ("cnf-tests", "20200728"),
     )
     for name, version in ocp45_components:
         create_component(name, version, ocp45_topic_id)
 
     # Create plugins components
-    create_component('storage-plugin', '0.1.nightly-20200622', ocp44_topic_id, team_id=storage_plugin_telco_ci_id)
-    create_component('storage-plugin', '0.1.nightly-20200521', ocp45_topic_id, team_id=storage_plugin_telco_ci_id)
-    create_component('network-plugin', '0.1.nightly-20200420', ocp44_topic_id, team_id=network_plugin_telco_ci_id)
-    create_component('network-plugin', '0.1.nightly-20200319', ocp45_topic_id, team_id=network_plugin_telco_ci_id)
+    create_component(
+        "storage-plugin",
+        "0.1.nightly-20200622",
+        ocp44_topic_id,
+        team_id=storage_plugin_telco_ci_id,
+    )
+    create_component(
+        "storage-plugin",
+        "0.1.nightly-20200521",
+        ocp45_topic_id,
+        team_id=storage_plugin_telco_ci_id,
+    )
+    create_component(
+        "network-plugin",
+        "0.1.nightly-20200420",
+        ocp44_topic_id,
+        team_id=network_plugin_telco_ci_id,
+    )
+    create_component(
+        "network-plugin",
+        "0.1.nightly-20200319",
+        ocp45_topic_id,
+        team_id=network_plugin_telco_ci_id,
+    )
 
     # Create CNF components
 
-    create_component('rh-cnf', '0.1.nightly-20200703', cnf01_topic_id, tag='ocp-vanilla-4.4-ok', team_id=cnf_telco_ci_id)
-    create_component('rh-cnf', '0.1.nightly-20200708', cnf01_topic_id, team_id=cnf_telco_ci_id)
-    create_component('rh-cnf', '0.2.nightly-20200723', cnf02_topic_id, team_id=cnf_telco_ci_id)
+    create_component(
+        "rh-cnf",
+        "0.1.nightly-20200703",
+        cnf01_topic_id,
+        tag="ocp-vanilla-4.4-ok",
+        team_id=cnf_telco_ci_id,
+    )
+    create_component(
+        "rh-cnf", "0.1.nightly-20200708", cnf01_topic_id, team_id=cnf_telco_ci_id
+    )
+    create_component(
+        "rh-cnf", "0.2.nightly-20200723", cnf02_topic_id, team_id=cnf_telco_ci_id
+    )
 
     generate_remoteci_rc_files()
     generate_remoteci_yml_files()
     generate_pipeline_user_files()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
