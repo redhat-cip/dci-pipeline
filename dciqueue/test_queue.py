@@ -244,7 +244,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         self.doesnt_exist("queue", "8nodes", "3")
 
-    def test_jobid(self):
+    def test_env_vars(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
@@ -258,7 +258,7 @@ class TestQueue(unittest.TestCase):
                     "--",
                     "bash",
                     "-c",
-                    'test "$DCI_QUEUE_JOBID" = "8nodes.1" || exit 1; echo @RESOURCE',
+                    'test "$DCI_QUEUE_JOBID" = "8nodes.1" -a "$DCI_QUEUE" = "8nodes" -a "$DCI_QUEUE_ID" = "1" || exit 1; echo @RESOURCE',
                 ]
             ),
             0,

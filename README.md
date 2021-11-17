@@ -271,6 +271,12 @@ Run commands from a pool (using all the available resources):
 $ dci-queue run 8nodes
 ```
 
+The following environment variables are set when running a job:
+
+  * DCI\_QUEUE: name of the pool.
+  * DCI\_QUEUE\_ID: id of the job.
+  * DCI\_QUEUE\_JOBID: uniq id with &lt;pool name&gt;.&lt;id of the job&gt;
+
 You can unschedule the command `1` from the pool `8nodes`:
 ```ShellSession
 $ dci-queue unschedule 8nodes 1
