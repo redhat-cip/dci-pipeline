@@ -1,0 +1,8 @@
+---
+
+dci_agent: openshift
+dci_name: my-job
+dci_topic: OCP-4.9
+type: openshift-upgrade
+
+...

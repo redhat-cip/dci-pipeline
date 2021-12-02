@@ -24,7 +24,7 @@ readme = open(os.path.join(root_dir, "README.md")).read()
 
 setuptools.setup(
     name="dci-pipeline",
-    version="0.0.3",
+    version="0.0.4",
     packages=setuptools.find_packages(exclude=("tests")),
     author="Distributed CI team",
     author_email="distributed-ci@redhat.com",
@@ -47,6 +47,7 @@ setuptools.setup(
             "dci-rebuild-pipeline=dcipipeline.rebuild_pipeline:main",
             "dci-diff-pipeline=dcipipeline.diff_pipeline:main",
             "dci-queue=dciqueue.main:main",
+            "dci-agent-ctl=dciagent.main:main",
         ],
     },
 )

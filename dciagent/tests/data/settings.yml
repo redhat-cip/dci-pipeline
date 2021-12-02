@@ -1,0 +1,31 @@
+---
+
+# agent variables
+dci_topic: OCP-4.4
+dci_agent: openshift
+dci_name: openshift-vanilla
+dci_configuration: myconf
+dci_url: https://lwn.net/
+dci_comment: debugging comment
+dci_components_by_query:
+  - 'type:ocp,name:ocp-4.4.0-0.nightly-20200701'
+  - 'type:ose-tests,tags:ocp-vanilla-4.4-ok,name:ose-tests-20200628'
+  - 'type:cnf-tests'
+answer: 42
+
+# dci-pipeline specific variables
+dci_credentials: ../../../rh-telco-pipeline_dci_credentials.yml
+ansible_playbook: ../../../dcipipeline/agents/openshift-vanilla/agent.yml
+ansible_inventory: ../../../dcipipeline/agents/openshift-vanilla/inventory
+ansible_envvars:
+  ENVVAR_42: 42
+  ENVVAR_43: 43
+  ENVVAR_TMPDIR: /@tmpdir
+ansible_tags:
+  - working
+outputs:
+  hosts: etc/hosts
+success_tag: ocp-vanilla-4.4-simple-ok
+fallback_last_success: ocp-vanilla-4.4-simple-ok
+
+...

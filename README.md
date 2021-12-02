@@ -223,6 +223,48 @@ enable the `junit` Ansible callback to work out of the box:
 
 You can override them if you need.
 
+## dci-agent-ctl
+
+`dci-agent-ctl` is thin layer on top of `dci-pipeline` to consume regular
+agent settings transparently.
+
+```ShellSession
+$ dci-agent-ctl /etc/dci-openshift-agent/settings.yml /etc/dci-openshift-app-agent/settings.yml
+```
+
+will translate the settings in `/etc/dci-openshift-agent/settings.yml`
+and `/etc/dci-openshift-app-agent/settings.yml` into pipelines and
+call `dci-pipeline` on them.
+
+to be compatible with `dci-agent-ctl`, `setting.yml` files must have the
+following fields:
+
+```YAML
+dci_name: "<job-name-no-space>"
+dci_agent: openshift
+```
+
+`dci_agent` is the name of the agent: `rhel`, `openstack`, `openshift`
+or `openshift-app`.
+
+By default, the DCI credentials will be taken from the same location
+as the `settings.yml` file in a YAML file called
+`dci_credentials.yml`. The format must be following:
+
+```YAML
+  DCI_CLIENT_ID: <remote ci id>
+  DCI_API_SECRET: <remote ci secret>
+  DCI_CS_URL: https://api.distributed-ci.io/
+```
+
+The path to this file can be overridden in the `settings.yml` files like:
+
+```YAML
+dci_name: "<job-name-no-space>"
+dci_agent: openshift
+dci_credentials: "/etc/dci/dci_credentials.yml"
+```
+
 ## dci-queue command
 
 The `dci-queue` command allows to execute commands consuming resources

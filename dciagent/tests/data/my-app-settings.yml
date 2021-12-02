@@ -1,0 +1,7 @@
+---
+
+dci_agent: openshift-app
+dci_name: my-app
+dci_credentials: "/etc/dci/dci_credentials.yml"
+
+...

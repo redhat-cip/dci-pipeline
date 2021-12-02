@@ -305,6 +305,8 @@ def schedule_job(
     )
 
     topic_id = get_topic_id(remoteci_context, stage)
+    if not topic_id:
+        return None
     user_context = remoteci_context
     if pipeline_user_context:
         user_context = pipeline_user_context
@@ -598,9 +600,12 @@ def overload_dicts(overload, target):
             if type(overload[key]) is list and type(target[key]) is list:
                 to_add = []
                 for elt in overload[key]:
-                    eq_key = elt.split("=", 1)[0]
+                    eq_key = elt.replace("?", "=", 1).split("=", 1)[0]
                     for loop in range(len(target[key])):
-                        if target[key][loop].split("=", 1)[0] == eq_key:
+                        if (
+                            target[key][loop].replace("?", "=", 1).split("=", 1)[0]
+                            == eq_key
+                        ):
                             target[key][loop] = elt
                             break
                     else:

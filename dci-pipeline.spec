@@ -7,11 +7,10 @@
 %endif
 
 Name:           dci-pipeline
-Version:        0.0.3
-Release:        4.VERS%{?dist}
+Version:        0.0.4
+Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
-# TODO: actually mirror on github
 URL:            https://github.com/redhat-cip/%{name}
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
@@ -104,6 +103,7 @@ exit 0
 %{python3_sitelib}/*
 %endif
 %{_bindir}/%{name}
+%{_bindir}/dci-agent-ctl
 %{_bindir}/dci-queue
 %{_bindir}/dci-rebuild-pipeline
 %{_bindir}/dci-diff-pipeline
@@ -116,6 +116,9 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
+* Thu Dec  2 2021 Frederic Lepied <flepied@redhat.com> - 0.0.4-1
+- add dci-agent-ctl
+
 * Fri May  7 2021 Frederic Lepied <flepied@redhat.com> - 0.0.3-4
 - requires junit-xml
 

@@ -105,6 +105,17 @@ class TestMain(unittest.TestCase):
             {"components": ["ocp=12", "cnf-tests", "ose-tests"], "topic": "OCP-4.4"},
         )
 
+    def test_overload_dicts_replace_list_search(self):
+        overload = {"components": ["ocp?name:12", "ose-tests"]}
+        stage = {"components": ["ocp", "cnf-tests"], "topic": "OCP-4.4"}
+        self.assertEqual(
+            overload_dicts(overload, stage),
+            {
+                "components": ["ocp?name:12", "cnf-tests", "ose-tests"],
+                "topic": "OCP-4.4",
+            },
+        )
+
     def test_overload_dicts_replace_string(self):
         overload = {"components": "ocp=12"}
         stage = {"components": ["ocp", "cnf-tests"], "topic": "OCP-4.4"}
