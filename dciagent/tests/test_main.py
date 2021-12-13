@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,9 +16,8 @@
 import os
 import unittest
 
-import yaml
-
 import dciagent.main as main
+from dcipipeline.main import load_yaml_file
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -45,8 +44,7 @@ class TestMain(unittest.TestCase):
                 os.path.join(DATA_DIR, "upgrade-settings.yml"),
             ]
         )
-        with open(args[0]) as fd:
-            pipelines = yaml.full_load(fd)
+        pipelines = load_yaml_file(args[0])
         self.assertEqual(pipelines[0]["name"], "openshift-vanilla")
         self.assertEqual(pipelines[0]["type"], "openshift")
         self.assertEqual(pipelines[0]["topic"], "OCP-4.8")
@@ -84,7 +82,7 @@ class TestMain(unittest.TestCase):
         )
         self.assertEqual(pipelines[1]["name"], "my-app")
         self.assertEqual(pipelines[1]["type"], "openshift-app")
-        self.assertEqual(pipelines[1]["topic"], "OCP-4.8")
+        self.assertNotIn("topic", pipelines[1])
         self.assertEqual(pipelines[1]["prev_stages"], ["openshift"])
         self.assertEqual(
             pipelines[1]["ansible_playbook"],

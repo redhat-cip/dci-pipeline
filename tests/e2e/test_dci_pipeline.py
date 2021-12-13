@@ -58,8 +58,8 @@ def get(
 
 
 def get_jobs():
-    teams = get("jobs?embed=components").json()["jobs"]
-    return teams
+    teams = get("jobs?embed=components&sort=-created_at").json()
+    return teams["jobs"], teams["_meta"]["count"]
 
 
 def p(pname):
@@ -67,7 +67,7 @@ def p(pname):
 
 
 def test_dci_pipeline():
-    jobs = get_jobs()
+    jobs, count = get_jobs()
     os.environ["DCI_QUEUE_JOBID"] = "12"
     rc = main(
         [
@@ -78,8 +78,8 @@ def test_dci_pipeline():
     )
     assert rc == 0
     assert len(PIPELINE) == 2
-    jobs2 = get_jobs()
-    assert len(jobs) + 2 == len(jobs2)
+    jobs2, count2 = get_jobs()
+    assert count + 2 == count2
     assert jobs2[0]["previous_job_id"] == jobs2[1]["id"]
     assert jobs2[0]["name"] == "rh-cnf"
     assert jobs2[1]["configuration"] == "myconf"
@@ -122,7 +122,7 @@ def test_dci_pipeline_upgrade():
 
 
 def test_dci_pipeline_sigterm():
-    jobs = get_jobs()
+    jobs, count = get_jobs()
     pid = os.fork()
 
     if pid == 0:
@@ -132,6 +132,6 @@ def test_dci_pipeline_sigterm():
         os.kill(pid, signal.SIGTERM)
         time.sleep(10)
 
-        jobs2 = get_jobs()
-        assert len(jobs) + 1 == len(jobs2)
+        jobs2, count2 = get_jobs()
+        assert count + 1 == count2
         assert jobs2[0]["status"] == "error"

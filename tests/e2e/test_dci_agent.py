@@ -13,11 +13,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import atexit
 import os
+import tempfile
 
 import requests
+import yaml
 
-from dciagent.main import main
+from dciagent.main import main, main_s2p
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 
@@ -49,8 +52,8 @@ def get(
 
 
 def get_jobs():
-    teams = get("jobs?embed=components").json()["jobs"]
-    return teams
+    teams = get("jobs?embed=components&sort=-created_at").json()
+    return teams["jobs"], teams["_meta"]["count"]
 
 
 def p(pname):
@@ -58,7 +61,7 @@ def p(pname):
 
 
 def test_dci_agent_ctl():
-    jobs = get_jobs()
+    jobs, count = get_jobs()
     os.environ["DCI_QUEUE_JOBID"] = "12"
     rc = main(
         [
@@ -68,8 +71,8 @@ def test_dci_agent_ctl():
         ]
     )
     assert rc == 0
-    jobs2 = get_jobs()
-    assert len(jobs) + 1 == len(jobs2)
+    jobs2, count2 = get_jobs()
+    assert count + 1 == count2
     assert jobs2[0]["configuration"] == "myconf"
     assert jobs2[0]["url"] == "https://lwn.net/"
     assert jobs2[0]["name"] == "openshift-vanilla"
@@ -78,3 +81,14 @@ def test_dci_agent_ctl():
         len(ocp_component) == 1
         and ocp_component[0]["name"] == "ocp-4.8.0-0.nightly-20200703"
     )
+
+
+def test_dci_settings2pipeline():
+    pipeline = tempfile.mkstemp()[1]
+    atexit.register(lambda: os.remove(pipeline))
+    rc = main_s2p(["dci-settings2pipeline", p("settings.yml"), pipeline])
+    assert rc == 0
+    with open(pipeline) as pipeline_fd:
+        content = yaml.full_load(pipeline_fd)
+    assert content[0]["comment"] == "debugging comment"
+    assert "prev_stages" not in content[0]

@@ -1,5 +1,20 @@
 # CI pipeline management for DCI jobs
 
+- [dci-pipeline command](#dci-pipeline-command)
+  - [Sharing information between jobs](#sharing-information-between-jobs)
+  - [tagging and retrying](#tagging-and-retrying)
+  - [passing environment variables](#passing-environment-variables)
+  - [instrument the pipeline with temporary directories](#instrument-the-pipeline-with-temporary-directories)
+  - [special environment variables](#special-environment-variables)
+- [dci-agent-ctl](#dci-agent-ctl)
+  - [dci-settings2pipeline](#dci-settings2pipeline)
+- [dci-queue command](#dci-queue-command)
+- [How to rebuild a pipeline](#how-to-rebuild-a-pipeline)
+- [How to see components diff between two pipelines](#how-to-see-components-diff-between-two-pipelines)
+- [Development](#development)
+  - [Tests](#tests)
+  - [pre-commit](#pre-commit)
+
 ## dci-pipeline command
 
 The `dci-pipeline` command allows to execute multiple DCI jobs using
@@ -265,6 +280,16 @@ dci_agent: openshift
 dci_credentials: "/etc/dci/dci_credentials.yml"
 ```
 
+### dci-settings2pipeline
+
+To use the parsing capabilities of `dci-agent-ctl` and just output the
+pipeline file without executing `dci-pipeline`, use
+`dci-settings2pipeline` like this:
+
+```ShellSession
+$ dci-settings2pipeline /etc/dci-openshift-agent/settings.yml /etc/dci-openshift-app-agent/settings.yml /tmp/pipelines.yml
+```
+
 ## dci-queue command
 
 The `dci-queue` command allows to execute commands consuming resources
@@ -330,9 +355,9 @@ $ dci-queue run 8nodes
 
 The following environment variables are set when running a job:
 
-* DCI\_QUEUE: name of the pool.
-* DCI\_QUEUE\_ID: id of the job.
-* DCI\_QUEUE\_JOBID: uniq id with &lt;pool name&gt;.&lt;id of the job&gt;
+- DCI\_QUEUE: name of the pool.
+- DCI\_QUEUE\_ID: id of the job.
+- DCI\_QUEUE\_JOBID: uniq id with &lt;pool name&gt;.&lt;id of the job&gt;
 
 You can unschedule the command `1` from the pool `8nodes`:
 
@@ -419,9 +444,9 @@ To run the tests, you need to have `tox` installed on your system.
 
 There are 3 kinds of tests:
 
-* `lint`: static code checks using `flake8` and `black`.
-* `unit`: runs unit tests.
-* `functional`: runs functional tests against a local
+- `lint`: static code checks using `flake8` and `black`.
+- `unit`: runs unit tests.
+- `functional`: runs functional tests against a local
   [dci-dev-env](https://github.com/redhat-cip/dci-dev-env) instance
   prepared with `dev-setup/dci-telcoprovisioning`.
 

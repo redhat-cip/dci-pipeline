@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -26,6 +26,8 @@ import tempfile
 
 import yaml
 
+from dcipipeline.main import load_yaml_file
+
 TOP_DIR = os.path.join(os.path.dirname(__file__))
 
 
@@ -42,7 +44,6 @@ KEYS = [
     "dci_agent",
     "dci_credentials",
     "name",
-    "topic",
     "type",
 ]
 
@@ -60,21 +61,21 @@ OPT_KEYS = [
     "outputs",
     "success_tag",
     "url",
+    "topic",
 ]
 
 
-def process_settings(settings_filename, pipelines, topic, current_stage, prev_stage):
-    with open(settings_filename) as settings_fd:
-        settings = yaml.full_load(settings_fd)
-    # take the topic from the first stage
-    if not topic:
-        topic = settings["dci_topic"]
+def process_settings(settings_filename, pipelines, current_stage, prev_stage):
+    settings = load_yaml_file(settings_filename)
     base_dir = os.path.dirname(settings_filename)
     # maintain keys used in settings below in KEYS (without the dci_ prefix)
+    if "type" not in settings:
+        settings["type"] = settings["dci_agent"]
     pipeline = {
-        "name": settings["dci_name"],
-        "type": settings["type"] if "type" in settings else settings["dci_agent"],
-        "topic": topic,
+        "name": settings["dci_name"]
+        if "dci_name" in settings
+        else settings["dci_agent"],
+        "type": settings["type"],
         "ansible_playbook": fix_path(settings["ansible_playbook"], base_dir)
         if "ansible_playbook" in settings
         else "/usr/share/dci-{}-agent/dci-{}-agent.yml".format(
@@ -122,36 +123,40 @@ def process_settings(settings_filename, pipelines, topic, current_stage, prev_st
         if "dci_" + key in settings:
             del settings["dci_" + key]
     pipeline["ansible_extravars"] = settings
-    if current_stage != pipeline["type"]:
+    if current_stage is not None and current_stage != pipeline["type"]:
         prev_stage = current_stage if current_stage else pipeline["type"]
-        current_stage = pipeline["type"]
+    current_stage = pipeline["type"]
     if prev_stage:
         pipeline["prev_stages"] = [prev_stage]
     pipelines.append(pipeline)
 
-    return topic, current_stage, prev_stage
+    return current_stage, prev_stage
 
 
-def process_args(args):
-    tempdir = tempfile.mkdtemp()
-    atexit.register(lambda: shutil.rmtree(tempdir))
+def process_all_settings(args, first=None):
     pipelines = []
-    pipeline_filename = os.path.join(tempdir, "pipeline.yml")
-    ret = [pipeline_filename]
-    topic = None
+    dci_pipeline_args = [first] if first else []
     prev_stage = None
     current_stage = None
     # process args by replacing settings files by one pipeline file
     for arg in args:
         if arg[-12:] == "settings.yml":
-            topic, current_stage, prev_stage = process_settings(
-                arg, pipelines, topic, current_stage, prev_stage
+            current_stage, prev_stage = process_settings(
+                arg, pipelines, current_stage, prev_stage
             )
         else:
-            ret.append(arg)
+            dci_pipeline_args.append(arg)
+    return dci_pipeline_args, pipelines
+
+
+def process_args(args):
+    tempdir = tempfile.mkdtemp()
+    atexit.register(lambda: shutil.rmtree(tempdir))
+    pipeline_filename = os.path.join(tempdir, "pipeline.yml")
+    dci_pipeline_args, pipelines = process_all_settings(args, pipeline_filename)
     with open(pipeline_filename, "w") as pipeline_fd:
         yaml.dump(pipelines, pipeline_fd)
-    return ret
+    return dci_pipeline_args
 
 
 def main(args=sys.argv):
@@ -162,6 +167,21 @@ def main(args=sys.argv):
     print("+", dci_pipeline, " ".join(pipeline_args), file=sys.stderr)
     ret = subprocess.run([dci_pipeline] + pipeline_args)
     return ret.returncode
+
+
+def main_s2p(args=sys.argv):
+    if len(args) < 3:
+        print(
+            "Usage: {} <settings file> (<settings file2>...) <pipeline file>".format(
+                args[0]
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    _, pipelines = process_all_settings(args[1:-1])
+    with open(args[2], "w") as pipeline_fd:
+        yaml.dump(pipelines, pipeline_fd)
+    return 0
 
 
 if __name__ == "__main__":

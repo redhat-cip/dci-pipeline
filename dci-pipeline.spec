@@ -7,7 +7,7 @@
 %endif
 
 Name:           dci-pipeline
-Version:        0.0.4
+Version:        0.0.5
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -106,6 +106,7 @@ exit 0
 %{_bindir}/dci-agent-ctl
 %{_bindir}/dci-queue
 %{_bindir}/dci-rebuild-pipeline
+%{_bindir}/dci-settings2pipeline
 %{_bindir}/dci-diff-pipeline
 %attr(770, %{name}, %{name}) /var/lib/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
@@ -116,6 +117,9 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
+* Mon Dec 13 2021 Frederic Lepied <flepied@redhat.com> 12 2021 - 0.0.5-1
+- add dci-settings2pipeline
+
 * Thu Dec  2 2021 Frederic Lepied <flepied@redhat.com> - 0.0.4-1
 - add dci-agent-ctl
 
