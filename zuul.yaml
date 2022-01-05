@@ -1,24 +1,5 @@
 ---
 - job:
-    name: dci-pipeline-tests-py2
-    description: job to run the example pipeline in python 2
-    pre-run: zuul.d/pre-run.yaml
-    run: zuul.d/run.yaml
-    required-projects:
-      - dci-dev-env
-      - dci-control-server
-      - python-dciclient
-      - python-dciauth
-      - dci-ui
-      - dci-doc
-      - dci-ansible
-      - dci-analytics
-    nodeset:
-      nodes:
-        - name: testrunner
-          label: dci-centos-7
-
-- job:
     name: dci-pipeline-tests-py3
     description: job to run the example pipeline in python 3
     pre-run: zuul.d/pre-run3.yaml
@@ -41,21 +22,17 @@
     check:
       jobs:
         - dci-pipeline-tests-py3
-        - dci-rpm-build
         - dci-rpm-build-el8
 
     gate:
       jobs:
         - dci-pipeline-tests-py3
-        - dci-rpm-build
         - dci-rpm-build-el8
 
     dci-post:
       queue: dci
       jobs:
-        - dci-rpm-build
         - dci-rpm-build-el8
         - dci-rpm-publish:
             dependencies:
-              - dci-rpm-build
               - dci-rpm-build-el8

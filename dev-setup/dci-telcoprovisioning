@@ -65,6 +65,24 @@ def post(
     return check_return(requests.post(url, json=data, auth=user))
 
 
+def put(
+    endpoint,
+    data,
+    etag,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
+    url = get_url(endpoint)
+    print("-------------")
+    print("PUT %s" % url)
+    print(json.dumps(data, indent=2))
+    return check_return(
+        requests.put(url, json=data, auth=user, headers={"If-match": etag})
+    )
+
+
 def associate_user_to_team(
     team_id,
     user_id,
@@ -142,12 +160,12 @@ def create_component(name, version, topic_id, tag=None, team_id=None):
     r = post("components", data)
     print(r.json())
     if tag:
-        ret = tag_component(r.json()["component"]["id"], tag)
+        ret = tag_component(r.json()["component"], tag)
         print(ret.text)
 
 
-def tag_component(component_id, tag):
-    return post("components/%s/tags" % component_id, {"name": tag})
+def tag_component(component, tag):
+    return put("components/%s" % component["id"], {"tags": [tag]}, component["etag"])
 
 
 def create_remoteci(name, team_id):
