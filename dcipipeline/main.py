@@ -217,6 +217,8 @@ def is_stage_with_fixed_components(stage):
 
 def get_components(context, stage, topic_id, tag=None):
     components = []
+    if "components" not in stage:
+        stage["components"] = []
     for component_type in stage["components"]:
         c_type = component_type
         c_name = ""
@@ -241,7 +243,7 @@ def get_components(context, stage, topic_id, tag=None):
                 "Unable to fetch component %s/%s for topic %s: %s"
                 % (c_type, c_name, stage["topic"], resp.text)
             )
-    return components
+    return components, stage
 
 
 def get_topic_id(context, stage):
@@ -310,7 +312,7 @@ def schedule_job(
     user_context = remoteci_context
     if pipeline_user_context:
         user_context = pipeline_user_context
-    components = get_components(user_context, stage, topic_id, tag)
+    components, stage = get_components(user_context, stage, topic_id, tag)
 
     if len(stage["components"]) != len(components):
         log.error(

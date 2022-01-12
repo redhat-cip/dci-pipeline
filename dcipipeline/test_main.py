@@ -19,6 +19,7 @@ import unittest
 import mock
 
 from dcipipeline.main import (
+    get_components,
     get_prev_stages,
     overload_dicts,
     post_process_stage,
@@ -139,6 +140,11 @@ class TestMain(unittest.TestCase):
             overload_dicts(overload, stage),
             {"ansible_extravars": {"answer": 42, "dci_comment": "universal answer"}},
         )
+
+    def test_stage_without_component(self):
+        stage = {}
+        components, stage = get_components("context", stage, "topic_id", "tag")
+        self.assertEqual(stage, {"components": []})
 
     def test_prev_stages(self):
         stage1 = {"name": "1", "type": "ocp"}
