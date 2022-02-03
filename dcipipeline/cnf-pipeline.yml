@@ -8,5 +8,5 @@
     topic: RH-CNF-0.1
     components:
       - rh-cnf
-    success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.4-ok
+    success_tag: ocp-vanilla-4.8-ok
+    fallback_last_success: ocp-vanilla-4.8-ok

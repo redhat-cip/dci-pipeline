@@ -1,0 +1,37 @@
+---
+
+- name: openshift-vanilla
+  type: ocp
+  ansible_playbook: ../../dci-openshift-agent/dci-openshift-agent.yml
+  ansible_inventory: real-inventory
+  dci_credentials: ../rh-telco-pipeline_dci_credentials.yml
+  ansible_tags:
+    - dci
+  ansible_skip_tags:
+    - get_logs
+  ansible_extravars:
+    dci_config_dirs: [../dci-openshift-agent]
+    dci_tags: [debug]
+    cluster: "my-cluster"
+  topic: OCP-4.9
+  components:
+    - ocp
+  success_tag: ocp-vanilla-4.9-ok
+  fallback_last_success: ocp-vanilla-4.9-ok
+
+- name: fake-cnf
+  type: cnf
+  prev_stages: [ocp-upgrade, ocp]
+  ansible_playbook: ../../dci-openshift-app-agent/dci-openshift-app-agent.yml
+  ansible_inventory: real-inventory
+  ansible_extravars:
+    dci_tags: [debug]
+    kubeconfig_path: "/tmp/kubeconfig"
+    ocp_component_id: "{{ lookup('file', '/tmp/my-cluster.ocp_prod_id') }}"
+  dci_credentials: ../cnf-telco-ci_dci_credentials.yml
+  ansible_tags:
+    - dci
+  topic: RH-CNF-0.1
+  success_tag: fake-cnf-ok
+
+...

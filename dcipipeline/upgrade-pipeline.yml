@@ -8,13 +8,13 @@
     answer: 42
   outputs:
     hosts: etc/hosts
-  topic: OCP-4.4
+  topic: OCP-4.8
   components:
     - ocp
     - ose-tests
     - cnf-tests
-  success_tag: ocp-vanilla-4.4-ok
-  fallback_last_success: ocp-vanilla-4.4-ok
+  success_tag: ocp-vanilla-4.8-ok
+  fallback_last_success: ocp-vanilla-4.8-ok
 
 - name: rh-cnf
   type: cnf
@@ -25,8 +25,8 @@
   topic: RH-CNF-0.1
   components:
     - rh-cnf
-  success_tag: ocp-vanilla-4.4-ok
-  fallback_last_success: ocp-vanilla-4.4-ok
+  success_tag: ocp-vanilla-4.8-ok
+  fallback_last_success: ocp-vanilla-4.8-ok
 
 - name: openshift-upgrade
   type: ocp-upgrade
@@ -35,13 +35,13 @@
   ansible_inventory: agents/openshift-vanilla/inventory
   outputs:
     hosts: etc/hosts
-  topic: OCP-4.5
+  topic: OCP-4.9
   components:
     - ocp
     - ose-tests
     - cnf-tests
-  success_tag: ocp-vanilla-4.5-upgrade-ok
-  fallback_last_success: ocp-vanilla-4.5-upgrade-ok
+  success_tag: ocp-vanilla-4.9-upgrade-ok
+  fallback_last_success: ocp-vanilla-4.9-upgrade-ok
 
 - name: rh-cnf2
   type: cnf2
@@ -52,5 +52,5 @@
   topic: RH-CNF-0.2
   components:
     - rh-cnf
-  success_tag: ocp-vanilla-4.5-upgrade-ok
-  fallback_last_success: ocp-vanilla-4.5-upgrade-ok
+  success_tag: ocp-vanilla-4.9-upgrade-ok
+  fallback_last_success: ocp-vanilla-4.9-upgrade-ok

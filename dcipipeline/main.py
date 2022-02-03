@@ -121,15 +121,20 @@ def load_yaml_file(path):
 
 
 def load_credentials(stage, config_dir):
-    dci_credentials = load_yaml_file(
-        stage.get(
-            "dci_credentials",
-            "%s/%s/dci_credentials.yml"
-            % (config_dir, os.path.dirname(stage["ansible_playbook"])),
-        )
+    cred_path = stage.get(
+        "dci_credentials",
+        "%s/%s/dci_credentials.yml"
+        % (config_dir, os.path.dirname(stage["ansible_playbook"])),
     )
+
+    if cred_path[0] != "/":
+        cred_path = "%s/%s" % (config_dir, cred_path)
+
+    dci_credentials = load_yaml_file(cred_path)
+
     if "DCI_CS_URL" not in dci_credentials:
         dci_credentials["DCI_CS_URL"] = "https://api.distributed-ci.io/"
+
     return dci_credentials
 
 

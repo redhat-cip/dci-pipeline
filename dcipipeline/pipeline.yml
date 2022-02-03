@@ -15,14 +15,15 @@
       - working
     outputs:
       hosts: etc/hosts
-    topic: OCP-4.4
+      ocp_comp: ocp_component_id
+    topic: OCP-4.8
     components:
-      - ocp=ocp-4.4.0-0.nightly-20200701
-      - ose-tests?tags:ocp-vanilla-4.4-ok&name:ose-tests-20200628
+      - ocp=ocp-4.8.0-0.nightly-20200701
+      - ose-tests?tags:ocp-vanilla-4.8-ok&name:ose-tests-20200628
       - cnf-tests
     comment: debugging comment
-    success_tag: ocp-vanilla-4.4-simple-ok
-    fallback_last_success: ocp-vanilla-4.4-simple-ok
+    success_tag: ocp-vanilla-4.8-simple-ok
+    fallback_last_success: ocp-vanilla-4.8-simple-ok
 
   - name: rh-cnf
     type: cnf
@@ -31,10 +32,11 @@
     ansible_playbook: agents/rh-cnf/agent.yml
     inputs:
       hosts: hosts_path
+      ocp_comp: ocp_comp_path
     ansible_extravars:
       answer: 42
     topic: RH-CNF-0.1
     components:
       - rh-cnf
-    success_tag: ocp-vanilla-4.4-simple-ok
-    fallback_last_success: ocp-vanilla-4.4-simple-ok
+    success_tag: ocp-vanilla-4.8-simple-ok
+    fallback_last_success: ocp-vanilla-4.8-simple-ok

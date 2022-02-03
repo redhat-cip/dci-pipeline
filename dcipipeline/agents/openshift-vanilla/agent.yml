@@ -95,6 +95,7 @@
     - name: get OCP version from job_info
       set_fact:
         ocp_version: "{{ item.name }}"
+        ocp_product_id: "{{ item.id }}"
       with_items: "{{ job_info.job.components }}"
       when: item["type"] == "ocp"
 
@@ -105,10 +106,20 @@
         that:
           - "components|length == 3"
           - ocp_version is defined
+          - ocp_product_id is defined
 
     - name: display ocp_version
       debug:
-        msg: "OCP version {{ ocp_version }}"
+        msg: "OCP version {{ ocp_version }} {{ ocp_product_id }}"
+
+    - name: Export the OCP component id
+      copy:
+        dest: "{{ job_info['outputs']['ocp_comp'] }}"
+        content: "{{ ocp_product_id }}"
+      when:
+        - job_info is defined
+        - "'outputs' in job_info"
+        - "'ocp_comp' in job_info['outputs']"
 
     - name: validate extravars
       assert:

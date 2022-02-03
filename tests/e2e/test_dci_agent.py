@@ -63,7 +63,7 @@ def test_dci_agent_ctl():
     rc = main(
         [
             "dci-agent-ctl",
-            "openshift-vanilla:components=ocp=ocp-4.4.0-0.nightly-20200703",
+            "openshift-vanilla:components=ocp=ocp-4.8.0-0.nightly-20200703",
             p("settings.yml"),
         ]
     )
@@ -76,5 +76,5 @@ def test_dci_agent_ctl():
     ocp_component = [comp for comp in jobs2[0]["components"] if comp["type"] == "ocp"]
     assert (
         len(ocp_component) == 1
-        and ocp_component[0]["name"] == "ocp-4.4.0-0.nightly-20200703"
+        and ocp_component[0]["name"] == "ocp-4.8.0-0.nightly-20200703"
     )

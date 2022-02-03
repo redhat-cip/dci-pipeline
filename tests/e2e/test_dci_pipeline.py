@@ -15,17 +15,24 @@
 
 import os
 import signal
+import sys
 import time
 
 import requests
 
-from dcipipeline.main import PIPELINE, main
+from dcipipeline.main import PIPELINE
+from dcipipeline.main import main as dci_main
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 
 DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin")
 DCI_PASSWORD = os.environ.get("DCI_PASSWORD", "admin")
 DCI_CS_URL = os.environ.get("DCI_CS_URL", "http://127.0.0.1:5000")
+
+
+def main(args):
+    sys.stderr.write("+ {}\n".format(" ".join(args)))
+    return dci_main(args)
 
 
 def check_return(response):
@@ -65,7 +72,7 @@ def test_dci_pipeline():
     rc = main(
         [
             "dci-pipeline",
-            "openshift-vanilla:components=ocp=ocp-4.4.0-0.nightly-20200703",
+            "openshift-vanilla:components=ocp=ocp-4.8.0-0.nightly-20200703",
             p("pipeline.yml"),
         ]
     )
@@ -81,7 +88,7 @@ def test_dci_pipeline():
     ocp_component = [comp for comp in jobs2[1]["components"] if comp["type"] == "ocp"]
     assert (
         len(ocp_component) == 1
-        and ocp_component[0]["name"] == "ocp-4.4.0-0.nightly-20200703"
+        and ocp_component[0]["name"] == "ocp-4.8.0-0.nightly-20200703"
     )
     tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
     assert "pipeline-id" in tags
@@ -89,6 +96,11 @@ def test_dci_pipeline():
 
 def test_dci_pipeline_edge():
     rc = main(["dci-pipeline", p("pipeline-edge.yml")])
+    assert rc == 0
+
+
+def test_dci_pipeline_real():
+    rc = main(["dci-pipeline", p("pipeline-real.yml")])
     assert rc == 0
 
 

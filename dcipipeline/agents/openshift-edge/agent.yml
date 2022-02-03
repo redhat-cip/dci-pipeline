@@ -75,8 +75,14 @@
     - name: get OCP version from job_info
       set_fact:
         ocp_version: "{{ item.name }}"
+        ocp_product_id: "{{ item['id'] }}"
       with_items: "{{ job_info.job.components }}"
       when: item["type"] == "ocp"
+
+    - name: Export the OCP component id into a file
+      copy:
+        dest: "/tmp/{{ job_id }}.ocp_prod_id"
+        content: "{{ ocp_product_id }}"
 
     - name: do some checks
       assert:
@@ -133,6 +139,12 @@
         flat: true
         src: "/etc/hosts"
         dest: "{{ job_info['outputs']['hosts'] }}"
+
+    - name: Copy /tmp/{{ job_id }}.ocp_prod_id file to the outputs location
+      fetch:
+        flat: true
+        src: "/tmp/{{ job_id }}.ocp_prod_id"
+        dest: "{{ job_info['outputs']['ocp_comp'] }}"
 
 - name: Success tasks
   hosts: runner

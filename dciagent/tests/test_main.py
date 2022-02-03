@@ -49,13 +49,13 @@ class TestMain(unittest.TestCase):
             pipelines = yaml.full_load(fd)
         self.assertEqual(pipelines[0]["name"], "openshift-vanilla")
         self.assertEqual(pipelines[0]["type"], "openshift")
-        self.assertEqual(pipelines[0]["topic"], "OCP-4.4")
+        self.assertEqual(pipelines[0]["topic"], "OCP-4.8")
         self.assertEqual(pipelines[0]["ansible_tags"], ["working"])
         self.assertEqual(
             pipelines[0]["components"],
             [
-                "ocp?name:ocp-4.4.0-0.nightly-20200701",
-                "ose-tests?tags:ocp-vanilla-4.4-ok&name:ose-tests-20200628",
+                "ocp?name:ocp-4.8.0-0.nightly-20200701",
+                "ose-tests?tags:ocp-vanilla-4.8-ok&name:ose-tests-20200628",
                 "cnf-tests",
             ],
         )
@@ -84,7 +84,7 @@ class TestMain(unittest.TestCase):
         )
         self.assertEqual(pipelines[1]["name"], "my-app")
         self.assertEqual(pipelines[1]["type"], "openshift-app")
-        self.assertEqual(pipelines[1]["topic"], "OCP-4.4")
+        self.assertEqual(pipelines[1]["topic"], "OCP-4.8")
         self.assertEqual(pipelines[1]["prev_stages"], ["openshift"])
         self.assertEqual(
             pipelines[1]["ansible_playbook"],

@@ -1,4 +1,5 @@
 ---
+
 - job:
     name: dci-pipeline-tests-py3
     description: job to run the example pipeline in python 3
@@ -13,12 +14,15 @@
       - dci-doc
       - dci-ansible
       - dci-analytics
+      - dci-openshift-agent
+      - dci-openshift-app-agent
     nodeset:
       nodes:
         - name: testrunner
           label: cloud-fedora-34
 
 - project:
+
     check:
       jobs:
         - dci-pipeline-tests-py3
@@ -36,3 +40,5 @@
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-el8
+
+...

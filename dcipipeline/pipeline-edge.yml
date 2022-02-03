@@ -9,7 +9,8 @@
       - working
     outputs:
       hosts: etc/hosts
-    topic: OCP-4.4
+      ocp_comp: ocp_component_id
+    topic: OCP-4.8
     pipeline_user: ./dcipipeline/pipeline_user.yml
     components:
       - ocp
@@ -17,8 +18,8 @@
       - cnf-tests
       - storage-plugin
       - network-plugin
-    success_tag: ocp-edge-4.4-ok
-    fallback_last_success: ocp-edge-4.4-ok
+    success_tag: ocp-edge-4.8-ok
+    fallback_last_success: ocp-edge-4.8-ok
 
   - name: rh-cnf
     type: cnf
@@ -28,8 +29,9 @@
         answer: 42
     inputs:
       hosts: hosts_path
+      ocp_comp: ocp_comp_path
     topic: RH-CNF-0.1
     components:
       - rh-cnf
-    success_tag: ocp-edge-4.4-ok
-    fallback_last_success: ocp-edge-4.4-ok
+    success_tag: ocp-edge-4.8-ok
+    fallback_last_success: ocp-edge-4.8-ok

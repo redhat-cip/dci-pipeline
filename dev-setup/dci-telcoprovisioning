@@ -153,19 +153,28 @@ def associate_product_to_team(product_id, team_id):
     post("products/%s/teams" % product_id, {"team_id": team_id})
 
 
-def create_component(name, version, topic_id, tag=None, team_id=None):
-    data = {"name": name + "-" + version, "type": name, "topic_id": topic_id}
+def create_component(name, version, topic_id, tag=None, team_id=None, dev=True):
+    data = {
+        "name": name + "-" + version,
+        "type": name,
+        "topic_id": topic_id,
+        "data": {"version": version},
+    }
     if team_id:
         data["team_id"] = team_id
     r = post("components", data)
     print(r.json())
     if tag:
-        ret = tag_component(r.json()["component"], tag)
-        print(ret.text)
+        ret = tag_component(
+            r.json()["component"], [tag, "build:dev" if dev else "build:ga"]
+        )
+    else:
+        ret = tag_component(r.json()["component"], ["build:dev" if dev else "build:ga"])
+    print(ret.text)
 
 
-def tag_component(component, tag):
-    return put("components/%s" % component["id"], {"tags": [tag]}, component["etag"])
+def tag_component(component, tags):
+    return put("components/%s" % component["id"], {"tags": tags}, component["etag"])
 
 
 def create_remoteci(name, team_id):
@@ -264,10 +273,10 @@ def main():
     ocp = create_product("Openshift")
     ocp_id = ocp["id"]
 
-    # Create the Openshift topics: OCP-4.4 and OCP-4.5
-    ocp44_topic = create_topic("OCP-4.4", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    # Create the Openshift topics: OCP-4.8 and OCP-4.9
+    ocp44_topic = create_topic("OCP-4.8", ["ocp", "ose-tests", "cnf-tests"], ocp)
     ocp44_topic_id = ocp44_topic["id"]
-    ocp45_topic = create_topic("OCP-4.5", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    ocp45_topic = create_topic("OCP-4.9", ["ocp", "ose-tests", "cnf-tests"], ocp)
     ocp45_topic_id = ocp45_topic["id"]
 
     # Create the CNF topics: RH-CNF-0.1 and RH-CNF-0.2
@@ -319,22 +328,22 @@ def main():
 
     # Create OCP components
     ocp44_components = (
-        ("ocp", "4.4.0-0.nightly-20200701", "ocp-vanilla-4.4-ok"),
-        ("ose-tests", "20200628", "ocp-vanilla-4.4-ok"),
-        ("cnf-tests", "20200628", "ocp-vanilla-4.4-ok"),
+        ("ocp", "4.8.0-0.nightly-20200701", "ocp-vanilla-4.8-ok"),
+        ("ose-tests", "20200628", "ocp-vanilla-4.8-ok"),
+        ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok"),
     )
     for name, version, tag in ocp44_components:
         create_component(name, version, ocp44_topic_id, tag=tag)
 
     ocp44_components_2 = (
-        ("ocp", "4.4.0-0.nightly-20200703"),
+        ("ocp", "4.8.0-0.nightly-20200703"),
         ("ose-tests", "20200703"),
     )
     for name, version in ocp44_components_2:
         create_component(name, version, ocp44_topic_id)
 
     ocp45_components = (
-        ("ocp", "4.5.0-0.nightly-20200701"),
+        ("ocp", "4.9.0-0.nightly-20200701"),
         ("ose-tests", "20200729"),
         ("cnf-tests", "20200728"),
     )
@@ -373,7 +382,7 @@ def main():
         "rh-cnf",
         "0.1.nightly-20200703",
         cnf01_topic_id,
-        tag="ocp-vanilla-4.4-ok",
+        tag="ocp-vanilla-4.8-ok",
         team_id=cnf_telco_ci_id,
     )
     create_component(
