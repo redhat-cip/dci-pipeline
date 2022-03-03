@@ -237,7 +237,9 @@ def get_components(context, stage, topic_id, tag=None):
             if resp.json()["_meta"]["count"] > 0:
                 components.append(resp.json()["components"][0])
             else:
-                log.error("No %s[%s] component" % (c_type, c_name))
+                log.error(
+                    "No %s[%s] component, topic_id %s" % (c_type, c_name, topic_id)
+                )
         else:
             log.error(
                 "Unable to fetch component %s/%s for topic %s: %s"
