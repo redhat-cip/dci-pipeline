@@ -21,6 +21,7 @@ import errno
 import json
 import logging
 import os
+import subprocess
 
 from dciqueue import lib
 
@@ -57,10 +58,19 @@ def execute_command(args):
             raise
 
     path = os.path.join(args.top_dir, "reason", args.pool, args.name)
+
+    # Use tmux session name as a prefix if any
+    prefix = subprocess.check_output(
+        "tmux display-message -p '#S: '||:",
+        stderr=subprocess.DEVNULL,
+        shell=True,
+        text=True,
+    ).strip("\n")
+
     with open(path, "w") as f:
         json.dump(
             {
-                "reason": args.reason,
+                "reason": prefix + args.reason,
                 "pool": args.pool,
                 "resource": args.name,
                 "date": str(datetime.datetime.now()),
