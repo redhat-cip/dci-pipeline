@@ -16,8 +16,8 @@
 import os
 import unittest
 
+import yaml
 import dciagent.main as main
-from dcipipeline.main import load_yaml_file
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -44,7 +44,8 @@ class TestMain(unittest.TestCase):
                 os.path.join(DATA_DIR, "upgrade-settings.yml"),
             ]
         )
-        pipelines = load_yaml_file(args[0])
+        with open(args[0]) as stream:
+            pipelines = yaml.load(stream, Loader=yaml.SafeLoader)
         self.assertEqual(pipelines[0]["name"], "openshift-vanilla")
         self.assertEqual(pipelines[0]["type"], "openshift")
         self.assertEqual(pipelines[0]["topic"], "OCP-4.8")

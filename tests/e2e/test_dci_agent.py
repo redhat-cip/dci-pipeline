@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,44 +16,19 @@
 import atexit
 import os
 import tempfile
-
-import requests
 import yaml
+import sys
 
-from dciagent.main import main, main_s2p
+from test_dci_pipeline import get_jobs
+
+from dciagent.main import main as dci_main, main_s2p
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 
-DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin")
-DCI_PASSWORD = os.environ.get("DCI_PASSWORD", "admin")
-DCI_CS_URL = os.environ.get("DCI_CS_URL", "http://127.0.0.1:5000")
 
-
-def check_return(response):
-    print(response)
-    if response.status_code // 100 != 2:
-        raise Exception(response.text)
-    return response
-
-
-def get_url(endpoint, subresource=None):
-    return "%s/api/v1/%s" % (DCI_CS_URL, endpoint)
-
-
-def get(
-    endpoint,
-    user=(
-        DCI_LOGIN,
-        DCI_PASSWORD,
-    ),
-):
-    url = get_url(endpoint)
-    return check_return(requests.get(url, auth=user))
-
-
-def get_jobs():
-    teams = get("jobs?embed=components&sort=-created_at").json()
-    return teams["jobs"], teams["_meta"]["count"]
+def main(args):
+    sys.stderr.write("+ {}\n".format(" ".join(args)))
+    return dci_main(args)
 
 
 def p(pname):

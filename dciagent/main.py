@@ -25,8 +25,10 @@ import sys
 import tempfile
 
 import yaml
-
-from dcipipeline.main import load_yaml_file
+from ansible.cli import CLI
+from ansible.parsing.dataloader import DataLoader
+from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.yaml.dumper import AnsibleDumper
 
 TOP_DIR = os.path.join(os.path.dirname(__file__))
 
@@ -65,8 +67,17 @@ OPT_KEYS = [
 ]
 
 
+def get_vault_client():
+    return os.getenv("DCI_VAULT_CLIENT", shutil.which("dci-vault-client"))
+
+
 def process_settings(settings_filename, pipelines, current_stage, prev_stage):
-    settings = load_yaml_file(settings_filename)
+    loader = DataLoader()
+    vault_secrets = CLI.setup_vault_secrets(
+        loader=loader, vault_ids=[get_vault_client()]
+    )
+    with open(settings_filename) as stream:
+        settings = from_yaml(stream, vault_secrets=vault_secrets)
     base_dir = os.path.dirname(settings_filename)
     # maintain keys used in settings below in KEYS (without the dci_ prefix)
     if "type" not in settings:
@@ -155,7 +166,7 @@ def process_args(args):
     pipeline_filename = os.path.join(tempdir, "pipeline.yml")
     dci_pipeline_args, pipelines = process_all_settings(args, pipeline_filename)
     with open(pipeline_filename, "w") as pipeline_fd:
-        yaml.dump(pipelines, pipeline_fd)
+        yaml.dump(pipelines, pipeline_fd, Dumper=AnsibleDumper)
     return dci_pipeline_args
 
 
@@ -180,7 +191,7 @@ def main_s2p(args=sys.argv):
         return 1
     _, pipelines = process_all_settings(args[1:-1])
     with open(args[2], "w") as pipeline_fd:
-        yaml.dump(pipelines, pipeline_fd)
+        yaml.dump(pipelines, pipeline_fd, Dumper=AnsibleDumper)
     return 0
 
 

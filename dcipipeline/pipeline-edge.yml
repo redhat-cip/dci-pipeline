@@ -3,8 +3,9 @@
     type: ocp
     ansible_playbook: agents/openshift-edge/agent.yml
     ansible_inventory: agents/openshift-edge/inventory
+    ansible_credentials: agents/openshift-edge/dci_credentials.yml
     ansible_extravars:
-      answer: 42
+      var: 43
     ansible_tags:
       - working
     outputs:
@@ -25,8 +26,7 @@
     type: cnf
     prev_stages: openshift-edge
     ansible_playbook: agents/rh-cnf/agent.yml
-    ansible_extravars:
-        answer: 42
+    ansible_inventory: agents/rh-cnf/inventory.yml
     inputs:
       hosts: hosts_path
       ocp_comp: ocp_comp_path

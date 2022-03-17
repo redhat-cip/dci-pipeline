@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2020-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
+import json
 import logging
 import os
 import shutil
@@ -22,6 +23,11 @@ import tempfile
 
 import ansible_runner
 import yaml
+from ansible.cli import CLI
+from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.dataloader import DataLoader
+from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from dciclient.v1.api import component as dci_component
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import file as dci_file
@@ -115,9 +121,31 @@ def upload_junit_files_from_dir(context, stage, dir):
             log.warning("%s is not a junit file" % _abs_file_path)
 
 
-def load_yaml_file(path):
-    with open(path) as file:
-        return yaml.load(file, Loader=yaml.SafeLoader)
+def clean_ansible_objects(data):
+    return yaml.load(yaml.dump(data, Dumper=AnsibleDumper), Loader=yaml.BaseLoader)
+
+
+def load_stage_file(path, config_dir):
+    # Read the pipeline stages in 2 passes to be able to load first
+    # the credentials file to be able to decrypt !vault statements in
+    # the second pass.
+    with open(path) as stream:
+        data = stream.read(-1)
+    # First pass without decrypting !vault
+    stages_raw_data = yaml.load(data, Loader=yaml.BaseLoader)
+    if stages_raw_data and len(stages_raw_data) > 0:
+        creds = load_credentials(stages_raw_data[0], config_dir)
+    else:
+        log.warning("No credentials found to decrypt vault encrypted data.")
+        creds = {"DCI_API_SECRET": "fake-secret"}
+    # Second pass decrypting !vault statements
+    os.environ["DCI_API_SECRET"] = creds["DCI_API_SECRET"]
+    loader = DataLoader()
+    vault_secrets = CLI.setup_vault_secrets(
+        loader=loader, vault_ids=[get_vault_client()]
+    )
+    ansible_yaml = from_yaml(data, vault_secrets=vault_secrets)
+    return ansible_yaml
 
 
 def load_credentials(stage, config_dir):
@@ -130,7 +158,9 @@ def load_credentials(stage, config_dir):
     if cred_path[0] != "/":
         cred_path = "%s/%s" % (config_dir, cred_path)
 
-    dci_credentials = load_yaml_file(cred_path)
+    log.info("Loading credentials from %s" % cred_path)
+    with open(cred_path) as stream:
+        dci_credentials = yaml.load(stream, Loader=yaml.SafeLoader)
 
     if "DCI_CS_URL" not in dci_credentials:
         dci_credentials["DCI_CS_URL"] = "https://api.distributed-ci.io/"
@@ -143,7 +173,8 @@ def load_pipeline_user_credentials(pipeline_user_path):
     if not os.path.exists(pipeline_user_abs_path):
         log.error("unable to find pipeline user file at %s" % pipeline_user_abs_path)
         sys.exit(1)
-    dci_credentials = load_yaml_file(pipeline_user_abs_path)
+    with open(pipeline_user_abs_path) as stream:
+        dci_credentials = yaml.load(stream, Loader=yaml.SafeLoader)
     if "DCI_CS_URL" not in dci_credentials:
         dci_credentials["DCI_CS_URL"] = "https://api.distributed-ci.io/"
     return dci_credentials
@@ -177,7 +208,7 @@ def get_stages(names, pipeline):
     stages = []
     if names:
         # manage cases where a single entry is provided
-        if type(names) != list:
+        if not is_list(names):
             names = [names]
         for stage in pipeline:
             for name in names:
@@ -278,9 +309,9 @@ def get_data_dir(job_info, stage):
                 d = os.path.join(base_dir, stage["name"], job_info["job"]["id"])
                 os.makedirs(d, mode=0o700)
                 with open(os.path.join(d, "job_info.yaml"), "w") as f:
-                    yaml.safe_dump(job_info, f)
+                    yaml.dump(job_info, f, Dumper=AnsibleDumper)
                 with open(os.path.join(d, "stage.yaml"), "w") as f:
-                    yaml.safe_dump(stage, f)
+                    yaml.dump(stage, f, Dumper=AnsibleDumper)
                 job_info["data_dir"] = d
                 break
         except PermissionError:
@@ -360,7 +391,7 @@ def schedule_job(
         configuration=stage.get("configuration"),
         url=stage.get("url"),
         components=[c["id"] for c in components],
-        data={"pipeline": pipeline_data},
+        data={"pipeline": clean_ansible_objects(pipeline_data)},
         previous_job_id=previous_job_id,
     )
     if schedule.status_code == 201:
@@ -411,8 +442,12 @@ def get_list(stage, key):
     return val
 
 
+def get_vault_client():
+    return os.getenv("DCI_VAULT_CLIENT", shutil.which("dci-vault-client"))
+
+
 def build_cmdline(stage):
-    cmd = ""
+    cmd = "--vault-id %s" % get_vault_client()
     for key, switch in (
         ("ansible_tags", "--tags"),
         ("ansible_skip_tags", "--skip-tags"),
@@ -420,10 +455,14 @@ def build_cmdline(stage):
         lst = get_list(stage, key)
 
         if lst:
-            cmd += switch + " " + ",".join(lst) + " "
+            cmd += " " + switch + " " + ",".join(lst)
 
-    if cmd != "":
-        log.info('cmdline="%s"' % cmd)
+    if "ansible_extravars" in stage:
+        cmd += " -e '%s'" % json.dumps(
+            stage["ansible_extravars"], cls=AnsibleJSONEncoder
+        )
+
+    log.info('cmdline="%s"' % cmd)
 
     return cmd
 
@@ -513,15 +552,15 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
         )
     )
     envvars.update(dci_credentials)
-    extravars = stage.get("ansible_extravars", {})
-    extravars["job_info"] = job_info
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=os.path.join(data_dir, stage["ansible_playbook"]),
         verbosity=VERBOSE_LEVEL,
-        cmdline=build_cmdline(stage),
         envvars=envvars,
-        extravars=extravars,
+        # Variables are passed on the cmdline to allow vault encrypted
+        # vars to work
+        cmdline=build_cmdline(stage),
+        extravars={"job_info": job_info},
         inventory=inventory,
         quiet=False,
         cancel_callback=cancel_cb,
@@ -590,6 +629,18 @@ def process_args(args):
     return lst, ret
 
 
+def is_list(elt):
+    return isinstance(elt, list)
+
+
+def is_dict(elt):
+    return isinstance(elt, dict)
+
+
+def is_string(elt):
+    return isinstance(elt, str)
+
+
 def overload_dicts(overload, target):
     """do a complex dict update
 
@@ -600,13 +651,13 @@ def overload_dicts(overload, target):
     => {'components': ['ocp=12', 'cnf-tests', 'ose-tests'],
         'ansible_extravars': {'answer': 42', dci_comment': 'universal answer'}}"""
     # special case for components with a single entry
-    if "components" in overload and isinstance(overload["components"], str):
+    if "components" in overload and is_string(overload["components"]):
         overload["components"] = [overload["components"]]
     for key in overload:
         if key not in target:
             target[key] = overload[key]
         else:
-            if type(overload[key]) is list and type(target[key]) is list:
+            if is_list(overload[key]) and is_list(target[key]):
                 to_add = []
                 for elt in overload[key]:
                     eq_key = elt.replace("?", "=", 1).split("=", 1)[0]
@@ -620,7 +671,7 @@ def overload_dicts(overload, target):
                     else:
                         to_add.append(elt)
                 target[key] = target[key] + to_add
-            elif type(overload[key]) is dict and type(target[key]) is dict:
+            elif is_dict(overload[key]) and is_dict(target[key]):
                 target[key].update(overload[key])
             else:
                 target[key] = overload[key]
@@ -635,7 +686,7 @@ def get_config(args):
     pipeline = []
     for config in args:
         config_dir = os.path.abspath(os.path.dirname(config))
-        pipeline += load_yaml_file(config)
+        pipeline += load_stage_file(config, config_dir)
     for overload in lst:
         for name in overload:
             stage = get_stages(name, pipeline)

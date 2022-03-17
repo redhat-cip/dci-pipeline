@@ -58,12 +58,12 @@
 
     - name: display cnf_version and ocp_id
       debug:
-        msg: "CNF version {{ cnf_version }} {{ ocp_comp_id }}"
+        msg: "CNF version {{ cnf_version }} {{ ocp_comp_id }} {{ answer }}"
 
     - name: validate extravars
       assert:
         that:
-          - "answer == 42"
+          - "answer|int == 42"
 
 - name: Running cnf
   hosts: localhost

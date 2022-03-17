@@ -7,7 +7,8 @@
 %endif
 
 Name:           dci-pipeline
-Version:        0.0.5
+# to keep in sync with setup.py
+Version:        0.0.6
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -19,7 +20,7 @@ BuildArch:      noarch
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
 Requires:       PyYAML
-Requires:       python2-dciclient
+Requires:       python2-dciclient >= 2.3.0
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
 Requires:       python2-junit_xml
@@ -29,7 +30,7 @@ Requires:       python2-junit_xml
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 Requires:       python3-PyYAML
-Requires:       python3-dciclient
+Requires:       python3-dciclient >= 2.3.0
 Requires:       python3-ansible-runner
 Requires:       python3-junit_xml
 %endif
@@ -117,6 +118,9 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
+* Thu Mar 24 2022 Frederic Lepied <flepied@redhat.com> - 0.0.6-3
+- make use of dci-vault-client
+
 * Mon Dec 13 2021 Frederic Lepied <flepied@redhat.com> 12 2021 - 0.0.5-1
 - add dci-settings2pipeline
 

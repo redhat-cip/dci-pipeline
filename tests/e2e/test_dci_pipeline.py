@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,6 +15,7 @@
 
 import os
 import signal
+import subprocess
 import sys
 import time
 
@@ -23,7 +24,9 @@ import requests
 from dcipipeline.main import PIPELINE
 from dcipipeline.main import main as dci_main
 
-TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
+TOPDIR = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
+)
 
 DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin")
 DCI_PASSWORD = os.environ.get("DCI_PASSWORD", "admin")
@@ -36,13 +39,13 @@ def main(args):
 
 
 def check_return(response):
-    print(response)
+    print(response, file=sys.stderr)
     if response.status_code // 100 != 2:
         raise Exception(response.text)
     return response
 
 
-def get_url(endpoint, subresource=None):
+def get_url(endpoint):
     return "%s/api/v1/%s" % (DCI_CS_URL, endpoint)
 
 
@@ -54,12 +57,22 @@ def get(
     ),
 ):
     url = get_url(endpoint)
+    print("GET %s" % url, file=sys.stderr)
     return check_return(requests.get(url, auth=user))
 
 
 def get_jobs():
     teams = get("jobs?embed=components&sort=-created_at").json()
     return teams["jobs"], teams["_meta"]["count"]
+
+
+def get_ocp_component_id(topic):
+    topics = get("topics?where=name:%s" % topic).json()
+    print(topics, file=sys.stderr)
+    components = get(
+        "topics/%s/components?where=type:ocp" % topics["topics"][0]["id"]
+    ).json()
+    return components["components"][0]["id"]
 
 
 def p(pname):
@@ -95,12 +108,69 @@ def test_dci_pipeline():
 
 
 def test_dci_pipeline_edge():
-    rc = main(["dci-pipeline", p("pipeline-edge.yml")])
+    inventory = p("agents/rh-cnf/inventory2.yml")
+    out = subprocess.check_output(
+        ". cnf-telco-ci.sh; echo -n 42|dci-vault encrypt",
+        shell=True,
+        text=True,
+        executable="/bin/bash",  # it doesn't work with /bin/sh
+    )
+    prefix = "      "
+    aligned = prefix + out.replace("\n", "\n" + prefix)
+    with open(inventory, "w") as fp:
+        fp.write(
+            """all:
+  vars:
+    answer: !vault |
+%s
+"""
+            % aligned
+        )
+    rc = main(
+        [
+            "dci-pipeline",
+            p("pipeline-edge.yml"),
+            "rh-cnf:ansible_inventory=" + inventory,
+            "openshift-edge:ansible_extravars=answer:42",
+        ]
+    )
+    assert rc == 0
+
+
+def test_dci_pipeline_edge2():
+    pipeline = p("pipeline-edge.yml")
+    pipeline2 = p("pipeline-edge2.yml")
+    out = subprocess.check_output(
+        ". rh-telco-pipeline.sh; echo -n 42|dci-vault encrypt",
+        shell=True,
+        text=True,
+        executable="/bin/bash",  # it doesn't work with /bin/sh
+    )
+    prefix = "        "
+    aligned = prefix + out.replace("\n", "\n" + prefix)
+    content = (
+        open(pipeline).read(-1).replace("var: 43", "answer: !vault |\n%s" % aligned)
+    )
+    with open(pipeline2, "w") as fp:
+        fp.write(content)
+    rc = main(
+        [
+            "dci-pipeline",
+            pipeline2,
+        ]
+    )
     assert rc == 0
 
 
 def test_dci_pipeline_real():
-    rc = main(["dci-pipeline", p("pipeline-real.yml")])
+    rc = main(
+        [
+            "dci-pipeline",
+            p("pipeline-real.yml"),
+            "fake-cnf:ansible_extravars=ocp_component_id:%s"
+            % get_ocp_component_id("OCP-4.9"),
+        ]
+    )
     assert rc == 0
 
 

@@ -27,7 +27,6 @@
   ansible_extravars:
     dci_tags: [debug]
     kubeconfig_path: "/tmp/kubeconfig"
-    ocp_component_id: "{{ lookup('file', '/tmp/my-cluster.ocp_prod_id') }}"
   dci_credentials: ../cnf-telco-ci_dci_credentials.yml
   ansible_tags:
     - dci

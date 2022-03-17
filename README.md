@@ -313,7 +313,6 @@ Schedule a dci-pipeline command on the `8nodes` pool at priority 1
 (the highest the priority, the soonest it'll be executed):
 
 ```ShellSession
-
 $ dci-queue schedule -p 1 8nodes dci-pipeline openshift-vanilla:ansible_inventory=/etc/inventories/@RESOURCE pipeline.yml
 ```
 

@@ -94,12 +94,12 @@
 
     - name: display ocp_version
       debug:
-        msg: "OCP version {{ ocp_version }}"
+        msg: "OCP version {{ ocp_version }} {{ answer }}"
 
     - name: validate extravars
       assert:
         that:
-          - "answer == 42"
+          - "answer|int == 42"
 
 - name: Running ocp deployment
   hosts: runner
