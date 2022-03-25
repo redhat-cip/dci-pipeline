@@ -64,7 +64,7 @@ def execute_command(args):
         "tmux display-message -p '#S: '||:",
         stderr=subprocess.DEVNULL,
         shell=True,
-        text=True,
+        universal_newlines=True,
     ).strip("\n")
 
     with open(path, "w") as f:
