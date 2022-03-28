@@ -60,12 +60,14 @@ def execute_command(args):
     path = os.path.join(args.top_dir, "reason", args.pool, args.name)
 
     # Use tmux session name as a prefix if any
-    prefix = subprocess.check_output(
-        "tmux display-message -p '#S: '||:",
-        stderr=subprocess.DEVNULL,
-        shell=True,
-        universal_newlines=True,
-    ).strip("\n")
+    prefix = ""
+    if os.environ.get("TMUX"):
+        prefix = subprocess.check_output(
+            "tmux display-message -p '#S: '||:",
+            stderr=subprocess.DEVNULL,
+            shell=True,
+            universal_newlines=True,
+        ).strip("\n")
 
     with open(path, "w") as f:
         json.dump(
