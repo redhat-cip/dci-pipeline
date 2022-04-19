@@ -269,11 +269,11 @@ export DCI_UI_URL"""
 def main():
     wait_db_ready()
 
-    # Create the Openshift product
-    ocp = create_product("Openshift")
+    # Create the OpenShift product
+    ocp = create_product("OpenShift")
     ocp_id = ocp["id"]
 
-    # Create the Openshift topics: OCP-4.8 and OCP-4.9
+    # Create the OpenShift topics: OCP-4.8 and OCP-4.9
     ocp44_topic = create_topic("OCP-4.8", ["ocp", "ose-tests", "cnf-tests"], ocp)
     ocp44_topic_id = ocp44_topic["id"]
     ocp45_topic = create_topic("OCP-4.9", ["ocp", "ose-tests", "cnf-tests"], ocp)
