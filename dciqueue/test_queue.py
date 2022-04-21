@@ -432,6 +432,18 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "remove-crontab", "8nodes", crontab_file]), 0
         )
 
+    def test_clean(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "8nodes", "res"]), 0)
+        os.unlink(os.path.join(self.queue_dir, "available", "8nodes", "res"))
+        self.doesnt_exist("available", "8nodes", "res")
+        execfile = os.path.join(self.queue_dir, "queue", "8nodes", "1234" + run_cmd.EXT)
+        with open(execfile, "w") as fd:
+            json.dump({"resource": "res", "pid": 123456}, fd)
+        self.assertEqual(main.main(["dci-queue", "clean", "8nodes"]), 0)
+        self.doesnt_exist("queue", "8nodes", "1234" + run_cmd.EXT)
+        self.file_exists("available", "8nodes", "res")
+
 
 if __name__ == "__main__":
     unittest.main()

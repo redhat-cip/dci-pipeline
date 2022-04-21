@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Author: Frederic Lepied <flepied@redhat.com>
 #
@@ -38,18 +38,22 @@ def execute_command(args):
     if not lib.check_pool(args):
         return 1
 
-    LINE = lib.CRONTAB_LINE_FMT % args.pool
+    CRONLINES = [
+        lib.CRONTAB_LINE_FMT % args.pool,
+        lib.CRONTAB_CLEAN_LINE_FMT % args.pool,
+    ]
 
     with open(args.file) as f:
         lines = f.readlines()
 
-    for line in lines:
-        line = line.strip("\n")
-        if line == LINE:
-            return 0
-
-    with open(args.file, "a") as f:
-        f.write("%s\n" % LINE)
+    for LINE in CRONLINES:
+        for line in lines:
+            line = line.strip("\n")
+            if line == LINE:
+                break
+        else:
+            with open(args.file, "a") as f:
+                f.write("%s\n" % LINE)
 
     return 0
 
