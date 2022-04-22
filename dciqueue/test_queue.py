@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2020-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -19,6 +19,7 @@ import shutil
 import tempfile
 import time
 import unittest
+import uuid
 
 from dciqueue import lib, main, run_cmd
 
@@ -389,6 +390,35 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
         )
         self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
+
+    def test_dci_job(self):
+        import io
+        from contextlib import redirect_stdout
+
+        job_id = uuid.uuid4()
+        job_name = "test-dci-job"
+        job_ids = "%s:%s" % (job_name, job_id)
+        res = "res"
+        with open(os.path.join(self.queue_dir, res), "w") as f:
+            f.write("- Scheduled DCI job %s\n" % job_id)
+            f.write("- Setting tag job:%s on job %s\n" % (job_name, job_id))
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "8nodes", res]), 0)
+        main.main(
+            [
+                "dci-queue",
+                "schedule",
+                "8nodes",
+                "cat",
+                os.path.join(self.queue_dir, "@RESOURCE"),
+            ]
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        with io.StringIO() as buf, redirect_stdout(buf):
+            rc = main.main(["dci-queue", "dci-job", "8nodes", "1"])
+            output = buf.getvalue()
+        self.assertEqual(rc, 0)
+        self.assertEqual(output, job_ids)
 
     def test_add_crontab(self):
         crontab_file = os.path.join(self.queue_dir, "crontab")
