@@ -266,7 +266,7 @@ def get_components(context, stage, topic_id, tag=None):
             c_type, c_name = c_type.split("=", 1)
             where_query = "type:%s,name:%s" % (c_type, c_name)
         resp = dci_topic.list_components(
-            context, topic_id, limit=1, offset=0, sort="-created_at", where=where_query
+            context, topic_id, limit=1, offset=0, sort="-released_at", where=where_query
         )
         if resp.status_code == 200:
             log.info("Got component %s[%s]: %s" % (c_type, c_name, resp.text))
