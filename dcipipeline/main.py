@@ -55,16 +55,16 @@ _JOB_PRODUCT_STATUSES = {"running"}
 
 class SignalHandler:
     def __init__(self):
-        self._called = False
+        self.signum = 0
         signal.signal(signal.SIGTERM, self._handler)
         signal.signal(signal.SIGINT, self._handler)
 
     def _handler(self, signum, frame):
-        self._called = True
+        self.signum = signum
         log.error("Caught SIG %d" % signum)
 
     def called(self):
-        return self._called
+        return self.signum != 0
 
 
 def pre_process_stage(stage):
@@ -785,7 +785,7 @@ def compute_tags(stage, prev_stages):
     return tags
 
 
-def set_job_to_final_state(context, job_id):
+def set_job_to_final_state(context, job_id, killed_func):
     j = dci_job.get(context, job_id)
     if j.status_code != 200:
         log.error("Unable to get job %s, error: %s" % (job_id, j.text))
@@ -798,7 +798,9 @@ def set_job_to_final_state(context, job_id):
                 % (job_id, j_states.text)
             )
             return
-        if j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
+        if killed_func() and j_states.json()["jobstates"][0]["status"] != "killed":
+            dci_jobstate.create(context, "killed", job_id=job_id, comment="killed")
+        elif j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
             dci_jobstate.create(context, "failure", job_id=job_id, comment="failure")
         else:
             dci_jobstate.create(context, "error", job_id=job_id, comment="error")
@@ -887,10 +889,10 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb):
                             % (stage["name"], stage["fallback_last_success"])
                         )
                         errors += 1
-                    set_job_to_final_state(dci_remoteci_context, _job_id_2)
+                    set_job_to_final_state(dci_remoteci_context, _job_id_2, cancel_cb)
             else:
                 errors += 1
-        set_job_to_final_state(dci_remoteci_context, _job_id)
+        set_job_to_final_state(dci_remoteci_context, _job_id, cancel_cb)
     return errors, stages
 
 
@@ -914,7 +916,7 @@ def main(args=sys.argv):
                 "%d job%s in error at stage %s"
                 % (job_in_errors, "s" if job_in_errors > 1 else "", stage_type)
             )
-            return 1
+            return 128 + signal_handler.signum if signal_handler.called() else 1
         if len(stages) > 0:
             previous_job_id = stages[0]["job_info"]["job"]["id"]
     log.info("Successful end of pipeline")

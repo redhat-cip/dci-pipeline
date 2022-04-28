@@ -191,7 +191,7 @@ def test_dci_pipeline_upgrade():
     assert rc == 0
 
 
-def test_dci_pipeline_sigterm():
+def helper_dci_pipeline_signal(sig):
     jobs, count = get_jobs()
     pid = os.fork()
 
@@ -199,9 +199,19 @@ def test_dci_pipeline_sigterm():
         os.execvp("dci-pipeline", ["dci-pipeline", "dcipipeline/pipeline-pause.yml"])
     else:
         time.sleep(10)
-        os.kill(pid, signal.SIGTERM)
-        time.sleep(10)
+        os.kill(pid, sig)
+        _, status = os.waitpid(pid, 0)
+
+        assert os.WEXITSTATUS(status) == 128 + sig
 
         jobs2, count2 = get_jobs()
         assert count + 1 == count2
-        assert jobs2[0]["status"] == "error"
+        assert jobs2[0]["status"] == "killed"
+
+
+def test_dci_pipeline_sigterm():
+    helper_dci_pipeline_signal(signal.SIGTERM)
+
+
+def test_dci_pipeline_sigint():
+    helper_dci_pipeline_signal(signal.SIGINT)
