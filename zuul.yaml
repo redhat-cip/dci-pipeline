@@ -26,19 +26,19 @@
     check:
       jobs:
         - dci-pipeline-tests-py3
-        - dci-rpm-build-el8
+        - dci-rpm-build-with-doc-el8
 
     gate:
       jobs:
         - dci-pipeline-tests-py3
-        - dci-rpm-build-el8
+        - dci-rpm-build-with-doc-el8
 
     dci-post:
       queue: dci
       jobs:
-        - dci-rpm-build-el8
+        - dci-rpm-build-with-doc-el8
         - dci-rpm-publish:
             dependencies:
-              - dci-rpm-build-el8
+              - dci-rpm-build-with-doc-el8
 
 ...
