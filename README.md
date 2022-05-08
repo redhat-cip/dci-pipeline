@@ -41,7 +41,7 @@ Here is a pipeline example:
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
     topic: OCP-4.5
     components:
-      - ocp?tags:build:ga&name:4.5.41
+      - ocp?tags%3abuild%3aga&name:4.5.41
       - plugin=1.1.1
 ```
 

@@ -265,6 +265,9 @@ def get_components(context, stage, topic_id, tag=None):
         elif "=" in c_type:
             c_type, c_name = c_type.split("=", 1)
             where_query = "type:%s,name:%s" % (c_type, c_name)
+        where_query = (
+            where_query.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
+        )
         resp = dci_topic.list_components(
             context, topic_id, limit=1, offset=0, sort="-released_at", where=where_query
         )
