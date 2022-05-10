@@ -40,5 +40,8 @@
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-with-doc-el8
+        - dci-deploy:
+            dependencies:
+              - dci-rpm-publish
 
 ...
