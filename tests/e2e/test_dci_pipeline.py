@@ -112,7 +112,7 @@ def test_dci_pipeline_edge():
     out = subprocess.check_output(
         ". cnf-telco-ci.sh; echo -n 42|dci-vault encrypt",
         shell=True,
-        text=True,
+        universal_newlines=True,
         executable="/bin/bash",  # it doesn't work with /bin/sh
     )
     prefix = "      "
@@ -143,7 +143,7 @@ def test_dci_pipeline_edge2():
     out = subprocess.check_output(
         ". rh-telco-pipeline.sh; echo -n 42|dci-vault encrypt",
         shell=True,
-        text=True,
+        universal_newlines=True,
         executable="/bin/bash",  # it doesn't work with /bin/sh
     )
     prefix = "        "
