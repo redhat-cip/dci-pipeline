@@ -397,7 +397,7 @@ class TestQueue(unittest.TestCase):
 
         job_id = uuid.uuid4()
         job_name = "test-dci-job"
-        job_ids = "%s:%s" % (job_name, job_id)
+        job_ids = "%s:%s\n" % (job_name, job_id)
         res = "res"
         with open(os.path.join(self.queue_dir, res), "w") as f:
             f.write("- Scheduled DCI job %s\n" % job_id)

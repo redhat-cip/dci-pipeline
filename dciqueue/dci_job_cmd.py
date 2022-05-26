@@ -61,7 +61,7 @@ def execute_command(args):
             jobs.append("%s:%s" % (m.group(1), m.group(2)))
 
     if jobs:
-        sys.stdout.write("\n".join(jobs))
+        _ = sys.stdout.write("\n".join(jobs) + "\n")
     else:
         sys.stderr.write(
             "No DCI job IDs found in (pool/id): %s/%s\n" % (args.pool, args.id)
