@@ -39,9 +39,37 @@ Here is a pipeline example:
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    topic: OCP-4.11
     components:
-      - ocp?tags%3abuild%3aga&name:4.5.41
+      - ocp?tags%3abuild%3aga&name:4.11.41
+      - plugin=1.1.1
+```
+
+Pipeline jobs can be split in multiple files to ease re-usability. To
+do so the pipeline names must be identical in the 2 files and the
+files must be loaded in order.
+
+Example:
+
+```YAML
+---
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
+    ansible_inventory: /etc/dci-pipeline/inventory
+    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    topic: OCP-4.11
+    components:
+      - ocp?tags%3abuild%3aga&name:4.11.41
+```
+
+and the next file could be like that to have same result as the first
+pipeline example:
+
+```YAML
+---
+  - name: openshift-vanilla
+    components:
       - plugin=1.1.1
 ```
 

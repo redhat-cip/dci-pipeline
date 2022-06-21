@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Red Hat, Inc.
+# Copyright (C) 2020-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,6 +20,7 @@ import mock
 
 from dcipipeline.main import (
     get_components,
+    get_config,
     get_prev_stages,
     overload_dicts,
     post_process_stage,
@@ -203,6 +204,24 @@ class TestMain(unittest.TestCase):
             mime="application/junit",
             job_id="1",
         )
+
+    def test_get_config(self):
+        basedir = os.path.dirname(__file__)
+        fullpath = os.path.join(basedir, "comp.yml")
+        fullpath2 = os.path.join(basedir, "comp2.yml")
+        config_dir, stages = get_config(["prog", fullpath, fullpath2])
+        self.assertEqual(len(stages), 1)
+        self.assertEqual(
+            stages[0]["components"],
+            [
+                "storage-plugin",
+                "network-plugin",
+                "ocp",
+                "ose-tests",
+                "cnf-tests",
+            ],
+        )
+        self.assertEqual(stages[0]["ansible_extravars"], {"var": 43, "var2": 42})
 
 
 if __name__ == "__main__":

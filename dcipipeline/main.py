@@ -133,9 +133,9 @@ def load_stage_file(path, config_dir):
         data = stream.read(-1)
     # First pass without decrypting !vault
     stages_raw_data = yaml.load(data, Loader=yaml.BaseLoader)
-    if stages_raw_data and len(stages_raw_data) > 0:
+    try:
         creds = load_credentials(stages_raw_data[0], config_dir)
-    else:
+    except (KeyError, IndexError):
         log.warning("No credentials found to decrypt vault encrypted data.")
         creds = {"DCI_API_SECRET": "fake-secret"}
     # Second pass decrypting !vault statements
@@ -689,7 +689,31 @@ def get_config(args):
     pipeline = []
     for config in args:
         config_dir = os.path.abspath(os.path.dirname(config))
-        pipeline += load_stage_file(config, config_dir)
+        stages = load_stage_file(config, config_dir)
+        pipeline += stages
+    # When 2 consecutive stages have the same name, do a
+    # special merge
+    print(range(len(pipeline) - 1, 1, -1))
+    for idx in range(len(pipeline) - 1, 0, -1):
+        print(pipeline[idx]["name"])
+        if pipeline[idx - 1]["name"] == pipeline[idx]["name"]:
+            # Do a copy of the keys to avoid a runtime error when
+            # we delete keys
+            for key in list(pipeline[idx].keys()):
+                # Special merge: concat lists and merge dicts
+                if (
+                    key in pipeline[idx]
+                    and key in pipeline[idx - 1]
+                    and type(pipeline[idx][key]) == type(pipeline[idx - 1][key])  # noqa
+                ):
+                    if isinstance(pipeline[idx][key], list):
+                        pipeline[idx - 1][key] += pipeline[idx][key]
+                        del pipeline[idx][key]
+                    elif isinstance(pipeline[idx][key], dict):
+                        pipeline[idx - 1][key].update(pipeline[idx][key])
+                        del pipeline[idx][key]
+            pipeline[idx - 1].update(pipeline[idx])
+            del pipeline[idx]
     for overload in lst:
         for name in overload:
             stage = get_stages(name, pipeline)
