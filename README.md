@@ -58,6 +58,8 @@ pipeline example:
       - plugin=1.1.1
 ```
 
+### Changing settings from the command line
+
 Any part in the pipeline files can be overridden on the command line
 using the syntax `<job name>:<field>=<value>`. For example if you want
 to change the playbook to use in the `openshift-vanilla` job from the
@@ -67,6 +69,18 @@ previous example, use:
 $ dci-pipeline openshift-vanilla:ansible_playbook=/tmp/myplaybook.yml mypipeline.yml
 ...
 ```
+
+### Changing the name of the pipeline
+
+To change the name of the pipeline, you can use the special setting
+`@pipeline:name=<pipeline name>`. For example:
+
+```ShellSession
+$ dci-pipeline @pipeline:name=mypipeline mypipeline.yml
+...
+```
+
+### Directory
 
 `dci-pipeline` runs the jobs in their own workspace in
 `/var/lib/dci-pipeline/<job name>/<job id>`. Various log files are

@@ -33,25 +33,26 @@ from dcipipeline.main import (
 class TestMain(unittest.TestCase):
     def test_process_args_empty(self):
         args = ["dci-pipeline"]
-        result, args = process_args(args)
+        result, args, opts = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [])
+        self.assertEqual(opts["name"], "pipeline")
 
     def test_process_args_single(self):
         args = ["dci-pipeline", "stage:key=value"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": "value"}}])
 
     def test_process_args_list(self):
         args = ["dci-pipeline", "stage:key=value=toto,value2"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": ["value=toto", "value2"]}}])
 
     def test_process_args_dict(self):
         args = ["dci-pipeline", "stage:key=subkey:value", "stage:key=subkey2:value2"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(
             result,
@@ -63,33 +64,44 @@ class TestMain(unittest.TestCase):
 
     def test_process_args_dict_list(self):
         args = ["dci-pipeline", "stage:key=subkey:value,value2"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": {"subkey": ["value", "value2"]}}}])
 
     def test_process_args_list1(self):
         args = ["dci-pipeline", "stage:key=value=toto,"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": ["value=toto"]}}])
 
     def test_process_args_only_files(self):
         args = ["dci-pipeline", "file1", "file2"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, ["file1", "file2"])
         self.assertEqual(result, [])
 
     def test_process_args_http(self):
         args = ["dci-pipeline", "stage:key=http://lwn.net/"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": "http://lwn.net/"}}])
 
     def test_process_args_https(self):
         args = ["dci-pipeline", "stage:key=https://lwn.net/"]
-        result, args = process_args(args)
+        result, args, _ = process_args(args)
         self.assertEqual(args, [])
         self.assertEqual(result, [{"stage": {"key": "https://lwn.net/"}}])
+
+    def test_process_args_pipeline_name(self):
+        args = ["dci-pipeline", "@pipeline:name=my-pipeline"]
+        _, _, opts = process_args(args)
+        self.assertEqual(opts["name"], "my-pipeline")
+
+    @mock.patch("dcipipeline.main.usage")
+    def test_process_args_pipeline_invalid_name(self, m):
+        args = ["dci-pipeline", "@name:name=my-pipeline"]
+        _, _, opts = process_args(args)
+        self.assertTrue(m.called)
 
     def test_overload_dicts_add(self):
         stage = {"first": "value"}
@@ -209,7 +221,7 @@ class TestMain(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         fullpath = os.path.join(basedir, "comp.yml")
         fullpath2 = os.path.join(basedir, "comp2.yml")
-        config_dir, stages = get_config(["prog", fullpath, fullpath2])
+        config_dir, stages, _ = get_config(["prog", fullpath, fullpath2])
         self.assertEqual(len(stages), 1)
         self.assertEqual(
             stages[0]["components"],

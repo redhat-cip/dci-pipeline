@@ -31,8 +31,10 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from dciclient.v1.api import component as dci_component
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import file as dci_file
+from dciclient.v1.api import identity as dci_identity
 from dciclient.v1.api import job as dci_job
 from dciclient.v1.api import jobstate as dci_jobstate
+from dciclient.v1.api import pipeline as dci_pipeline
 from dciclient.v1.api import topic as dci_topic
 
 if sys.version_info[0] == 2:
@@ -339,14 +341,16 @@ def schedule_job(
     tag=None,
     prev_components=None,
     previous_job_id=None,
+    pipeline_id=None,
 ):
     log.info(
-        "scheduling job %s on topic %s%s previous_job_id=%s"
+        "scheduling job %s on topic %s%s previous_job_id=%s pipeline_id=%s"
         % (
             stage["name"],
             stage["topic"],
             " with tag %s" % tag if tag else "",
             previous_job_id,
+            pipeline_id,
         )
     )
 
@@ -399,6 +403,7 @@ def schedule_job(
         components=[c["id"] for c in components],
         data={"pipeline": clean_ansible_objects(pipeline_data)},
         previous_job_id=previous_job_id,
+        pipeline_id=pipeline_id,
     )
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()["job"]["id"]
@@ -602,6 +607,7 @@ def process_args(args):
     args = args[1:]
     ret = []
     lst = []
+    opt = {"name": "pipeline"}
     while True:
         if len(args) == 0:
             break
@@ -637,11 +643,17 @@ def process_args(args):
             dct = overload.get(name, {})
             dct[key] = value
             overload[name] = dct
-            lst.append(overload)
+            # @pipeline is a special name to set options for the whole pipeline
+            if name == "@pipeline":
+                opt.update(overload["@pipeline"])
+            else:
+                if name[0] == "@":
+                    raise ValueError(f"Invalid name {name}")
+                lst.append(overload)
         except ValueError:
             log.error('Invalid syntax: "%s"' % arg)
             usage(3, cmd)
-    return lst, ret
+    return lst, ret, opt
 
 
 def is_list(elt):
@@ -694,8 +706,8 @@ def overload_dicts(overload, target):
 
 
 def get_config(args):
-    lst, args = process_args(args)
-    log.info("overload=%s" % lst)
+    lst, args, opts = process_args(args)
+    log.info(f"overload={lst} options={opts}")
     if len(args) == 0:
         args = [os.path.join(TOPDIR, "dcipipeline/pipeline.yml")]
     pipeline = []
@@ -705,7 +717,6 @@ def get_config(args):
         pipeline += stages
     # When 2 consecutive stages have the same name, do a
     # special merge
-    print(range(len(pipeline) - 1, 1, -1))
     for idx in range(len(pipeline) - 1, 0, -1):
         print(pipeline[idx]["name"])
         if pipeline[idx - 1]["name"] == pipeline[idx]["name"]:
@@ -726,6 +737,7 @@ def get_config(args):
                         del pipeline[idx][key]
             pipeline[idx - 1].update(pipeline[idx])
             del pipeline[idx]
+    # Process global options from @pipeline
     for overload in lst:
         for name in overload:
             stage = get_stages(name, pipeline)
@@ -733,7 +745,7 @@ def get_config(args):
                 log.error("No such stage %s" % name)
                 sys.exit(3)
             overload_dicts(overload[name], stage[0])
-    return config_dir, pipeline
+    return config_dir, pipeline, opts
 
 
 def set_success_tag(stage, job_info, context):
@@ -845,7 +857,7 @@ def set_job_to_final_state(context, job_id, killed_func):
             dci_jobstate.create(context, "error", job_id=job_id, comment="error")
 
 
-def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb):
+def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb, options):
     stages = get_stages(stage_type, pipeline)
     errors = 0
     for stage in stages:
@@ -860,11 +872,25 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb):
             dci_pipeline_user_context = build_pipeline_user_context(
                 dci_pipeline_user_credentials
             )
+
+        if "pipeline_id" not in options:
+            context = (
+                dci_pipeline_user_context
+                if dci_pipeline_user_context is not None
+                else dci_remoteci_context
+            )
+            team_id = dci_identity.my_team_id(context)
+            res = dci_pipeline.create(context, options["name"], team_id)
+            if res.status_code == 201:
+                print(res.json())
+                options["pipeline_id"] = res.json()["pipeline"]["id"]
+
         stage["job_info"] = schedule_job(
             stage,
             dci_remoteci_context,
             dci_pipeline_user_context,
             previous_job_id=previous_job_id,
+            pipeline_id=options["pipeline_id"],
         )
 
         if not stage["job_info"]:
@@ -900,6 +926,7 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb):
                     stage["fallback_last_success"],
                     stage["job_info"]["job"]["components"],
                     previous_job_id=previous_job_id,
+                    pipeline_id=options["pipeline_id"],
                 )
 
                 if not stage["job_info"]:
@@ -942,13 +969,18 @@ def main(args=sys.argv):
     global PIPELINE
     del PIPELINE[:]
     signal_handler = SignalHandler()
-    config_dir, pipeline = get_config(args)
+    config_dir, pipeline, options = get_config(args)
     PIPELINE += pipeline
 
     previous_job_id = None
     for stage_type in get_types_of_stage(pipeline):
         job_in_errors, stages = run_stages(
-            stage_type, pipeline, config_dir, previous_job_id, signal_handler.called
+            stage_type,
+            pipeline,
+            config_dir,
+            previous_job_id,
+            signal_handler.called,
+            options,
         )
         if job_in_errors != 0:
             log.error(
