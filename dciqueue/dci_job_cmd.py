@@ -18,6 +18,7 @@
 import os
 import re
 import sys
+import json
 import logging
 
 from dciqueue import lib
@@ -50,18 +51,27 @@ def execute_command(args):
         return 1
 
     jobs = []
-    job_id_regex = re.compile(r"Setting tag job:([\w-]+) on job ([0-9a-f-]+)$")
+    dci_pipeline_job_id_regex = re.compile(
+        r"Setting tag job:([\w-]+) on job ([0-9a-f-]+)$"
+    )
+    dci_check_change_job_id_regex = re.compile(
+        r'^changed: \[[\w-]+\] => (\{"changed": true, "job":.+\})$'
+    )
 
     with open(logfile, "r") as f:
         lines = f.readlines()
 
     for line in lines:
-        m = job_id_regex.search(line)
+        m = dci_pipeline_job_id_regex.search(line)
         if m:
             jobs.append("%s:%s" % (m.group(1), m.group(2)))
+        m = dci_check_change_job_id_regex.search(line)
+        if m:
+            j = json.loads(m.group(1))
+            jobs.append("%s:%s" % (j["job"].get("name"), j["job"].get("id")))
 
     if jobs:
-        _ = sys.stdout.write("\n".join(jobs) + "\n")
+        _ = sys.stdout.write("\n".join(list(set(jobs))) + "\n")
     else:
         sys.stderr.write(
             "No DCI job IDs found in (pool/id): %s/%s\n" % (args.pool, args.id)
