@@ -1,20 +1,5 @@
 # CI pipeline management for DCI jobs
 
-- [dci-pipeline command](#dci-pipeline-command)
-  - [Sharing information between jobs](#sharing-information-between-jobs)
-  - [tagging and retrying](#tagging-and-retrying)
-  - [passing environment variables](#passing-environment-variables)
-  - [instrument the pipeline with temporary directories](#instrument-the-pipeline-with-temporary-directories)
-  - [special environment variables](#special-environment-variables)
-- [dci-agent-ctl](#dci-agent-ctl)
-  - [dci-settings2pipeline](#dci-settings2pipeline)
-- [dci-queue command](#dci-queue-command)
-- [How to rebuild a pipeline](#how-to-rebuild-a-pipeline)
-- [How to see components diff between two pipelines](#how-to-see-components-diff-between-two-pipelines)
-- [Development](#development)
-  - [Tests](#tests)
-  - [pre-commit](#pre-commit)
-
 ## dci-pipeline command
 
 The `dci-pipeline` command allows to execute multiple DCI jobs using
@@ -163,7 +148,7 @@ an example on how to use it:
   when: kubeconfig.stat.exists == False
 ```
 
-### tagging and retrying
+### Tagging and retrying
 
 `dci-pipeline` can tag components on successful jobs by specifying a
 `success_tag` in the job definition. Example:
@@ -201,7 +186,7 @@ continue testing the next layers in the pipeline. Example:
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
 
-### passing environment variables
+### Passing environment variables
 
 If you want to pass environment variables to the agent. Example:
 
@@ -224,7 +209,7 @@ If you want to pass environment variables to the agent. Example:
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
 
-### instrument the pipeline with temporary directories
+### Instrument the pipeline with temporary directories
 
 You can specify the meta value "/@tmpdir" that will be replaced
 by an actual path of a temporary directory. Example:
@@ -252,7 +237,7 @@ by an actual path of a temporary directory. Example:
 This will create a new temporary directory before running the stage, at the end of
 the stage the directory is removed.
 
-### special environment variables
+### Special environment variables
 
 `dci-pipeline` is setting the following environment variables to
 enable the `junit` Ansible callback to work out of the box:
@@ -265,6 +250,25 @@ enable the `junit` Ansible callback to work out of the box:
 ```
 
 You can override them if you need.
+
+### Using Ansible variable files
+
+You can specify extra Ansible variable files using the
+`ansible_extravars_files` key in your pipeline file. Example:
+
+```YAML
+---
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: agents/openshift-vanilla/agent.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_extravars_files:
+      - agents/openshift-vanilla/vars.yml
+    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    topic: OCP-4.5
+    components:
+      - ocp
+```
 
 ## dci-agent-ctl
 

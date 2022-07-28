@@ -7,6 +7,8 @@
     ansible_inventory: agents/openshift-vanilla/inventory
     ansible_extravars:
       answer: 42
+    ansible_extravars_files:
+      - agents/openshift-vanilla/vars.yml
     ansible_envvars:
       ENVVAR_42: 42
       ENVVAR_43: 43

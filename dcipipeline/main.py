@@ -144,7 +144,10 @@ def load_stage_file(path, config_dir):
     vault_secrets = CLI.setup_vault_secrets(
         loader=loader, vault_ids=[get_vault_client()]
     )
-    ansible_yaml = from_yaml(data, vault_secrets=vault_secrets)
+    ansible_yaml = []
+    for assoc in from_yaml(data, vault_secrets=vault_secrets):
+        assoc["_pipeline_path_"] = path
+        ansible_yaml.append(assoc)
     return ansible_yaml
 
 
@@ -464,6 +467,15 @@ def build_cmdline(stage):
         cmd += " -e '%s'" % json.dumps(
             stage["ansible_extravars"], cls=AnsibleJSONEncoder
         )
+
+    if "ansible_extravars_files" in stage:
+        for extra_file in stage["ansible_extravars_files"]:
+            if extra_file[0] != "/":
+                extra_file = os.path.join(
+                    os.path.abspath(os.path.dirname(stage["_pipeline_path_"])),
+                    extra_file,
+                )
+            cmd += f" -e '@{extra_file}'"
 
     log.info('cmdline="%s"' % cmd)
 

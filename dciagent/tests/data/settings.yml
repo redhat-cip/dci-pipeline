@@ -12,6 +12,7 @@ dci_components_by_query:
   - 'type:ose-tests,tags:ocp-vanilla-4.8-ok,name:ose-tests-20200628'
   - 'type:cnf-tests'
 answer: 42
+answer2: 42
 
 # dci-pipeline specific variables
 dci_credentials: ../../../rh-telco-pipeline_dci_credentials.yml

@@ -125,6 +125,7 @@
       assert:
         that:
           - "answer == 42"
+          - "answer2 == 42"
 
 - name: Running ocp deployment
   hosts: runner
