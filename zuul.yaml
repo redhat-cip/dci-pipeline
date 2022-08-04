@@ -3,7 +3,6 @@
 - job:
     name: dci-pipeline-tests-py3
     description: job to run the example pipeline in python 3
-    pre-run: zuul.d/pre-run3.yaml
     run: zuul.d/run3.yaml
     required-projects:
       - dci-dev-env
@@ -19,7 +18,7 @@
     nodeset:
       nodes:
         - name: testrunner
-          label: cloud-fedora-34
+          label: dci-centos-8
 
 - project:
 
@@ -27,19 +26,26 @@
       jobs:
         - dci-pipeline-tests-py3
         - dci-rpm-build-with-doc-el8
+        - dci-rpm-build-with-doc-el9:
+            voting: false
 
     gate:
       jobs:
         - dci-pipeline-tests-py3
         - dci-rpm-build-with-doc-el8
+        - dci-rpm-build-with-doc-el9:
+            voting: false
 
     dci-post:
       queue: dci
       jobs:
         - dci-rpm-build-with-doc-el8
+        - dci-rpm-build-with-doc-el9:
+            voting: false
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-with-doc-el8
+              - dci-rpm-build-with-doc-el9
         - dci-deploy:
             dependencies:
               - dci-rpm-publish

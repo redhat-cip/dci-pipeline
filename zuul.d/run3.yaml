@@ -8,17 +8,15 @@
     dciclient_path: "{{ ansible_env.HOME }}/{{ (zuul.projects.values() | list | json_query(dciclient_path_query))[0] }}"
   tasks:
 
-    - name: Build and launch docker images from dci-dev-env
-      become: yes
-      command: docker-compose up -d --build api
+    - name: Build and launch the control server container images from dci-dev-env
+      command: podman-compose up -d --build
       environment:
         DCI_GIT_REPO_DIR: ..
       args:
         chdir: '{{ dcidevenv_path }}'
 
-    - name: Get docket-compose status
-      become: yes
-      command: docker-compose ps
+    - name: Get podman-compose status
+      command: podman-compose ps
       environment:
         DCI_GIT_REPO_DIR: ..
       args:
