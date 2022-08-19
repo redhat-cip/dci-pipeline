@@ -391,17 +391,50 @@ class TestQueue(unittest.TestCase):
         )
         self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
 
-    def test_dci_job(self):
+    def test_dci_job_via_pipeline(self):
         import io
         from contextlib import redirect_stdout
 
         job_id = uuid.uuid4()
-        job_name = "test-dci-job"
+        job_name = "test-dci-pipeline-job"
         job_ids = "%s:%s\n" % (job_name, job_id)
         res = "res"
         with open(os.path.join(self.queue_dir, res), "w") as f:
-            f.write("- Scheduled DCI job %s\n" % job_id)
-            f.write("- Setting tag job:%s on job %s\n" % (job_name, job_id))
+            f.write("dcipipeline.main - Scheduled DCI job %s\n" % job_id)
+            f.write(
+                "dcipipeline.main - Setting tag job:%s on job %s\n" % (job_name, job_id)
+            )
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "8nodes", res]), 0)
+        main.main(
+            [
+                "dci-queue",
+                "schedule",
+                "8nodes",
+                "cat",
+                os.path.join(self.queue_dir, "@RESOURCE"),
+            ]
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        with io.StringIO() as buf, redirect_stdout(buf):
+            rc = main.main(["dci-queue", "dci-job", "8nodes", "1"])
+            output = buf.getvalue()
+        self.assertEqual(rc, 0)
+        self.assertEqual(output, job_ids)
+
+    def test_dci_job_via_check_change(self):
+        import io
+        from contextlib import redirect_stdout
+
+        job_id = uuid.uuid4()
+        job_name = "test-dci-check-change-job"
+        job_ids = "%s:%s\n" % (job_name, job_id)
+        res = "res"
+        with open(os.path.join(self.queue_dir, res), "w") as f:
+            f.write(
+                'changed: [jumphost] => {"changed": true, "job": {"name": "%s","id": "%s"}}\n'
+                % (job_name, job_id)
+            )
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(main.main(["dci-queue", "add-resource", "8nodes", res]), 0)
         main.main(
