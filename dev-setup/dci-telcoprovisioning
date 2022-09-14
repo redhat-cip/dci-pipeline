@@ -158,7 +158,12 @@ def create_component(name, version, topic_id, tag=None, team_id=None, dev=True):
         "name": name + "-" + version,
         "type": name,
         "topic_id": topic_id,
-        "data": {"version": version},
+        "data": {
+            "version": version,
+            "name": name,
+            "url": "http://url.com/",
+            "pull_url": "http://pullurl.com/",
+        },
     }
     if team_id:
         data["team_id"] = team_id

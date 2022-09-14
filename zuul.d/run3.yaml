@@ -9,16 +9,12 @@
   tasks:
 
     - name: Build and launch the control server container images from dci-dev-env
-      command: podman-compose up -d --build
-      environment:
-        DCI_GIT_REPO_DIR: ..
+      shell: "set -ex; ln -s ../* . && podman-compose build db api && podman-compose up -d db api"
       args:
         chdir: '{{ dcidevenv_path }}'
 
     - name: Get podman-compose status
       command: podman-compose ps
-      environment:
-        DCI_GIT_REPO_DIR: ..
       args:
         chdir: '{{ dcidevenv_path }}'
 
