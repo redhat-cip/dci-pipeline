@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py
-Version:        0.0.6
+Version:        0.0.7
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -39,7 +39,7 @@ BuildRequires:  systemd
 %{?systemd_requires}
 Requires(pre):  shadow-utils
 Requires:       ansible
-Requires:       dci-ansible
+Requires:       dci-ansible >= 0.3.0
 Requires:       /usr/bin/sudo
 
 %description
@@ -118,7 +118,10 @@ exit 0
 %{_sysconfdir}/sudoers.d/%{name}
 
 %changelog
-* Thu Mar 24 2022 Frederic Lepied <flepied@redhat.com> - 0.0.6-3
+* Thu Sep 15 2022 Frederic Lepied <flepied@redhat.com> - 0.0.7-1
+- depends on dci-ansible >= 0.3.0 to have the filter_plugins available
+
+* Thu Mar 24 2022 Frederic Lepied <flepied@redhat.com> - 0.0.6-1
 - make use of dci-vault-client
 
 * Mon Dec 13 2021 Frederic Lepied <flepied@redhat.com> 12 2021 - 0.0.5-1

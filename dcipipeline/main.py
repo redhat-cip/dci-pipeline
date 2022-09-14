@@ -193,6 +193,9 @@ def generate_ansible_cfg(dci_ansible_dir, config_dir):
             """[defaults]
 library            = {dci_ansible_dir}/modules/
 module_utils       = {dci_ansible_dir}/module_utils/
+action_plugins     = {dci_ansible_dir}/action_plugins/
+callback_plugins   = {dci_ansible_dir}/callback/
+filter_plugins     = {dci_ansible_dir}/filter_plugins/
 callback_whitelist = dci
 log_path           = ansible.log
 """.format(
