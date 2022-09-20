@@ -1,5 +1,22 @@
 # CI pipeline management for DCI jobs
 
+## Installation
+
+To install dci-pipeline on a RHEL 8 system, do the following as root:
+
+```ShellSession
+# dnf install -y https://packages.distributed-ci.io/dci-release.el8.noarch.rpm
+# cat > /etc/yum.repos.d/ansible-runner.repo <<EOF
+[ansible-runner]
+name=Ansible Runner for EL 8 - $basearch
+baseurl=https://releases.ansible.com/ansible-runner/rpm/epel-8-x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=https://releases.ansible.com/keys/RPM-GPG-KEY-ansible-release.pub
+EOF
+# dnf install -y dci-pipeline
+```
+
 ## dci-pipeline command
 
 The `dci-pipeline` command allows to execute multiple DCI jobs using
