@@ -46,7 +46,8 @@
     - name: 'Set tags for the current job'
       dci_job:
         id: "{{ job_id }}"
-        tags: 'ocp-edge-conf'
+        tags:
+          - 'ocp-edge-conf'
 
     - name: 'Create git repo component'
       dci_component:

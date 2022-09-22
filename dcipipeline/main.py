@@ -205,10 +205,17 @@ module_utils       = {dci_ansible_dir}/module_utils/
 action_plugins     = {dci_ansible_dir}/action_plugins/
 callback_plugins   = {dci_ansible_dir}/callback/
 filter_plugins     = {dci_ansible_dir}/filter_plugins/
+collections_paths  = {ansible_collections_paths}
 callback_whitelist = dci
 log_path           = ansible.log
 """.format(
-                dci_ansible_dir=dci_ansible_dir
+                dci_ansible_dir=dci_ansible_dir,
+                ansible_collections_paths=os.path.expanduser(
+                    os.getenv(
+                        "ANSIBLE_COLLECTIONS_PATHS",
+                        "~/.ansible/collections:/usr/share/ansible/collections",
+                    )
+                ),
             )
         )
 
@@ -584,11 +591,12 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     else:
         generate_ansible_cfg(dci_ansible_dir, private_data_dir)
     log.info(
-        "running stage: %s%s private_data_dir=%s"
+        "running stage: %s%s private_data_dir=%s env=%s"
         % (
             stage["name"],
             " with inventory %s" % inventory if inventory else "",
             private_data_dir,
+            envvars,
         )
     )
     envvars.update(dci_credentials)

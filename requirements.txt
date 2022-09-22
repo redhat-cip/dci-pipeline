@@ -1,5 +1,7 @@
 ansible<2.10
 ansible-runner
+dciauth
 dciclient
 junit-xml
 jmespath
+selinux

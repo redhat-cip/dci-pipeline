@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Copyright (C) 2022 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+ARGS=
+
+function print_directory() {
+    param="$1"
+    echo "$(cd $(dirname $param); pwd)"
+    for path in $(sed -n -e "s@.* /@/@p" "$param"); do
+        if [ -f "$path" ]; then
+            echo $(dirname "$path")
+        else
+            echo "$path"
+        fi
+    done
+}
+
+function print_directories() {
+    for param in "$@"; do
+        case "$param" in
+            .*)
+                print_directory "$PWD/$param"
+                ;;
+            /*)
+                if ! grep "^/@" <<< $param; then
+                    print_directory "$param"
+                fi
+                ;;
+        esac
+    done
+}
+
+for dir in $(print_directories "$@"|sort -u|grep -v "@"); do
+    if [ -w "$dir" ]; then
+        ARGS="$ARGS --mount=type=bind,src=$dir,dst=$dir,ro=false"
+        #ARGS="$ARGS -v $dir:$dir:rw"
+    else
+        ARGS="$ARGS --mount=type=bind,src=$dir,dst=$dir,ro=true"
+        #ARGS="$ARGS -v $dir:$dir:ro"
+    fi
+done
+
+set -x
+
+podman run --rm --userns=keep-id --network=host --workdir=/tmp --mount=type=bind,src=$HOME,dst=$HOME,ro=false $ARGS quay.io/distributedci/dci-pipeline:"${DCI_PIPELINE_TAG:=latest}" quay.io/distributedci/dci-pipeline:"${DCI_PIPELINE_TAG:=stable}" "$@"
+
+# dci-pipeline-podman ends here

@@ -7,8 +7,8 @@
 %endif
 
 Name:           dci-pipeline
-# to keep in sync with setup.py
-Version:        0.0.11
+# to keep in sync with setup.py and Dockerfile
+Version:        0.1.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -26,6 +26,7 @@ Requires:       python2-dciclient >= 2.3.0
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
 Requires:       python2-junit_xml
+Requires:       python2-libselinux
 %endif
 
 %if 0%{?with_python3}
@@ -35,6 +36,7 @@ Requires:       python3-PyYAML
 Requires:       python3-dciclient >= 2.3.0
 Requires:       python3-ansible-runner
 Requires:       python3-junit_xml
+Requires:       python3-libselinux
 %endif
 
 BuildRequires:  systemd
@@ -46,6 +48,13 @@ Requires:       /usr/bin/sudo
 
 %description
 CI pipeline management for DCI jobs
+
+%package podman
+Summary:        dci-pipeline podman flavour
+Requires:       podman
+
+%description podman
+CI pipeline management for DCI jobs (via podman)
 
 %prep -a -v
 %autosetup -n %{name}-%{version}
@@ -82,6 +91,11 @@ install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdi
 install -d -m 700 %{buildroot}/var/lib/%{name}
 install -d -m 700 %{buildroot}/var/lib/dci-queue
 install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
+
+for cmd in dci-create-component dci-diff-pipeline dci-find-latest-component dci-openshift-agent-ctl dci-openshift-app-agent-ctl dci-pipeline dci-queue dci-rebuild-pipeline dci-rhel-latest-kernel-version dci-vault-client dci-vault dcictl; do
+    install -v -m 755 container/$cmd-podman %{buildroot}%{_bindir}/
+done
+
 cat > %{buildroot}%{_sysconfdir}/%{name}/pipeline.yml <<EOF
 ---
 EOF
@@ -138,8 +152,15 @@ exit 0
 %{_datadir}/%{name}/test-runner
 %{_datadir}/%{name}/yaml2json
 
+%files podman
+%{_bindir}/*-podman
+
 %changelog
-* Fri Oct 28 2022 Frederic Lepied <flepied@redhat.com> - 0.0.11-&
+* Thu Nov  3 2022 Frederic Lepied <flepied@redhat.com> 0.1.0-1
+- create the podman sub-package
+- add a dependency on python-libselinux
+
+* Fri Oct 28 2022 Frederic Lepied <flepied@redhat.com> - 0.0.11-1
 - add common lib
 
 * Thu Oct 27 2022 Frederic Lepied <flepied@redhat.com> - 0.0.10-1
@@ -167,7 +188,7 @@ exit 0
 * Fri May  7 2021 Frederic Lepied <flepied@redhat.com> - 0.0.3-4
 - requires junit-xml
 
-* Mon Jan 12 2021 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.0.3-3
+* Tue Jan 12 2021 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.0.3-3
 - add dci-diff-pipeline
 
 * Mon Jan 11 2021 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.0.3-2

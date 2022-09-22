@@ -15,15 +15,62 @@
       - dci-analytics
       - dci-openshift-agent
       - dci-openshift-app-agent
+      - ansible-collection-community-kubernetes
+      - ansible-collection-community-libvirt
+      - ansible-collection-containers-podman
+      - ansible-role-dci-podman
+      - ansible-role-dci-sync-registry
     nodeset:
       nodes:
         - name: testrunner
           label: dci-centos-8
 
+- job:
+    name: dci-build-and-push-dci-pipeline-dev-container-job
+    parent: dci-build-and-push-container-job
+    description: Build dci-pipeline container
+    vars:
+      registry: quay.io
+      tag: "distributedci/dci-pipeline"
+      version: "gerrit-{{ zuul.change }}"
+      push_stable_tag: false
+    required-projects:
+      - python-dciclient
+      - python-dciauth
+      - dci-ansible
+      - dci-openshift-agent
+      - dci-openshift-app-agent
+      - ansible-collection-community-kubernetes
+      - ansible-collection-community-libvirt
+      - ansible-collection-containers-podman
+      - ansible-role-dci-podman
+      - ansible-role-dci-sync-registry
+
+- job:
+    name: dci-build-and-push-dci-pipeline-container-job
+    parent: dci-build-and-push-container-job
+    description: Build and push dci-pipeline container
+    vars:
+      registry: quay.io
+      tag: "distributedci/dci-analytics"
+      version: latest
+    required-projects:
+      - python-dciclient
+      - python-dciauth
+      - dci-ansible
+      - dci-openshift-agent
+      - dci-openshift-app-agent
+      - ansible-collection-community-kubernetes
+      - ansible-collection-community-libvirt
+      - ansible-collection-containers-podman
+      - ansible-role-dci-podman
+      - ansible-role-dci-sync-registry
+
 - project:
 
     check:
       jobs:
+        - dci-build-and-push-dci-pipeline-dev-container-job
         - dci-pipeline-tests-py3
         - dci-rpm-build-with-doc-el8
         - dci-rpm-build-with-doc-el9:
@@ -31,6 +78,7 @@
 
     gate:
       jobs:
+        - dci-build-and-push-dci-pipeline-container-job
         - dci-pipeline-tests-py3
         - dci-rpm-build-with-doc-el8
         - dci-rpm-build-with-doc-el9:
@@ -39,6 +87,7 @@
     dci-post:
       queue: dci
       jobs:
+        - dci-build-and-push-dci-pipeline-container-job
         - dci-rpm-build-with-doc-el8
         - dci-rpm-build-with-doc-el9:
             voting: false
