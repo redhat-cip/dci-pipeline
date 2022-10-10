@@ -1,0 +1,68 @@
+---
+- name: Schedule a job
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  tasks:
+
+    - name: Read credentials from env vars
+      set_fact:
+        dci_client_id: "{{ lookup('env','DCI_CLIENT_ID') }}"
+        dci_api_secret: "{{ lookup('env','DCI_API_SECRET') }}"
+        dci_cs_url: "{{ lookup('env','DCI_CS_URL') }}"
+        dci_ui_url: "{{ lookup('env','DCI_UI_URL') }}"
+      no_log: true
+
+    - name: Schedule a new job
+      dci_job:
+        topic: '{{ dci_topic }}'
+      register: job_info
+      when: job_info is not defined
+
+    - name: Print job_info
+      debug:
+        msg: "{{ job_info['job'] }}"
+
+    - name: Set global variables
+      set_fact:
+        job_id: "{{ job_info['job']['id'] }}"
+        topic_id: "{{ job_info['job']['topic_id'] }}"
+        remoteci_id: "{{ job_info['job']['remoteci_id'] }}"
+        components: "{{ job_info['job']['components'] }}"
+        product: "{{ job_info['job']['topic']['product_id'] }}"
+
+    - name: Print job id
+      debug:
+        msg: "dci_job_id: {{ job_id }}"
+
+    - name: Print components
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{ job_info['job']['components'] }}"
+
+    - name: 'Set tags for the current job'
+      dci_job:
+        id: "{{ job_id }}"
+        tags: 'ocp-vanilla-conf'
+
+- name: Preparation tasks
+  hosts: runner
+  gather_facts: false
+  tags:
+    - working
+  tasks:
+
+    - name: running
+      dci_job:
+        id: "{{ job_id }}"
+        status: "running"
+
+    - name: failure
+      dci_job:
+        id: "{{ job_id }}"
+        status: "failure"
+
+    - name: Failure
+      fail:
+        msg: "fatal error in pre-run --> failure state"

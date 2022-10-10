@@ -554,6 +554,14 @@ def upload_ansible_log(context, ansible_log_dir, stage):
         log.error("ansible.log not found in %s" % ansible_log)
 
 
+def update_job_info(context, stage):
+    resp = dci_job.get(context, stage["job_info"]["job"]["id"])
+    if resp.status_code != 200:
+        log.error("Unable to get job info: %s" % resp.text())
+    else:
+        stage["job_info"].update(resp.json())
+
+
 def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     stage = dict(stage)
     stage_metas, stage = pre_process_stage(stage)
@@ -593,6 +601,7 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     log.info("stats=%s" % run.stats)
     upload_ansible_log(context, private_data_dir, stage)
     post_process_stage(context, stage, stage_metas)
+    update_job_info(context, stage)
     return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
@@ -914,7 +923,10 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb, opt
         ):
             set_success_tag(stage, stage["job_info"], dci_remoteci_context)
         else:
-            log.error("Unable to run successfully job %s" % stage["name"])
+            log.error(
+                "Unable to run successfully job %s (%s)"
+                % (stage["name"], stage["job_info"]["job"]["id"])
+            )
             if (
                 "fallback_last_success" in stage
                 and not is_stage_with_fixed_components(stage)
@@ -990,7 +1002,34 @@ def main(args=sys.argv):
                 "%d job%s in error at stage %s"
                 % (job_in_errors, "s" if job_in_errors > 1 else "", stage_type)
             )
-            return 128 + signal_handler.signum if signal_handler.called() else 1
+            if signal_handler.called():
+                return 128 + signal_handler.signum
+            else:
+                for stage in stages:
+                    if "job_info" in stage and stage["job_info"] is not None:
+                        job_info = stage["job_info"]
+                    elif (
+                        "failed_job_info" in stage
+                        and stage["failed_job_info"] is not None
+                    ):
+                        job_info = stage["failed_job_info"]
+                    else:
+                        job_info = None
+                        log.error("No job_info found for stage %s" % stage["name"])
+                    if job_info and "jobstates" in job_info["job"]:
+                        job_states = sorted(
+                            job_info["job"]["jobstates"],
+                            key=lambda x: x["created_at"],
+                        )
+                        log.info(
+                            "Stage %s status=%s"
+                            % (stage["name"], job_states[-1]["status"])
+                        )
+                        if job_states[-1]["status"] == "error":
+                            return 2
+                    else:
+                        log.error("No job.jobstate found for stage %s" % stage["name"])
+                return 1
         if len(stages) > 0:
             previous_job_id = stages[0]["job_info"]["job"]["id"]
     log.info("Successful end of pipeline")

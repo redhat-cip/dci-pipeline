@@ -1,0 +1,17 @@
+---
+
+# pipeline with an error status to test exit code
+
+  - name: openshift-vanilla
+    type: ocp
+    ansible_playbook: agents/openshift-vanilla/agent-error.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    topic: OCP-4.8
+    components:
+      - ocp
+      - ose-tests
+      - cnf-tests
+    success_tag: ocp-vanilla-4.8-ok
+    fallback_last_success: ocp-vanilla-4.8-ok
+
+...
