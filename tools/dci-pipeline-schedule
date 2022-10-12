@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# Copyright (C) 2022 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+PIPELINES_DIR=${PIPELINES_DIR:=$HOME/pipelines}
+INVENTORIES_DIR=${INVENTORIES_DIR:=$HOME/inventories}
+
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+    fi
+done
+
+DCI_QUEUE="$DEFAULT_QUEUE"
+
+# get an optional dci-queue pool name with -p
+if [ "$1" = "-p" ]; then
+    shift
+    DCI_QUEUE="$1"
+    shift
+fi
+
+# get an optional dci-queue resource name with -r
+if [ "$1" = "-r" ]; then
+    shift
+    export DCI_QUEUE_RESOURCE="$1"
+    shift
+fi
+
+if [ -n "$DCI_QUEUE_RESOURCE" ]; then
+    RES="$DCI_QUEUE_RESOURCE"
+else
+    RES="@RESOURCE"
+fi
+
+CMD=
+OPTS=
+for arg in "$@"; do
+    case "$arg" in
+        *:*=*)
+            CMD="$CMD $arg"
+            ;;
+        -*)
+            OPTS="$OPTS $arg"
+            ;;
+        *)
+            # Verify if the pipeline file exists
+            pipeline="${PIPELINES_DIR}/${arg}-pipeline.yml"
+            if [ ! -r "$pipeline" ]; then
+                echo "Unable to find $pipeline file" 1>&2
+                exit 1
+            fi
+            name=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' "$pipeline")
+            if [ -z "$name" ]; then
+                echo "Unable to extract the pipeline name from $pipeline" 1>&2
+                exit 1
+            fi
+            # Inject the inventory and configuration arguments
+            INV=$(grep ansible_inventory: "$pipeline"|sed -n -e 's@.*ansible_inventory:\s*@@p'| sed -e "s/@QUEUE/$DCI_QUEUE/")
+            CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
+            ;;
+    esac
+done
+
+if [ -n "$DCI_QUEUE_RESOURCE" ]; then
+    CMD="dci-pipeline $CMD"
+else
+    CMD="dci-queue schedule $OPTS $DCI_QUEUE dci-pipeline $CMD"
+fi
+
+echo "+ $CMD" 1>&2
+
+exec $CMD
+
+# dci-pipeline-schedule ends here

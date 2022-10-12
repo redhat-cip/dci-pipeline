@@ -1,4 +1,5 @@
-ansible
+ansible<2.10
 ansible-runner
 dciclient
 junit-xml
+jmespath

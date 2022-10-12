@@ -6,3 +6,10 @@ include systemd/*
 include LICENSE
 include dci-pipeline.sudo
 include dciqueue/dci-queue.bash_completion
+include tools/extract-dependencies
+include tools/loop_until_failure
+include tools/loop_until_success
+include tools/send-feedback
+include tools/test-runner
+include tools/dci-pipeline-schedule
+include tools/dci-pipeline-check

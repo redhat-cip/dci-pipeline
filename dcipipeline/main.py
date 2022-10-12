@@ -869,7 +869,15 @@ def set_job_to_final_state(context, job_id, killed_func):
             dci_jobstate.create(context, "error", job_id=job_id, comment="error")
 
 
-def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb, options):
+def run_stages(
+    stage_type,
+    pipeline,
+    config_dir,
+    previous_job_id,
+    previous_topic,
+    cancel_cb,
+    options,
+):
     stages = get_stages(stage_type, pipeline)
     errors = 0
     for stage in stages:
@@ -896,6 +904,17 @@ def run_stages(stage_type, pipeline, config_dir, previous_job_id, cancel_cb, opt
             if res.status_code == 201:
                 print(res.json())
                 options["pipeline_id"] = res.json()["pipeline"]["id"]
+
+        if (
+            "use_previous_topic" in stage
+            and stage["use_previous_topic"] is True
+            and previous_topic is not None
+        ):
+            log.info(
+                "Setting topic to %s for %s from previous topic"
+                % (previous_topic, stage["name"])
+            )
+            stage["topic"] = previous_topic
 
         stage["job_info"] = schedule_job(
             stage,
@@ -988,12 +1007,14 @@ def main(args=sys.argv):
     PIPELINE += pipeline
 
     previous_job_id = None
+    previous_topic = None
     for stage_type in get_types_of_stage(pipeline):
         job_in_errors, stages = run_stages(
             stage_type,
             pipeline,
             config_dir,
             previous_job_id,
+            previous_topic,
             signal_handler.called,
             options,
         )
@@ -1032,6 +1053,7 @@ def main(args=sys.argv):
                 return 1
         if len(stages) > 0:
             previous_job_id = stages[0]["job_info"]["job"]["id"]
+            previous_topic = stages[0]["job_info"]["job"]["topic"]["name"]
     log.info("Successful end of pipeline")
     return 0
 

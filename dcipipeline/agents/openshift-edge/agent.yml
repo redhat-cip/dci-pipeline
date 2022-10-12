@@ -99,7 +99,7 @@
     - name: validate extravars
       assert:
         that:
-          - "answer|int == 42"
+          - "{{ answer }} == 42"
 
 - name: Running ocp deployment
   hosts: runner

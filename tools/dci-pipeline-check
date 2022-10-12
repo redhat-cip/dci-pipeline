@@ -1,0 +1,279 @@
+#!/bin/bash
+#
+# Copyright (C) 2022 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+set -e
+
+TOPDIR=$(cd $(dirname $0); pwd)
+
+if [ -x "$TOPDIR"/test-runner ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
+
+INVENTORIES_DIR=${INVENTORIES_DIR:=$HOME/inventories}
+
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+    fi
+done
+
+QUEUE="$DEFAULT_QUEUE"
+INVENTORIES_REPO=$(basename $(cd "$INVENTORIES_DIR" && git rev-parse --show-toplevel))
+
+if [ $# = 0 -o "$1" = -h ]; then
+    cat 1>&2 <<EOF
+Usage: $(basename $0) [-F] [-S] [-Fr] [-Sr] [-f] (<GitHub PR URL>|<Gerrit review id>)
+             [-p <pool name>] [-r <resource name>]
+             [[<kubeconfig path>] <pipeline name> [(<pipeline name2>|<pipeline var>)*]]
+
+    -F   Run in a loop until there's a failure
+    -S   Run in a loop until succeeds
+    -Fr  Run in a loop until there's a failure and remove the resource from the pool
+    -Sr  Run in a loop until succeeds and remove the resource from the pool
+    -f   Force a suffix to be added (uses PID as suffix)
+    -p   Specify a pool name (default: $DEFAULT_QUEUE)
+    -r   Specify a resource name
+    -h   Print this help
+EOF
+    exit 1
+fi
+
+LAUNCHER=
+
+set -x
+
+ARGS=("$@")
+
+# -F: run using loop_until_failure
+if [ "$1" = "-F" ]; then
+    LAUNCHER="$BASEDIR/loop_until_failure"
+    shift
+fi
+
+# -S: run using loop_until_success
+if [ "$1" = "-S" ]; then
+    LAUNCHER="$BASEDIR/loop_until_success"
+    shift
+fi
+
+# -Fr: run using loop_until_failure -r
+if [ "$1" = "-Fr" ]; then
+    LAUNCHER="$BASEDIR/loop_until_failure -r"
+    shift
+fi
+
+# -Sr: run using loop_until_success -r
+if [ "$1" = "-Sr" ]; then
+    LAUNCHER="$BASEDIR/loop_until_success -r"
+    shift
+fi
+
+# force a suffix to be added on -f
+if [ "$1" = "-f" ]; then
+    shift
+    # manage recursive call (bootstrap): extract the directory name
+    # from the path of the command
+    if grep -Fq '.bootstrap' <<< $TOPDIR; then
+        SUFFIX=
+        DIR=$(dirname $(dirname $TOPDIR))
+        DIR=$(sed -e 's/\.bootstrap//' <<< $DIR)
+    else
+        SUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')-$$
+    fi
+else
+    SUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')
+    DIR=
+fi
+
+CHANGEID=$1
+shift
+
+# get an optional dci-queue pool name with -p
+if [ "$1" = "-p" ]; then
+    shift
+    QUEUE="$1"
+    shift
+fi
+
+# get an optional dci-queue resource name with -r
+if [ "$1" = "-r" ]; then
+    shift
+    export DCI_QUEUE_RESOURCE="$1"
+    shift
+fi
+
+# check that the KUBECONFIG is working
+if [[ "$1" =~ .*/kubeconfig ]]; then
+    KBCFG="$1"
+    oc --kubeconfig "$KBCFG" version || exit 1
+    oc --kubeconfig "$KBCFG" get nodes || exit 1
+    shift
+fi
+
+OPT=("$@")
+
+if [ -z "$OPT" ]; then
+    echo "no specified pipeline" 1>&2
+    exit 1
+fi
+
+case $CHANGEID in
+    https://*)
+        PR=$(sed -e 's@.*github.com/.*/\([^/]*\)/pull/\([0-9]*\)@\1-pr\2@' <<< $CHANGEID)
+        if [ -z "$PR" ]; then
+            echo "Unable to extract PR from $CHANGEID" 1>&2
+            exit 1
+        fi
+        [ -n "$DIR" ] || DIR=$HOME/github/$PR$SUFFIX
+        TYPE=github
+        ;;
+    *)
+        [ -n "$DIR" ] || DIR=$HOME/gerrit/$CHANGEID$SUFFIX
+        TYPE=gerrit
+        ;;
+esac
+
+if [ -d $DIR ]; then
+    jobid="$(dci-queue searchdir $QUEUE $DIR)"
+    if [ -z "$jobid" ]; then
+        $BASEDIR/send-feedback $DIR "A job is already scheduled or running in $DIR (unable to find job id). Aborting."
+        exit
+    fi
+    dci-queue unschedule $QUEUE $jobid
+    if [ -d $DIR ]; then
+        find $DIR -type d -not -perm -u=w -exec chmod u+w {} \;
+        rm -rf $DIR
+    fi
+fi
+
+mkdir -p $DIR
+cd $DIR
+
+echo "Depends-On: $CHANGEID" | $BASEDIR/extract-dependencies $DIR
+
+# rerun check from the local repo
+if [ -d dci-pipeline ]; then
+    if [ $0 != $DIR.bootstrap/dci-pipeline/tools/$(basename $0) ]; then
+        echo "re-exec"
+        cd
+        mv $DIR $DIR.bootstrap
+        exec $DIR.bootstrap/dci-pipeline/tools/$(basename $0) "${ARGS[@]}"
+    fi
+fi
+
+BASEDIR=$(sed -e 's/\.bootstrap//' <<< $BASEDIR)
+
+if [ "$TYPE" = "github" ]; then
+    mv *.json github.json
+fi
+
+# we should have only one directory and one or zero json file
+(
+  # extract depends-on from a pr body
+  jq -r .body *.json || :
+  # extract depends-on from the last commit message
+  cd $(ls|fgrep -v .json); git log -1
+) | tr -d '\r' | sort -u | $BASEDIR/extract-dependencies $DIR
+
+# take test-runner from the local dir
+if [ -d dci-pipeline ]; then
+    BASEDIR=$PWD/dci-pipeline/tools
+fi
+
+# do launch through dci-queue only when there is no KUBECONFIG passed
+if [ -z "$KBCFG" ]; then
+    # if the resource is set explicitly, do not launch through
+    # dci-queue
+    if [ -z "$DCI_QUEUE_RESOURCE" ]; then
+        PREFIX="dci-queue schedule $QUEUE"
+        RES="@RESOURCE"
+    else
+        PREFIX=""
+        RES=""
+    fi
+else
+    if [ -d "$INVENTORIES_REPO" ]; then
+        INVENTORIES_PATH=$(cd "$INVENTORIES_DIR" && git rev-parse --show-prefix)
+        INVENTORIES="$PWD/$INVENTORIES_REPO/$INVENTORIES_PATH/$QUEUE"
+    else
+        INVENTORIES="$INVENTORIES_DIR/$QUEUE"
+    fi
+    PREFIX="env DCI_QUEUE=$QUEUE"
+    # find the name of the resource from the oc command
+    cluster_names=( $(oc --kubeconfig $KBCFG config view -o json | jq -r '.clusters[].name') )
+    for cluster_name in "${cluster_names[@]}"; do
+        if [ -f "$INVENTORIES/${cluster_name}" ]; then
+            RES=${cluster_name}
+            break
+        fi
+    done
+
+    if [ -z "$RES" ]; then
+        $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) in inventories $INVENTORIES for queue $QUEUE" 1>&2
+        exit 1
+    fi
+fi
+
+if [ -n "$LAUNCHER" ]; then
+    CMD="$PREFIX $LAUNCHER $RES $BASEDIR/test-runner $DIR $KBCFG"
+else
+    CMD="$PREFIX $BASEDIR/test-runner $DIR $RES $KBCFG"
+fi
+
+# create a python virtualenv if there is any project with a
+# requirements.txt into the changes
+REQS=$(ls */requirements.txt 2> /dev/null || :)
+
+if [ -n "$REQS" ]; then
+    rm -rf .venv
+    virtualenv --system-site-packages .venv
+    . .venv/bin/activate
+
+    # substitute dependencies from the changes into requirements.txt
+    for req in $REQS; do
+        reqdir=$(dirname $req)
+        if [ -r $reqdir/setup.py ]; then
+            module=$(sed -n -e 's/\s*name="\(.*\)",/\1/p' $reqdir/setup.py)
+            if [ -n "$module" ]; then
+                sed -i -e "s@$module.*@-e $PWD/$reqdir/@" */requirements.txt
+            fi
+        fi
+    done
+
+    # install python dependencies into the virtualenv
+    for req in $REQS; do
+        pip install -r $req
+        cd $(dirname $req)
+        python setup.py develop || :
+        cd -
+    done
+fi
+
+if [ -d "$DIR.bootstrap" ]; then
+    rm -rf "$DIR.bootstrap"
+fi
+
+if [ "$RES" = "@RESOURCE" ]; then
+    $BASEDIR/send-feedback $DIR "QUEUED" pending
+    $CMD "${OPT[@]}"
+    dci-queue list "$QUEUE"
+else
+    exec $CMD "${OPT[@]}"
+fi
+
+# dci-pipeline-check ends here

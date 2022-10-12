@@ -1,0 +1,406 @@
+#!/bin/bash
+#
+# Copyright (C) 2022 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+PID=
+PID2=
+RET=0
+KILLED=
+ERROR=
+declare -A ALL_DIRS
+
+error() {
+    ERROR="$1"
+    RET=2
+    # make sure the error message is compatible with send-feedback
+    $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: $ERROR"
+    exit $RET
+}
+
+finish() {
+    echo "finish $*"
+
+    if [ -n "$PID" ]; then
+        kill $PID
+
+        wait $PID
+        RET=$?
+    fi
+
+    if [ -n "$PID2" ]; then
+        kill $PID2
+    fi
+
+    if [ -z "$ERROR" ]; then
+        JOBURLS=($(grep -v sed output | sed -n -e 's@^.*Follow the log at: \(.*/jobs/.*/jobStates\).*@\1@p'| tr '\n' ' '))
+        LENGTH=${#JOBURLS[@]}
+
+        # Get the exit code of the last job
+        if [ $RET = 0 ]; then
+            LAST_RESULT="SUCCESS"
+        elif [ $RET -gt 128 ]; then
+            LAST_RESULT="KILLED"
+            KILLED=1
+        elif [ $RET = 2 ]; then
+            LAST_RESULT="ERROR"
+        else
+            LAST_RESULT="FAILURE"
+        fi
+
+        # Only the last job could have failed
+        RESULT=
+        if [ ${LENGTH} -gt 1 ]; then
+            for JOBURL in ${JOBURLS[@]:0:$(( ${LENGTH} - 1 ))}; do
+                RESULT+="- SUCCESS $JOBURL\n"
+            done
+        fi
+        RESULT+="- ${LAST_RESULT} ${JOBURLS[-1]}\n"
+
+        # do not send feedback on a killed run
+        if [ -z "$KILLED" ]; then
+            $BASEDIR/send-feedback $DIR "$RESULT from $URL"
+        fi
+    fi
+
+    cd
+
+    # Workaround to delete any temporary directory created without u+w
+    find "${DIR}" -type d -not -perm -u=w -exec chmod u+w {} \;
+    rm -rf "$DIR"
+
+    exit $RET
+}
+
+get_project() {
+    local dir="$1"
+    local project=$(cd "$dir"; basename $(git config --local remote.origin.url) .git)
+    if [ -n "$project" ]; then
+        ALL_DIRS["$project"]=$(cd "$dir"; git rev-parse --show-toplevel)
+    fi
+}
+
+extract_dirs() {
+    for path in $(cat "$@" | python3 -c 'import re; import sys; [[print(fname) for fname in lst_fnames] for lst_fnames in [re.findall(r"(/[\w/._-]+)", line) for line in sys.stdin.readlines()]]' | sort -u); do
+        if [ -d "$path" ]; then
+            get_project "$path"
+        elif [ -f "$path" ]; then
+            get_project "$(dirname $path)"
+        fi
+    done
+}
+
+BASEDIR=$(cd $(dirname $0); pwd)
+
+PIPELINES_DIR=$HOME/pipelines
+
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+    fi
+done
+
+PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
+
+if [ -n "$DCI_QUEUE_RESOURCE" ]; then
+    if [ $# -lt 2 ]; then
+        echo "Usage: $0 <change directory> [<kubeconfig path>] <pipeline name> [(<pipeline name2>|<pipeline var>)*]" 1>&2
+        exit 1
+    fi
+
+    DIR="$1"
+    RES="$DCI_QUEUE_RESOURCE"
+    shift 1
+else
+    if [ $# -lt 3 ]; then
+        echo "Usage: $0 <change directory> <resource> [<kubeconfig path>] <pipeline name> [(<pipeline name2>|<pipeline var>)*]" 1>&2
+        exit 1
+    fi
+
+    DIR=$1
+    RES=$2
+    shift 2
+fi
+
+if [ ! -d $DIR ]; then
+    echo "No such directory $DIR" 1>&2
+    exit 1
+fi
+
+trap finish 0
+
+# check that the KUBECONFIG is working
+if [[ "$1" =~ .*/kubeconfig ]]; then
+    export KUBECONFIG="$1"
+    OCPVERS=$(oc version -o json|jq -r .openshiftVersion)
+    OCPVERS=${OCPVERS%%-*}
+    # extract the DCI topic
+    case $OCPVERS in
+        *.*.*)
+            OCP_TOPIC=OCP-${OCPVERS%.*}
+            ;;
+        *.*)
+            OCP_TOPIC=OCP-$OCPVERS
+            ;;
+        *)
+            error "Unsupported OCP version scheme: $OCPVERS"
+            ;;
+    esac
+    shift
+fi
+
+set -x
+
+CHANGEID="$(basename $DIR)"
+CHANGEID=${CHANGEID%-*}
+
+# extract github or gerrit from the path
+KIND="$(basename $(dirname $DIR))"
+cd "$DIR" || exit 1
+
+$BASEDIR/send-feedback $DIR "IN PROGRESS" pending
+
+if [ "$KIND" = gerrit ]; then
+    PROJECT="$(jq -r .project $CHANGEID.json)"
+    NUMBER="$(jq -r ._number $CHANGEID.json)"
+    TAGS="ansible_extravars=dci_tags:debug,gerrit:$PROJECT-$CHANGEID"
+    COMMENT="url=https://softwarefactory-project.io/r/#/c/$CHANGEID/"
+    URL="https://softwarefactory-project.io/r/#/c/$CHANGEID/"
+    PIPELINENAME=gr-$PROJECT-$NUMBER
+else
+    TAGS="ansible_extravars=dci_tags:debug,github:$CHANGEID"
+    REPO=$(jq -r .head.repo.full_name github.json)
+    NUMBER=$(jq -r .number github.json)
+    URL=$(jq -r .html_url github.json)
+    COMMENT="url=$URL"
+    PIPELINENAME=pr-$REPO-$NUMBER
+fi
+
+# compute the command line arguments according to the extracted
+# directories
+if [ -d "$PIPELINES_REPO" ]; then
+    PIPELINES_PATH=$(cd "$PIPELINES_DIR" && git rev-parse --show-prefix)
+    PIPELINES="$PWD/$PIPELINES_REPO/$PIPELINES_PATH"
+else
+    PIPELINES=$PIPELINES_DIR
+fi
+
+# compute pipelines and args
+OCP_PIPELINES=
+CNF_PIPELINES=
+ALL_PIPELINES=
+ARGS=("@pipeline:name=$PIPELINENAME")
+for arg in "$@"; do
+    case "$arg" in
+        *:*=*)
+            ARGS+=("$arg")
+            ;;
+        *)
+            # Verify if the pipeline file exists
+            pipeline="$PIPELINES/${arg}-pipeline.yml"
+            if [ ! -r $pipeline ]; then
+                error "Unable to find $arg pipeline"
+            fi
+            # remove succes_tag and fallback_last_success lines from
+            # the pipelines to be sure the jobs will not tag the
+            # components and launch fallback jobs
+            sed -e '/success_tag\|fallback_last_success/d' < $pipeline > $PWD/$(basename $pipeline)
+            pipeline="$PWD/$(basename $pipeline)"
+            if grep -q '^\s*type\s*:\s*ocp' $pipeline; then
+                OCP_PIPELINES="$OCP_PIPELINES $pipeline"
+            else
+                CNF_PIPELINES="$CNF_PIPELINES $pipeline"
+            fi
+            ALL_PIPELINES="$ALL_PIPELINES $pipeline"
+            ;;
+    esac
+done
+
+if [ -n "$OCP_PIPELINES" ]; then
+    # compute the names from the ocp pipelines
+    OCP_NAMES="$(grep -m1 '^\s*-\s*name\s*:' $OCP_PIPELINES|sed -e 's/^.*:\s*//' -e 's/\s*$//')"
+    if [ -z "$OCP_NAMES" ]; then
+        error "Unable to find ocp pipeline names ($OCP_PIPELINES) from $URL"
+    fi
+fi
+
+GIT_REPOS=ansible_extravars=dev_gits_to_components:
+for repo in $(ls -d */.git);do
+    GIT_REPOS="$GIT_REPOS$PWD/${repo%/.git},"
+done
+GIT_REPOS="${GIT_REPOS%,}"
+
+if [ -r $PIPELINES/ansible.cfg ]; then
+    cp $PIPELINES/ansible.cfg ansible.cfg
+else
+    cp /usr/share/dci-openshift-agent/ansible.cfg ansible.cfg
+fi
+
+if [ -d baremetal-deploy ]; then
+    sed -i -e "s@\(:\{0,1\}\)[^:]*baremetal_deploy_repo/@\1$PWD/baremetal-deploy/@g" ansible.cfg
+fi
+
+for conf in $(ls -d *config 2> /dev/null); do
+    sed -i -e "s@\(:\{0,1\}\)[^:]*$conf/@\1$PWD/$conf/@g" ansible.cfg
+done
+
+if [ -d dci-ansible ]; then
+    sed -i -e "s@/usr/share/dci/\(modules\|module_utils\|action_plugins\|filter_plugins\)@$PWD/dci-ansible/\1@g" ansible.cfg
+    export DCI_ANSIBLE_DIR=$PWD/dci-ansible
+fi
+
+for d in $(ls -d ansible-role-dci-* 2> /dev/null); do
+    if [ -r $d/tasks/main.yml ]; then
+        sed -i -e "s@\(roles_path\s*=\s*\)@\1${PWD}:@" ansible.cfg
+        break
+    fi
+done
+
+ANSIBLE_COLLECTIONS_PATHS=
+for d in $(ls -d ansible-collection-* 2> /dev/null); do
+    mkdir -p collections
+    LOCAL_COLLECTIONS=$PWD/collections
+    export ANSIBLE_COLLECTIONS_PATHS=$LOCAL_COLLECTIONS:/usr/share/ansible/collections
+    cd $d
+    rm -f *.tar.gz
+    ansible-galaxy collection build
+    ansible-galaxy collection install *.tar.gz -p $LOCAL_COLLECTIONS
+    cd -
+done
+
+if [ -d dci-openshift-agent ]; then
+    sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-agent/plays/@" $PWD/dci-openshift-agent/dci-openshift-agent.yml
+    for pipeline in $OCP_PIPELINES; do
+        sed -i -e "s@ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml@ansible_playbook: $PWD/dci-openshift-agent/dci-openshift-agent.yml@" $pipeline
+    done
+    # force to use the roles from the change
+    sed -i -e "s@\(^\s*roles_path\s*=\s*\)@\1$PWD/dci-openshift-agent/common-roles/:$PWD/dci-openshift-agent/roles/:@" ansible.cfg
+fi
+
+if [ -d $PIPELINES_REPO ]; then
+    for pipeline in $OCP_PIPELINES; do
+        sed -i -e "s@$PIPELINES_DIR@$PWD/$PIPELINES_REPO/$PIPELINES_PATH@" $pipeline
+    done
+fi
+
+# configure the ocp playbook to run from the change
+if [ -d dci-openshift-app-agent ]; then
+    sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-app-agent/plays/@" dci-openshift-app-agent/dci-openshift-app-agent.yml
+    [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" fake-cnf-pipeline.yml
+    [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
+    [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
+    # set the playbook on the cnf pipelines
+    OCP_APP_OPT=
+    for cnf_pipeline in $CNF_PIPELINES; do
+        NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
+    done
+elif [ -d example-cnf-config/testpmd ]; then
+    sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" $PWD/example-cnf-pipeline.yml
+else
+    # use the default from the pipeline
+    OCP_APP_OPT=
+fi
+
+# extract all git directories from the pipeline files into ALL_DIRS
+extract_dirs $OCP_PIPELINES $CNF_PIPELINES
+
+for key in "${!ALL_DIRS[@]}"; do
+    echo "$key => ${ALL_DIRS[$key]}"
+done
+
+# edit pipeline files to reflect local changes
+for pipeline in $OCP_PIPELINES $CNF_PIPELINES; do
+    # replace the local dirs
+    for local_dir in $(ls -d */); do
+        local_path=${ALL_DIRS[${local_dir%/}]}
+        if [ -n "$local_path" ]; then
+            sed -i -e "s@${local_path}@$PWD/${local_dir%/}@g" -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" $pipeline
+        fi
+    done
+    # force to use the copy of ansible.cfg
+    sed -i -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
+done
+
+# inject certification variables and topic
+for cnf_pipeline in $CNF_PIPELINES; do
+    NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+    if [ -n "$OCP_TOPIC" ]; then
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
+    fi
+    if [ -d cnf-certification-test ]; then
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=test_network_function_repo:$PWD"
+    fi
+    if [ -d openshift-preflight ]; then
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=preflight_source_dir:$PWD/openshift-preflight"
+    fi
+done
+
+ALL_TAGS=
+# if KBCFG is set, do not launch the OCP pipeline. Set the KUBECONFIG
+# env var instead.
+if [ -n "$KBCFG" ]; then
+    export KUBECONFIG=$KBCFG
+else
+    for name in $OCP_NAMES; do
+        ALL_TAGS="$ALL_TAGS $name:$TAGS $name:$COMMENT $name:$GIT_REPOS $name:configuration=$DCI_QUEUE"
+    done
+fi
+
+# set the tags on the cnf pipelines
+for cnf_pipeline in $CNF_PIPELINES; do
+    NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+    ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $NAME:configuration=$DCI_QUEUE"
+done
+
+
+# activate the virtualenv created by the check command if present
+if [ -d $PWD/.venv/bin ]; then
+    . $PWD/.venv/bin/activate
+fi
+
+if [ -d python-dciclient ]; then
+    export DCI_VAULT_CLIENT=$PWD/.venv/bin/dci-vault-client
+fi
+
+dci-pipeline "${ARGS[@]}" $OPTVERS $ALL_TAGS $OCP_APP_OPT $ALL_PIPELINES >& output &
+
+PID=$!
+
+# do not turn read-only before creating ansible.log
+ANSIBLE_LOG=$(sed -n "s/log_path\s*=\s//p" ansible.cfg)
+if [ -n "$ANSIBLE_LOG" ]; then
+    while [ ! -r "$ANSIBLE_LOG" ]; do
+        sleep 1
+    done
+fi
+
+# make everything read-only to mimic what is delivered as rpm or in
+# the system
+chmod -R a-w $DIR
+
+# Example CNF hooks are writing into example-cnf-config/testpmd/hooks
+if [ -d example-cnf-config/testpmd/hooks ]; then
+    chmod ug+w example-cnf-config/testpmd/hooks
+fi
+
+tail -f output &
+
+PID2=$!
+
+wait $PID
+RET=$?
+PID=
+
+# test-runner ends here

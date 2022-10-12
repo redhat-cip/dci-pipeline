@@ -30,7 +30,7 @@
     inputs:
       hosts: hosts_path
       ocp_comp: ocp_comp_path
-    topic: RH-CNF-0.1
+    use_previous_topic: true
     components:
       - rh-cnf
     success_tag: ocp-edge-4.8-ok

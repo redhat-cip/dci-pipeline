@@ -30,7 +30,7 @@
   dci_credentials: ../cnf-telco-ci_dci_credentials.yml
   ansible_tags:
     - dci
-  topic: RH-CNF-0.1
+  use_previous_topic: true
   success_tag: fake-cnf-ok
 
 ...

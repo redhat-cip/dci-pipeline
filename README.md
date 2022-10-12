@@ -35,7 +35,6 @@ $ dci-pipeline dcipipeline/pipeline-retry.yml dcipipeline/cnf-pipeline.yml
 Here is a pipeline example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
@@ -54,7 +53,6 @@ files must be loaded in order.
 Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
@@ -69,7 +67,6 @@ and the next file could be like that to have same result as the first
 pipeline example:
 
 ```YAML
----
   - name: openshift-vanilla
     components:
       - plugin=1.1.1
@@ -83,7 +80,7 @@ to change the playbook to use in the `openshift-vanilla` job from the
 previous example, use:
 
 ```ShellSession
-$ dci-pipeline openshift-vanilla:ansible_playbook=/tmp/myplaybook.yml mypipeline.yml
+$ dci-pipeline openshift-vanilla:ansible_playbook=/tmp/myplaybook.yml ~/pipelines/ocp-vanilla-pipeline.yml
 ...
 ```
 
@@ -112,7 +109,6 @@ and have another job make use of this exported file.
 For example, a first job will export a `kubeconfig` file:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
@@ -185,7 +181,6 @@ an example on how to use it:
 `success_tag` in the job definition. Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
@@ -204,7 +199,6 @@ successful job for a group even when a new delivery is broken to
 continue testing the next layers in the pipeline. Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
@@ -222,7 +216,6 @@ continue testing the next layers in the pipeline. Example:
 If you want to pass environment variables to the agent. Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
@@ -246,7 +239,6 @@ You can specify the meta value "/@tmpdir" that will be replaced
 by an actual path of a temporary directory. Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
@@ -288,7 +280,6 @@ You can specify extra Ansible variable files using the
 `ansible_extravars_files` key in your pipeline file. Example:
 
 ```YAML
----
   - name: openshift-vanilla
     type: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
@@ -300,6 +291,89 @@ You can specify extra Ansible variable files using the
     components:
       - ocp
 ```
+
+### previous topic
+
+In a multi-stage pipeline, you can inherit the `topic` from the
+previous stage by using `use_previous_topic` in the
+configuration of the job. Example:
+
+```YAML
+  - name: workload
+    type: app
+    ansible_playbook: agents/openshift-vanilla/app.yml
+    ansible_inventory: agents/openshift-vanilla/inventory
+    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    use_previous_topic: true
+```
+
+## dci-pipeline-schedule
+
+`dci-pipeline-schedule` is a wrapper to call `dci-pipeline` without
+specifying the paths for the pipeline files and the inventories. This
+allows to have a more concise syntax.
+
+For example, to do the equivalent of:
+
+```ShellSession
+$ dci-pipeline ~/pipelines/ocp-vanilla-pipeline.yml ~/pipelines/workload-pipeline.yml
+...
+```
+
+Use:
+
+```ShellSession
+$ dci-pipeline-schedule ocp-vanilla workload
+...
+```
+
+For this to work, you need to configure `PIPELINES_DIR` and
+`INVENTORIES_DIR` in one these files: `~/.config/dci-pipeline/config`
+or `/etc/dci-pipeline/config`. Example:
+
+```Shell
+PIPELINES_DIR=~/my-config-dir/pipelines
+INVENTORIES_DIR=~/my-config-dir/inventories
+```
+
+You can also define the default `dci-queue` queue with the
+`DEFAULT_QUEUE` variable. To schedule on a specific `dci-queue` pool,
+use `-p` like this:
+
+```ShellSession
+$ dci-pipeline-schedule -p my-pool ocp-vanilla workload
+...
+```
+
+## dci-pipeline-check
+
+To test a Github PR, with specific a pipeline you can use
+`dci-pipeline-check` utility like that:
+
+```ShellSession
+$ dci-pipeline-check https://github.com/dci-labs/pipelines/pull/6 -p my-pool ocp-4.10-vanilla workload
+```
+
+It also works for a Gerrit review from <https://softwarefactory-project.io/r> :
+
+```ShellSession
+$ dci-pipeline-check 19837 -p my-pool ocp-4.10-vanilla workload
+```
+
+`dci-pipeline-check` uses the same configuration files as `dci-pipeline-schedule`.
+
+### Dependencies between changes
+
+Sometimes you also need multiple changes to be tested at the same
+time. To do so, add a `Build-Depends` or `Depends-On` field pointing
+to you Gihub PR or Gerrit review in your git commit or GitHub PR
+description like this:
+
+```Text
+Build-Depends: https://github.com/dci-labs/pipelines/pull/1
+```
+
+See this example: <https://softwarefactory-project.io/r/c/dci-pipeline/+/26189>
 
 ## dci-agent-ctl
 

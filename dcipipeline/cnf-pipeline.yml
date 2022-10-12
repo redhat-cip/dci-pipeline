@@ -5,7 +5,7 @@
     ansible_playbook: agents/rh-cnf/agent-retry.yml
     inputs:
       hosts: hosts_path
-    topic: RH-CNF-0.1
+    topic: OCP-4.8
     components:
       - rh-cnf
     success_tag: ocp-vanilla-4.8-ok

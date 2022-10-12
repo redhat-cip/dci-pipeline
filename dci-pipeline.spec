@@ -8,13 +8,15 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py
-Version:        0.0.7
+Version:        0.0.8
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
 URL:            https://github.com/redhat-cip/%{name}
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
+
+Requires:       jq
 
 %if 0%{?with_python2}
 BuildRequires:  python2-devel
@@ -69,6 +71,12 @@ install -p -D -m 644 systemd/%{name}.timer %{buildroot}%{_unitdir}/%{name}.timer
 install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/
+for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner; do
+    install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
+done
+install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule
+install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
 install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
 install -d -m 700 %{buildroot}/var/lib/%{name}
 install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
@@ -103,7 +111,9 @@ exit 0
 %else
 %{python3_sitelib}/*
 %endif
-%{_bindir}/%{name}
+%{_bindir}/dci-pipeline
+%{_bindir}/dci-pipeline-schedule
+%{_bindir}/dci-pipeline-check
 %{_bindir}/dci-agent-ctl
 %{_bindir}/dci-queue
 %{_bindir}/dci-rebuild-pipeline
@@ -116,8 +126,17 @@ exit 0
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
 %{_sysconfdir}/sudoers.d/%{name}
+%{_datadir}/%{name}/extract-dependencies
+%{_datadir}/%{name}/loop_until_failure
+%{_datadir}/%{name}/loop_until_success
+%{_datadir}/%{name}/send-feedback
+%{_datadir}/%{name}/test-runner
 
 %changelog
+* Wed Oct 12 2022 Frederic Lepied <flepied@redhat.com> - 0.0.8-1
+- add dci-pipeline-schedule and dci-pipeline-check
+- add jq as a required package
+
 * Thu Sep 15 2022 Frederic Lepied <flepied@redhat.com> - 0.0.7-1
 - depends on dci-ansible >= 0.3.0 to have the filter_plugins available
 

@@ -279,15 +279,17 @@ def main():
     ocp_id = ocp["id"]
 
     # Create the OpenShift topics: OCP-4.8 and OCP-4.9
-    ocp44_topic = create_topic("OCP-4.8", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    cnf01_topic = ocp44_topic = create_topic(
+        "OCP-4.8", ["ocp", "ose-tests", "cnf-tests"], ocp
+    )
     ocp44_topic_id = ocp44_topic["id"]
-    ocp45_topic = create_topic("OCP-4.9", ["ocp", "ose-tests", "cnf-tests"], ocp)
+    cnf02_topic = ocp45_topic = create_topic(
+        "OCP-4.9", ["ocp", "ose-tests", "cnf-tests"], ocp
+    )
     ocp45_topic_id = ocp45_topic["id"]
 
     # Create the CNF topics: RH-CNF-0.1 and RH-CNF-0.2
-    cnf01_topic = create_topic("RH-CNF-0.1", ["rh-cnf"], ocp)
     cnf01_topic_id = cnf01_topic["id"]
-    cnf02_topic = create_topic("RH-CNF-0.2", ["rh-cnf"], ocp)
     cnf02_topic_id = cnf02_topic["id"]
 
     # Create the teams

@@ -15,13 +15,15 @@
 
 import atexit
 import os
-import tempfile
-import yaml
 import sys
+import tempfile
 
+import yaml
 from test_dci_pipeline import get_jobs
+from yaml.loader import SafeLoader
 
-from dciagent.main import main as dci_main, main_s2p
+from dciagent.main import main as dci_main
+from dciagent.main import main_s2p
 
 TOPDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.basename(__file__))))
 
@@ -60,10 +62,11 @@ def test_dci_agent_ctl():
 
 def test_dci_settings2pipeline():
     pipeline = tempfile.mkstemp()[1]
+    print(pipeline)
     atexit.register(lambda: os.remove(pipeline))
     rc = main_s2p(["dci-settings2pipeline", p("settings.yml"), pipeline])
     assert rc == 0
     with open(pipeline) as pipeline_fd:
-        content = yaml.full_load(pipeline_fd)
+        content = yaml.load(pipeline_fd, Loader=SafeLoader)
     assert content[0]["comment"] == "debugging comment"
     assert "prev_stages" not in content[0]
