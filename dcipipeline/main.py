@@ -843,16 +843,6 @@ def compute_tags(stage, prev_stages):
     if "ansible_inventory" in stage:
         tags.append("inventory:" + os.path.basename(stage["ansible_inventory"]))
 
-    for prev_stage in prev_stages:
-        if prev_stage and "job_info" in prev_stage:
-            log.info("prev stage: %s" % prev_stage)
-            for component in prev_stage["job_info"]["job"]["components"]:
-                tags.append(
-                    "prev-component:%s:%s/%s"
-                    % (component["type"], prev_stage["topic"], component["name"])
-                )
-            tags.append("prev-job:" + prev_stage["job_info"]["job"]["id"])
-            break
     return tags
 
 
