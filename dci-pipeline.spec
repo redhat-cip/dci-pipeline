@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py
-Version:        0.0.8
+Version:        0.0.9
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -79,6 +79,7 @@ install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-s
 install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
 install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
 install -d -m 700 %{buildroot}/var/lib/%{name}
+install -d -m 700 %{buildroot}/var/lib/dci-queue
 install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
 cat > %{buildroot}%{_sysconfdir}/%{name}/pipeline.yml <<EOF
 ---
@@ -86,6 +87,7 @@ EOF
 
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
+getent group dci-queue >/dev/null || groupadd -r dci-queue
 getent passwd %{name} >/dev/null || \
     useradd -m -g %{name} -d %{_sharedstatedir}/%{name} -s /bin/bash \
             -c "%{summary}" %{name}
@@ -120,6 +122,7 @@ exit 0
 %{_bindir}/dci-settings2pipeline
 %{_bindir}/dci-diff-pipeline
 %attr(770, %{name}, %{name}) /var/lib/%{name}
+%attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
 %config(noreplace) %{_sysconfdir}/bash_completion.d/dci-queue
@@ -133,6 +136,9 @@ exit 0
 %{_datadir}/%{name}/test-runner
 
 %changelog
+* Wed Oct 19 2022 Frederic Lepied <flepied@redhat.com> - 0.0.9-1
+- dci-queue is using /var/lib/dci-queue by default
+
 * Wed Oct 12 2022 Frederic Lepied <flepied@redhat.com> - 0.0.8-1
 - add dci-pipeline-schedule and dci-pipeline-check
 - add jq as a required package
