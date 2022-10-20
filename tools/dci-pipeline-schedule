@@ -68,7 +68,11 @@ for arg in "$@"; do
                 exit 1
             fi
             # Inject the inventory and configuration arguments
-            INV=$(grep ansible_inventory: "$pipeline"|sed -n -e 's@.*ansible_inventory:\s*@@p'| sed -e "s/@QUEUE/$DCI_QUEUE/")
+            INV=$(sed -n \
+                -e "s/@QUEUE/$DCI_QUEUE/" \
+                -e "s/@RESOURCE/${RES}/" \
+                -e "s@.*ansible_inventory:\s*@@p" \
+                "$pipeline")
             CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
             ;;
     esac
