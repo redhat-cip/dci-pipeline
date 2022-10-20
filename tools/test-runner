@@ -326,11 +326,11 @@ for pipeline in $OCP_PIPELINES $CNF_PIPELINES; do
     for local_dir in $(ls -d */); do
         local_path=${ALL_DIRS[${local_dir%/}]}
         if [ -n "$local_path" ]; then
-            sed -i -e "s@${local_path}@$PWD/${local_dir%/}@g" -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" $pipeline
+            sed -i -e "s@${local_path}@$PWD/${local_dir%/}@g" $pipeline
         fi
     done
-    # force to use the copy of ansible.cfg
-    sed -i -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
+    # force to use the copy of ansible.cfg and substitute @RESOURCE and @QUEUE
+    sed -i -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
 done
 
 # inject certification variables and topic
