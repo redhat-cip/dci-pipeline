@@ -362,8 +362,12 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         saved = os.execlp
         os.execlp = self.fork
-        main.main(["dci-queue", "log", "8nodes", "1"])
+        main.main(["dci-queue", "log", "-f", "8nodes", "1"])
         self.assertEqual(self.arg, "tail")
+        main.main(["dci-queue", "log", "-n", "+1", "8nodes", "1"])
+        self.assertEqual(self.arg, "tail")
+        main.main(["dci-queue", "log", "8nodes", "1"])
+        self.assertEqual(self.arg, "less")
         os.execlp = saved
 
     def test_search(self):
