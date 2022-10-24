@@ -96,13 +96,15 @@ get_project() {
 }
 
 extract_dirs() {
-    for path in $(cat "$@" |
-            grep -Po '\s+/[\w/._-]+' |
-            tr -d "[:blank:]" |
-            xargs -I {} find {} -type d -maxdepth 0 |
-            sort -u); do
-        get_project "$path"
-    done
+    for path in $(grep -vP "^s*#.*" "$@" |
+            grep -Po "[\s,[\"']/[\w/._-]+" |
+            sed -e "s#[ ,[\"']##g"); do
+        if [ -d "${path}" ]; then
+            get_project "$path"
+        elif [ -f "${path}" ]; then
+            get_project "$(dirname ${path})"
+        fi
+    done | sort -u
 }
 
 BASEDIR=$(cd $(dirname $0); pwd)
