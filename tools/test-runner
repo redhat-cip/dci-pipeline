@@ -96,12 +96,12 @@ get_project() {
 }
 
 extract_dirs() {
-    for path in $(cat "$@" | python3 -c 'import re; import sys; [[print(fname) for fname in lst_fnames] for lst_fnames in [re.findall(r"(/[\w/._-]+)", line) for line in sys.stdin.readlines()]]' | sort -u); do
-        if [ -d "$path" ]; then
-            get_project "$path"
-        elif [ -f "$path" ]; then
-            get_project "$(dirname $path)"
-        fi
+    for path in $(cat "$@" |
+            grep -Po '\s+/[\w/._-]+' |
+            tr -d "[:blank:]" |
+            xargs -I {} find {} -type d -maxdepth 0 |
+            sort -u); do
+        get_project "$path"
     done
 }
 
