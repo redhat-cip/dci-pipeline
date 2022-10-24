@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2020-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -36,6 +36,46 @@ EXECUTE_ENTRY_POINT = "execute_command"  # execute sub-command
 LOG_FORMAT = "%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s"
 
 
+def get_umask():
+    mask = None
+    try:
+        with open("/proc/self/status") as fd:
+            for line in fd:
+                if line.startswith("Umask:"):
+                    mask = int(line[6:].strip(), 8)
+                    break
+    except FileNotFoundError:
+        pass
+    except ValueError:
+        pass
+    if mask is None:
+        import subprocess
+
+        mask = int(
+            subprocess.check_output("umask", shell=True).decode("utf-8").strip(), 8
+        )
+    return mask
+
+
+def set_umask(new_umask=0o007):
+    current = get_umask()
+    if (0o777 - current) & (0o777 - new_umask) == (0o777 - new_umask):
+        log.info("Keeping current umask %o" % current)
+    else:
+        log.info("Setting umask %o" % (new_umask))
+        os.umask(new_umask)
+
+
+def get_default_top_dir():
+    top_dir = os.getenv("DCI_QUEUE_DIR", "/var/lib/dci-queue")
+    if os.path.exists(top_dir):
+        if os.access(top_dir, os.W_OK):
+            return top_dir
+    elif os.access(os.path.basename(top_dir), os.W_OK):
+        return top_dir
+    return os.path.expanduser("~/.dci-queue")
+
+
 def main(cmdargs=sys.argv):
     parser = argparse.ArgumentParser(
         prog=os.path.basename(cmdargs[0]),
@@ -49,7 +89,7 @@ def main(cmdargs=sys.argv):
         default=default_log_level,
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
     )
-    default_top_dir = os.getenv("DCI_QUEUE_DIR", os.path.expanduser("~/.dci-queue"))
+    default_top_dir = get_default_top_dir()
     parser.add_argument(
         "-t",
         "--top-dir",
@@ -91,7 +131,13 @@ def main(cmdargs=sys.argv):
 
     try:
         if not os.path.exists(args.top_dir):
-            os.makedirs(args.top_dir)
+            try:
+                os.makedirs(args.top_dir)
+            except PermissionError:
+                sys.stderr.write(
+                    "Unable to create top dir %s. Aborting.\n" % args.top_dir
+                )
+                return 1
 
         if args.console_output:
             logging.basicConfig(
@@ -104,6 +150,8 @@ def main(cmdargs=sys.argv):
                 format=LOG_FORMAT,
                 filename=os.path.join(args.top_dir, "dci-queue.log"),
             )
+
+        set_umask()
 
         log.debug("Launching %s" % args.command)
         return commands[args.command](args)
