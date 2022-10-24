@@ -41,11 +41,20 @@ if sys.version_info[0] == 2:
     FileNotFoundError = IOError
     PermissionError = IOError
 
-logging.basicConfig(
-    level=getattr(logging, os.getenv("DCI_PIPELINE_LOG_LEVEL", "INFO")),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# remove all handlers before adding the console handler to avoid a
+# side effect of having loaded ansible.utils.display which creates a
+# logger to ANSIBLE_LOG if set in ansible.cfg.
+root_logger = logging.getLogger()
+del root_logger.handlers[:]
+# make sure we log on stdout/stderr
 log = logging.getLogger(__name__)
+log_level = getattr(logging, os.getenv("DCI_PIPELINE_LOG_LEVEL", "INFO"))
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+log.addHandler(console_handler)
+log.setLevel(log_level)
+
 VERBOSE_LEVEL = int(os.getenv("DCI_PIPELINE_VERBOSE_LEVEL", "2"))
 TOPDIR = os.getenv(
     "DCI_PIPELINE_TOPDIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -730,7 +739,6 @@ def get_config(args):
     # When 2 consecutive stages have the same name, do a
     # special merge
     for idx in range(len(pipeline) - 1, 0, -1):
-        print(pipeline[idx]["name"])
         if pipeline[idx - 1]["name"] == pipeline[idx]["name"]:
             # Do a copy of the keys to avoid a runtime error when
             # we delete keys
@@ -902,7 +910,6 @@ def run_stages(
             team_id = dci_identity.my_team_id(context)
             res = dci_pipeline.create(context, options["name"], team_id)
             if res.status_code == 201:
-                print(res.json())
                 options["pipeline_id"] = res.json()["pipeline"]["id"]
 
         if (

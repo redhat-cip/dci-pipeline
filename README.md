@@ -362,6 +362,10 @@ $ dci-pipeline-check 19837 -p my-pool ocp-4.10-vanilla workload
 
 `dci-pipeline-check` uses the same configuration files as `dci-pipeline-schedule`.
 
+If no DCI job has been created by `dci-pipeline-check`, it stores its
+working directory into `/tmp/test-runner-$DATE-$ID` to ease the debug
+later.
+
 ### Dependencies between changes
 
 Sometimes you also need multiple changes to be tested at the same
