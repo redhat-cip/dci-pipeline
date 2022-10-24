@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -19,6 +19,7 @@
 import logging
 import os
 import sys
+import time
 
 from dciqueue import lib
 
@@ -49,19 +50,29 @@ def execute_command(args):
 
     logfile = os.path.join(args.top_dir, "log", args.pool, args.id)
     if not os.path.exists(logfile):
-        sys.stderr.write(("No such file %s\n" % logfile))
-        log.error("No such file %s" % logfile)
-        return 1
+        cmdfile = os.path.join(args.top_dir, "queue", args.pool, args.id)
+        if not os.path.exists(cmdfile):
+            sys.stderr.write(("No such file %s\n" % logfile))
+            log.error("No such file %s" % logfile)
+            return 1
+        sys.stderr.write(("Waiting for command %s to start...\n" % args.id))
+        while not os.path.exists(logfile):
+            time.sleep(1)
 
-    tailargs = ["tail"]
-    if args.follow:
-        tailargs.append("-f")
-    if args.lines:
-        tailargs.append("-n")
-        tailargs.append(args.lines)
-    tailargs.append(logfile)
-    log.debug("Executing %s" % " ".join(tailargs))
-    os.execlp("tail", *tailargs)
+    if args.follow or args.lines:
+        cmd = "tail"
+        cmdargs = [cmd]
+        if args.follow:
+            cmdargs.append("-f")
+        if args.lines:
+            cmdargs.append("-n")
+            cmdargs.append(args.lines)
+    else:
+        cmd = "less"
+        cmdargs = [cmd]
+    cmdargs.append(logfile)
+    log.debug("Executing %s" % " ".join(cmdargs))
+    os.execlp(cmd, *cmdargs)
     log.error("Should not go here")
     return 1
 
