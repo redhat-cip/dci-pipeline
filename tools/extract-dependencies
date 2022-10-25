@@ -22,6 +22,13 @@ BASEDIR=$(cd $(dirname $0); pwd)
 export GIT_COMMITTER_NAME="Extractor"
 export GIT_COMMITTER_EMAIL="noaddress@nowhere.com"
 
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+        break
+    fi
+done
+
 TARGET="$1"
 test -n "$TARGET" -a -d "$TARGET" && cd "$TARGET"
 
@@ -40,10 +47,21 @@ while read line; do
       if [ -n "$pr" -a -n "$proj" ]; then
           echo "Extracting PR $pr from $proj"
 
-          curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $(cat ~/.github_token)" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
+          if [ -n "$GITHUB_TOKEN" ]; then
+              curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
+          else
+              curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
+          fi
+
 
           if [ ! -d $dir ]; then
-              ssh-agent bash -c "ssh-add $HOME/.ssh/id_dcibot; git clone git@github.com:$proj $dir"
+              if [ -n "$GITHUB_SSH_ID" ]; then
+                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git clone git@github.com:$proj $dir"
+              elif [ -n "$GITHUB_LOGIN" ] && [ -n "$GITHUB_TOKEN" ]; then
+                  git clone "https://$GITHUB_LOGIN:$GITHUB_TOKEN@github.com/$proj" "$dir"
+              else
+                  git clone "https://github.com/$proj" "$dir"
+              fi
           fi
 
           BRANCH=$(jq -r .base.ref "$dir-$pr.json")
@@ -52,13 +70,13 @@ while read line; do
           git checkout "$BRANCH"
           # remove old branch if it exists
           git branch -D pr$pr || :
-          ssh-agent bash -c "ssh-add $HOME/.ssh/id_dcibot; git fetch origin pull/$pr/head:pr$pr"
+          ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin pull/$pr/head:pr$pr"
           # check if branch is already merged
           if git branch -d pr$pr; then
               git checkout "$BRANCH"
           else
               git checkout pr$pr
-              ssh-agent bash -c "ssh-add $HOME/.ssh/id_dcibot; git fetch origin $BRANCH"
+              ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin $BRANCH"
               if ! git rebase "origin/$BRANCH"; then
                   $BASEDIR/send-feedback $TARGET "error in check dallas: unable to rebase PR $pr from $proj branch $BRANCH"
                   rm -rf $TARGET

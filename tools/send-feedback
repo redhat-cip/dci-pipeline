@@ -20,6 +20,13 @@ DIR="$1"
 BODY="$2"
 STARTING="$3"
 
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+        break
+    fi
+done
+
 for json in $(ls $DIR/*.json); do
     # gerrit
     if [ $(jq -r .url $json) = null ]; then
@@ -27,15 +34,21 @@ for json in $(ls $DIR/*.json); do
         CHANGEID=$(jq -r ._number $json)
         CURREV=$(jq -r .current_revision $json)
         PATCHSET=$(jq -r ".revisions[\"$CURREV\"]._number" $json)
+        if [ -z "$GERRIT_SSH_ID" ]; then
+            continue
+        fi
         # Use json to allow message to be formatted
         echo '{"message": "'${BODY}'"}' |
           ssh \
-          -i ~/.ssh/id_dcibot \
+          -i ~/.ssh/"$GERRIT_SSH_ID" \
           -p 29418 \
           dci-ci-bot@softwarefactory-project.io \
             gerrit review -j $CHANGEID,$PATCHSET
     # github
     else
+        if [ -z "$GITHUB_TOKEN" ]; then
+            continue
+        fi
         REPO_NAME=$(jq -r .head.repo.name $json)
         case "$REPO_NAME" in
             # voting on some GH projects
@@ -43,7 +56,7 @@ for json in $(ls $DIR/*.json); do
                 # doc in https://docs.github.com/en/rest/commits/statuses
                 STATUSES_URL=$(jq -r .statuses_url $json)
                 if [ -n "$STARTING" ]; then
-                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $(cat ~/.github_token)" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
                 else
                     DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- *//' -e 's/ .*//')
                     DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
@@ -57,14 +70,14 @@ for json in $(ls $DIR/*.json); do
                         *)
                             GITHUB_STATUS=pending;;
                     esac
-                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $(cat ~/.github_token)" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
                 fi
                 ;;
             # non voting, only commenting
             *)
                 [ -n "$STARTING" ] && exit 0
                 COMMENTS_URL=$(jq -r .comments_url $json)
-                curl -s -H "Authorization: token $(cat ~/.github_token)" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
+                curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
                 ;;
         esac
     fi

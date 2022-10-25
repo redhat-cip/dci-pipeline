@@ -20,6 +20,7 @@ INVENTORIES_DIR=${INVENTORIES_DIR:=$HOME/inventories}
 for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
     if [ -r "$p/config" ]; then
         . "$p/config"
+        break
     fi
 done
 

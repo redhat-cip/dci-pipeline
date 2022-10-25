@@ -354,11 +354,20 @@ To test a Github PR, with specific a pipeline you can use
 $ dci-pipeline-check https://github.com/dci-labs/pipelines/pull/6 -p my-pool ocp-4.10-vanilla workload
 ```
 
+If you use private GitHub repositories, you need to set the
+`GITHUB_TOKEN` variable in your configuration file to get the details
+using the GitHub API about the changes. Then you need either to set
+the `GITHUB_SSH_ID` variable to download the pull request using `ssh` or the
+`GITHUB_LOGIN` variable to use `https`. The ssh key needs to be
+without password for the automation to work.
+
 It also works for a Gerrit review from <https://softwarefactory-project.io/r> :
 
 ```ShellSession
 $ dci-pipeline-check 19837 -p my-pool ocp-4.10-vanilla workload
 ```
+
+To vote on Gerrit reviews, you need to set the `GERRIT_SSH_ID` variable.
 
 `dci-pipeline-check` uses the same configuration files as `dci-pipeline-schedule`.
 
