@@ -57,12 +57,20 @@ def get_umask():
     return mask
 
 
-def set_umask(new_umask=0o007):
-    current = get_umask()
-    if (0o777 - current) & (0o777 - new_umask) == (0o777 - new_umask):
-        log.info("Keeping current umask %o" % current)
+# set umask to be sure files are user and group writable
+def set_umask():
+    current_umask = get_umask()
+    log.debug("current umask %04o" % current_umask)
+    # keep the other part from current umask
+    new_umask = 0o020 | (current_umask & 0o007)
+    # compute perm without the other part
+    current_perms = (0o777 - current_umask) & 0o770
+    target_perms = (0o777 - new_umask) & 0o770
+    log.debug("current_perms=%04o target_perms=%04o" % (current_perms, target_perms))
+    if (current_perms & target_perms) == target_perms:
+        log.info("Keeping current umask %04o" % current_umask)
     else:
-        log.info("Setting umask %o" % (new_umask))
+        log.info("Setting umask %04o" % (new_umask))
         os.umask(new_umask)
 
 

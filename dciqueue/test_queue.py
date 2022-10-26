@@ -20,6 +20,7 @@ import tempfile
 import time
 import unittest
 import uuid
+from unittest.mock import patch
 
 from dciqueue import lib, main, run_cmd
 
@@ -63,6 +64,18 @@ class TestQueue(unittest.TestCase):
         else:
             path = os.path.join(self.queue_dir, directory, subdir)
         self.assertFalse(os.path.exists(path), path)
+
+    @patch("dciqueue.main.get_umask", return_value=0o0077)
+    def test_umask_0077(self, patched_get_umask):
+        with patch("os.umask") as patched_umask:
+            main.set_umask()
+            patched_umask.assert_called_with(0o0027)
+
+    @patch("dciqueue.main.get_umask", return_value=0o0002)
+    def test_umask_0002(self, patched_get_umask):
+        with patch("os.umask") as patched_umask:
+            main.set_umask()
+            patched_umask.assert_not_called()
 
     def test_add_pool(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
