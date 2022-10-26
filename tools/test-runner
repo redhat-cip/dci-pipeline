@@ -222,7 +222,7 @@ for arg in "$@"; do
             # components and launch fallback jobs
             sed -e '/success_tag\|fallback_last_success/d' < $pipeline > $PWD/$(basename $pipeline)
             pipeline="$PWD/$(basename $pipeline)"
-            if grep -q '^\s*type\s*:\s*ocp' $pipeline; then
+            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-agent/dci-openshift-agent.yml' $pipeline; then
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"
             else
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
@@ -234,7 +234,7 @@ done
 
 if [ -n "$OCP_PIPELINES" ]; then
     # compute the names from the ocp pipelines
-    OCP_NAMES="$(grep -m1 '^\s*-\s*name\s*:' $OCP_PIPELINES|sed -e 's/^.*:\s*//' -e 's/\s*$//')"
+    OCP_NAMES="$(grep -E '^\s*-?\s*name\s*:' $OCP_PIPELINES|sed -e 's/^.*:\s*//' -e 's/\s*$//')"
     if [ -z "$OCP_NAMES" ]; then
         error "Unable to find ocp pipeline names ($OCP_PIPELINES) from $URL"
     fi
@@ -308,7 +308,7 @@ if [ -d dci-openshift-app-agent ]; then
     # set the playbook on the cnf pipelines
     OCP_APP_OPT=
     for cnf_pipeline in $CNF_PIPELINES; do
-        NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+        NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
 elif [ -d example-cnf-config/testpmd ]; then
@@ -340,7 +340,7 @@ done
 
 # inject certification variables and topic
 for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+    NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
     if [ -n "$OCP_TOPIC" ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
     fi
@@ -365,7 +365,7 @@ fi
 
 # set the tags on the cnf pipelines
 for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' $cnf_pipeline)
+    NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $NAME:configuration=$DCI_QUEUE"
 done
 
