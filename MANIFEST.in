@@ -13,3 +13,4 @@ include tools/send-feedback
 include tools/test-runner
 include tools/dci-pipeline-schedule
 include tools/dci-pipeline-check
+include tools/yaml2json

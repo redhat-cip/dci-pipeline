@@ -46,6 +46,9 @@ else
     RES="@RESOURCE"
 fi
 
+# set PATH for yaml2json
+PATH=$(dirname $0):/usr/share/dci-pipeline:$PATH
+
 CMD=
 OPTS=
 for arg in "$@"; do
@@ -63,7 +66,7 @@ for arg in "$@"; do
                 echo "Unable to find $pipeline file" 1>&2
                 exit 1
             fi
-            name=$(sed -n -e 's/^-\s*name\s*:\s*\(.*\)/\1/p' "$pipeline")
+            name=$(yaml2json "$pipeline"|jq -r '.[0].name')
             if [ -z "$name" ]; then
                 echo "Unable to extract the pipeline name from $pipeline" 1>&2
                 exit 1

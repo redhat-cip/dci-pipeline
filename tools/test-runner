@@ -308,7 +308,7 @@ if [ -d dci-openshift-app-agent ]; then
     # set the playbook on the cnf pipelines
     OCP_APP_OPT=
     for cnf_pipeline in $CNF_PIPELINES; do
-        NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
+        NAME=$($BASEDIR/yam2json $cnf_pipeline|jq -r '[0].name')
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
 elif [ -d example-cnf-config/testpmd ]; then
@@ -340,7 +340,7 @@ done
 
 # inject certification variables and topic
 for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
+    NAME=$($BASEDIR/yaml2json $cnf_pipeline|jq -r '.[0].name')
     if [ -n "$OCP_TOPIC" ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
     fi
@@ -365,7 +365,7 @@ fi
 
 # set the tags on the cnf pipelines
 for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$(sed -n -E -e 's/^\s*-?\s*name\s*:\s*(.*)/\1/p' $cnf_pipeline)
+    NAME=$($BASEDIR/yaml2json $cnf_pipeline|jq -r '.[0].name')
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $NAME:configuration=$DCI_QUEUE"
 done
 

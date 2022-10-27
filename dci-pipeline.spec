@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py
-Version:        0.0.9
+Version:        0.0.10
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -72,7 +72,7 @@ install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{na
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
 install -d -m 755 %{buildroot}%{_datadir}/%{name}/
-for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner; do
+for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
 done
 install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule
@@ -134,8 +134,12 @@ exit 0
 %{_datadir}/%{name}/loop_until_success
 %{_datadir}/%{name}/send-feedback
 %{_datadir}/%{name}/test-runner
+%{_datadir}/%{name}/yaml2json
 
 %changelog
+* Thu Oct 27 2022 Frederic Lepied <flepied@redhat.com> - 0.0.10-1
+- add yaml2json
+
 * Wed Oct 19 2022 Frederic Lepied <flepied@redhat.com> - 0.0.9-1
 - dci-queue is using /var/lib/dci-queue by default
 
