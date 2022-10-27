@@ -668,8 +668,10 @@ def process_args(args):
             if name == "@pipeline":
                 opt.update(overload["@pipeline"])
             else:
-                if name[0] == "@":
-                    raise ValueError(f"Invalid name {name}")
+                if len(name) == 0:
+                    raise ValueError(f"No name {arg}")
+                elif name[0] == "@":
+                    raise ValueError(f"Invalid name {arg}")
                 lst.append(overload)
         except ValueError:
             log.error('Invalid syntax: "%s"' % arg)

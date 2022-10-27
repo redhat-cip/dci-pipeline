@@ -232,12 +232,28 @@ for arg in "$@"; do
     esac
 done
 
+OCP_NAMES=
 if [ -n "$OCP_PIPELINES" ]; then
     # compute the names from the ocp pipelines
-    OCP_NAMES="$(grep -E '^\s*-?\s*name\s*:' $OCP_PIPELINES|sed -e 's/^.*:\s*//' -e 's/\s*$//')"
-    if [ -z "$OCP_NAMES" ]; then
-        error "Unable to find ocp pipeline names ($OCP_PIPELINES) from $URL"
-    fi
+    for pipeline in $OCP_PIPELINES; do
+        NAME=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].name')
+        if [ -z "$NAME" ]; then
+            error "Unable to find ocp pipeline name for $pipeline"
+        fi
+        OCP_NAMES="$OCP_NAMES $NAME"
+    done
+fi
+
+CNF_NAMES=
+if [ -n "$CNF_PIPELINES" ]; then
+    # compute the names from the cnf pipelines
+    for pipeline in $CNF_PIPELINES; do
+        NAME=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].name')
+        if [ -z "$NAME" ]; then
+            error "Unable to find cnf pipeline name for $pipeline"
+        fi
+        CNF_NAMES="$CNF_NAMES $NAME"
+    done
 fi
 
 GIT_REPOS=ansible_extravars=dev_gits_to_components:
@@ -307,8 +323,7 @@ if [ -d dci-openshift-app-agent ]; then
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
     # set the playbook on the cnf pipelines
     OCP_APP_OPT=
-    for cnf_pipeline in $CNF_PIPELINES; do
-        NAME=$($BASEDIR/yam2json $cnf_pipeline|jq -r '[0].name')
+    for NAME in $CNF_NAMES; do
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
 elif [ -d example-cnf-config/testpmd ]; then
@@ -339,8 +354,7 @@ for pipeline in $OCP_PIPELINES $CNF_PIPELINES; do
 done
 
 # inject certification variables and topic
-for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$($BASEDIR/yaml2json $cnf_pipeline|jq -r '.[0].name')
+for NAME in $CNF_NAMES; do
     if [ -n "$OCP_TOPIC" ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
     fi
@@ -364,8 +378,7 @@ else
 fi
 
 # set the tags on the cnf pipelines
-for cnf_pipeline in $CNF_PIPELINES; do
-    NAME=$($BASEDIR/yaml2json $cnf_pipeline|jq -r '.[0].name')
+for NAME in $CNF_NAMES; do
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $NAME:configuration=$DCI_QUEUE"
 done
 
