@@ -20,12 +20,15 @@ DIR="$1"
 BODY="$2"
 STARTING="$3"
 
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
-    if [ -r "$p/config" ]; then
-        . "$p/config"
-        break
-    fi
-done
+TOPDIR=$(cd $(dirname $0); pwd)
+
+if [ -r "$TOPDIR"/common ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
+
+. $BASEDIR/common
 
 for json in $(ls $DIR/*.json); do
     # gerrit

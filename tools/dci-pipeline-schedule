@@ -14,16 +14,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-PIPELINES_DIR=${PIPELINES_DIR:=$HOME/pipelines}
-INVENTORIES_DIR=${INVENTORIES_DIR:=$HOME/inventories}
+TOPDIR=$(cd $(dirname $0); pwd)
 
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
-    if [ -r "$p/config" ]; then
-        . "$p/config"
-        break
-    fi
-done
+if [ -r "$TOPDIR"/common ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
 
+. $BASEDIR/common
 DCI_QUEUE="$DEFAULT_QUEUE"
 
 # get an optional dci-queue pool name with -p
@@ -66,18 +65,18 @@ for arg in "$@"; do
                 echo "Unable to find $pipeline file" 1>&2
                 exit 1
             fi
-            name=$(yaml2json "$pipeline"|jq -r '.[0].name')
-            if [ -z "$name" ]; then
-                echo "Unable to extract the pipeline name from $pipeline" 1>&2
+            names=$(yaml2json "$pipeline"|jq -r '.[].name')
+            if [ -z "$names" ]; then
+                echo "Unable to extract a pipeline name from $pipeline" 1>&2
                 exit 1
             fi
-            # Inject the inventory and configuration arguments
-            INV=$(sed -n \
-                -e "s/@QUEUE/$DCI_QUEUE/" \
-                -e "s/@RESOURCE/${RES}/" \
-                -e "s@.*ansible_inventory:\s*@@p" \
-                "$pipeline")
-            CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
+            for name in $names; do
+                # Inject the inventory and configuration arguments
+                INV=$("$BASEDIR"/yaml2json "$pipeline" | \
+                    jq -r ".[]|select(.name==\"$name\")|.ansible_inventory" | \
+                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/${RES}/")
+                CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
+            done
             ;;
     esac
 done
