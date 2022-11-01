@@ -27,6 +27,7 @@ if len(sys.argv) == 1:
 else:
     input_stream = open(sys.argv[1])
 
-json.dump(yaml.full_load(input_stream), sys.stdout)
+
+json.dump(yaml.load(input_stream, Loader=yaml.BaseLoader), sys.stdout)
 
 # yaml2json ends here

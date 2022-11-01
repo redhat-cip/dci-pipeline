@@ -18,23 +18,14 @@ set -e
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -x "$TOPDIR"/test-runner ]; then
+if [ -r "$TOPDIR"/common ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-INVENTORIES_DIR=${INVENTORIES_DIR:=$HOME/inventories}
-
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
-    if [ -r "$p/config" ]; then
-        . "$p/config"
-        break
-    fi
-done
-
+. $BASEDIR/common
 QUEUE="$DEFAULT_QUEUE"
-INVENTORIES_REPO=$(basename $(cd "$INVENTORIES_DIR" && git rev-parse --show-toplevel))
 
 if [ $# = 0 -o "$1" = -h ]; then
     cat 1>&2 <<EOF
@@ -208,24 +199,40 @@ if [ -z "$KBCFG" ]; then
         RES=""
     fi
 else
-    if [ -d "$INVENTORIES_REPO" ]; then
-        INVENTORIES_PATH=$(cd "$INVENTORIES_DIR" && git rev-parse --show-prefix)
-        INVENTORIES="$PWD/$INVENTORIES_REPO/$INVENTORIES_PATH/$QUEUE"
-    else
-        INVENTORIES="$INVENTORIES_DIR/$QUEUE"
+    # lookup the first pipeline file
+    first_pipeline=
+    for arg in "$@"; do
+        case "$arg" in
+            *:*|-*)
+                ;;
+            /*)
+                first_pipeline="${arg}"
+                break
+                ;;
+            *)
+                first_pipeline="${PIPELINES_DIR}/${arg}-pipeline.yml"
+                break
+                ;;
+        esac
+    done
+    if [ -z "$first_pipeline" ]; then
+        "$BASEDIR"/send-feedback "$DIR" "ERROR unable to find a pipeline file" 1>&2
+        exit 1
     fi
     PREFIX="env DCI_QUEUE=$QUEUE"
     # find the name of the resource from the oc command
-    cluster_names=( $(oc --kubeconfig $KBCFG config view -o json | jq -r '.clusters[].name') )
+    cluster_names=( $(oc --kubeconfig "$KBCFG" config view -o json | jq -r '.clusters[].name') )
     for cluster_name in "${cluster_names[@]}"; do
-        if [ -f "$INVENTORIES/${cluster_name}" ]; then
+        INV=$("$BASEDIR"/yaml2json "$first_pipeline" | jq -r '.[0].ansible_inventory' | \
+            sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/")
+        if [ -f "$INV" ]; then
             RES=${cluster_name}
             break
         fi
     done
 
     if [ -z "$RES" ]; then
-        $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) in inventories $INVENTORIES for queue $QUEUE" 1>&2
+        $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) for queue $QUEUE" 1>&2
         exit 1
     fi
 fi

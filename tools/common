@@ -1,0 +1,11 @@
+# -*- shell-script -*-
+# shellcheck shell=bash
+
+PIPELINES_DIR="$HOME/pipelines"
+
+for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+    if [ -r "$p/config" ]; then
+        . "$p/config"
+        break
+    fi
+done

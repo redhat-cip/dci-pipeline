@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py
-Version:        0.0.10
+Version:        0.0.11
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -75,6 +75,7 @@ install -d -m 755 %{buildroot}%{_datadir}/%{name}/
 for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
 done
+install -m 644 tools/common %{buildroot}%{_datadir}/%{name}/common
 install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule
 install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
 install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
@@ -129,6 +130,7 @@ exit 0
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
 %{_sysconfdir}/sudoers.d/%{name}
+%{_datadir}/%{name}/common
 %{_datadir}/%{name}/extract-dependencies
 %{_datadir}/%{name}/loop_until_failure
 %{_datadir}/%{name}/loop_until_success
@@ -137,6 +139,9 @@ exit 0
 %{_datadir}/%{name}/yaml2json
 
 %changelog
+* Fri Oct 28 2022 Frederic Lepied <flepied@redhat.com> - 0.0.11-&
+- add common lib
+
 * Thu Oct 27 2022 Frederic Lepied <flepied@redhat.com> - 0.0.10-1
 - add yaml2json
 

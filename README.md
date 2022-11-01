@@ -327,13 +327,12 @@ $ dci-pipeline-schedule ocp-vanilla workload
 ...
 ```
 
-For this to work, you need to configure `PIPELINES_DIR` and
-`INVENTORIES_DIR` in one these files: `~/.config/dci-pipeline/config`
-or `/etc/dci-pipeline/config`. Example:
+For this to work, you need to configure `PIPELINES_DIR` in one these
+files: `~/.config/dci-pipeline/config` or
+`/etc/dci-pipeline/config`. Example:
 
 ```Shell
 PIPELINES_DIR=~/my-config-dir/pipelines
-INVENTORIES_DIR=~/my-config-dir/inventories
 ```
 
 You can also define the default `dci-queue` queue with the
@@ -374,6 +373,20 @@ To vote on Gerrit reviews, you need to set the `GERRIT_SSH_ID` variable.
 If no DCI job has been created by `dci-pipeline-check`, it stores its
 working directory into `/tmp/test-runner-$DATE-$ID` to ease the debug
 later.
+
+### Testing on an existing OCP cluster
+
+To test a change on the `dci-openshift-app-agent` without
+re-installing an OCP cluster, you need to pass an extra parameter to
+the `dci-pipeline-check` command pointng to the `KUBECONFIG` of the
+OCP cluster like this:
+
+```ShellSession
+$ dci-pipeline-check 26269 /path/to/kubeconfig workload
+```
+
+This bypasses the queue mechanism and directly launches the
+application pipelines on the OCP cluster.
 
 ### Dependencies between changes
 

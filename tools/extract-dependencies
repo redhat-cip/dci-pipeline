@@ -17,17 +17,18 @@
 set -e
 set -x
 
-BASEDIR=$(cd $(dirname $0); pwd)
+TOPDIR=$(cd $(dirname $0); pwd)
+
+if [ -r "$TOPDIR"/common ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
+
+. $BASEDIR/common
 
 export GIT_COMMITTER_NAME="Extractor"
 export GIT_COMMITTER_EMAIL="noaddress@nowhere.com"
-
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
-    if [ -r "$p/config" ]; then
-        . "$p/config"
-        break
-    fi
-done
 
 TARGET="$1"
 test -n "$TARGET" -a -d "$TARGET" && cd "$TARGET"

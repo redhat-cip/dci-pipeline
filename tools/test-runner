@@ -105,16 +105,15 @@ extract_dirs() {
     done
 }
 
-BASEDIR=$(cd $(dirname $0); pwd)
+TOPDIR=$(cd $(dirname $0); pwd)
 
-PIPELINES_DIR=$HOME/pipelines
+if [ -r "$TOPDIR"/common ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
 
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
-    if [ -r "$p/config" ]; then
-        . "$p/config"
-        break
-    fi
-done
+. $BASEDIR/common
 
 PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
 
@@ -236,11 +235,11 @@ OCP_NAMES=
 if [ -n "$OCP_PIPELINES" ]; then
     # compute the names from the ocp pipelines
     for pipeline in $OCP_PIPELINES; do
-        NAME=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].name')
-        if [ -z "$NAME" ]; then
+        NAMES=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name')
+        if [ -z "$NAMES" ]; then
             error "Unable to find ocp pipeline name for $pipeline"
         fi
-        OCP_NAMES="$OCP_NAMES $NAME"
+        OCP_NAMES="$OCP_NAMES $NAMES"
     done
 fi
 
@@ -248,11 +247,11 @@ CNF_NAMES=
 if [ -n "$CNF_PIPELINES" ]; then
     # compute the names from the cnf pipelines
     for pipeline in $CNF_PIPELINES; do
-        NAME=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].name')
-        if [ -z "$NAME" ]; then
+        NAMES=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name')
+        if [ -z "$NAMES" ]; then
             error "Unable to find cnf pipeline name for $pipeline"
         fi
-        CNF_NAMES="$CNF_NAMES $NAME"
+        CNF_NAMES="$CNF_NAMES $NAMES"
     done
 fi
 
@@ -366,22 +365,11 @@ for NAME in $CNF_NAMES; do
     fi
 done
 
+# set the tags, comment, configuration and git repos on all the pipelines
 ALL_TAGS=
-# if KBCFG is set, do not launch the OCP pipeline. Set the KUBECONFIG
-# env var instead.
-if [ -n "$KBCFG" ]; then
-    export KUBECONFIG=$KBCFG
-else
-    for name in $OCP_NAMES; do
-        ALL_TAGS="$ALL_TAGS $name:$TAGS $name:$COMMENT $name:$GIT_REPOS $name:configuration=$DCI_QUEUE"
-    done
-fi
-
-# set the tags on the cnf pipelines
-for NAME in $CNF_NAMES; do
+for NAME in $OCP_NAMES $CNF_NAMES; do
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $NAME:configuration=$DCI_QUEUE"
 done
-
 
 # activate the virtualenv created by the check command if present
 if [ -d $PWD/.venv/bin ]; then
