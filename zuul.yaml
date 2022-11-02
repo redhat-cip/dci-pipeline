@@ -28,7 +28,7 @@
 - job:
     name: dci-build-and-push-dci-pipeline-dev-container-job
     parent: dci-build-and-push-container-job
-    description: Build dci-pipeline container
+    description: Build and push dci-pipeline dev container
     vars:
       registry: quay.io
       tag: "distributedci/dci-pipeline"
@@ -78,7 +78,6 @@
 
     gate:
       jobs:
-        - dci-build-and-push-dci-pipeline-container-job
         - dci-pipeline-tests-py3
         - dci-rpm-build-with-doc-el8
         - dci-rpm-build-with-doc-el9:

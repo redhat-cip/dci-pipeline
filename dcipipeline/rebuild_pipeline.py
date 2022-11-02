@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) Red Hat, Inc
+# Copyright (C) 2020-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,10 +16,11 @@
 
 import os
 import sys
+from argparse import ArgumentParser
 
 import yaml
-from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import job as dci_job
+from dciclient.v1.shell_commands import context as dci_context
 
 from dcipipeline import pipeline_utils as pu
 
@@ -36,62 +37,50 @@ def update_pipeline_with_component_version(context, pipeline_jobs):
         pj["data"]["pipeline"]["components"] = components
 
 
+def parse_arguments(args, environment={}):
+    p = ArgumentParser(
+        prog="dci-rebuild-pipeline",
+        description=(
+            "Tool to rebuild a pipeline from the info of a DCI job"
+            "(https://docs.distributed-ci.io/dci-pipeline/#how-to-rebuild-a-pipeline)"
+        ),
+    )
+    dci_context.parse_arguments(p, args, environment)
+    p.add_argument(
+        "--job_id",
+        help="DCI job id",
+        type=str,
+        default=None,
+        required=False,
+    )
+    args = p.parse_args(args)
+
+    return args
+
+
 def main(args=sys.argv):
-
-    u_context = None
-
-    if os.getenv("DCI_LOGIN") and os.getenv("DCI_PASSWORD") and os.getenv("DCI_CS_URL"):
-        print(
-            "using environment with dci_login: %s, dci_cs_url: %s"
-            % (os.getenv("DCI_LOGIN"), os.getenv("DCI_CS_URL"))
-        )
-        u_context = dci_context.build_dci_context(
-            dci_cs_url=os.getenv("DCI_CS_URL"),
-            dci_login=os.getenv("DCI_LOGIN"),
-            dci_password=os.getenv("DCI_PASSWORD"),
-        )
-
-    if (
-        not u_context
-        and os.getenv("DCI_CLIENT_ID")
-        and os.getenv("DCI_API_SECRET")
-        and os.getenv("DCI_CS_URL")
-    ):
-        print(
-            "using environment with dci_client_id: %s, dci_cs_url: %s"
-            % (os.getenv("DCI_LOGIN"), os.getenv("DCI_CS_URL"))
-        )
-        u_context = dci_context.build_signature_context(
-            dci_cs_url=os.getenv("DCI_CS_URL"),
-            dci_client_id=os.getenv("DCI_CLIENT_ID"),
-            dci_api_secret=os.getenv("DCI_API_SECRET"),
-        )
+    args = parse_arguments(sys.argv[1:], os.environ)
+    u_context = dci_context.build_context(args)
 
     if not u_context:
-        print(
-            "using local development environment with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000"
-        )
-        u_context = dci_context.build_dci_context(
-            dci_cs_url="http://127.0.0.1:5000/",
-            dci_login="pipeline-user",
-            dci_password="pipeline-user",
-        )
-        job_id = None
-        if len(sys.argv) < 2:
-            print("no job id provided, getting latest known job")
-            jobs = dci_job.list(u_context, limit=1, offset=0)
-            if jobs.status_code == 200:
-                if len(jobs.json()["jobs"]) > 0:
-                    job_id = jobs.json()["jobs"][0]["id"]
-                    print("job id: %s" % job_id)
-                else:
-                    print("no job found")
-                    sys.exit(1)
+        print("Unable to authenticate. aborting")
+        sys.exit(2)
+
+    if args.job_id is None:
+        print("no job id provided, getting latest known job")
+        jobs = dci_job.list(u_context, limit=1, offset=0)
+        if jobs.status_code == 200:
+            if len(jobs.json()["jobs"]) > 0:
+                args.job_id = jobs.json()["jobs"][0]["id"]
+                print("job id: %s" % args.job_id)
+            else:
+                print("no job found")
+                sys.exit(1)
         else:
             job_id = sys.argv[1]
             print("job id: %s" % job_id)
 
-    pipeline_jobs = pu.get_pipeline_from_job(u_context, job_id)
+    pipeline_jobs = pu.get_pipeline_from_job(u_context, args.job_id)
 
     update_pipeline_with_component_version(u_context, pipeline_jobs)
 

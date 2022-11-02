@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) Red Hat, Inc
+# Copyright (C) 2021-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,66 +16,108 @@
 
 import os
 import sys
+from argparse import ArgumentParser
 
-from dciclient.v1.api import context as dci_context
+from dciclient.printer import print_result
 from dciclient.v1.api import job as dci_job
-from prettytable import PrettyTable
+from dciclient.v1.api import pipeline as dci_pipeline
+from dciclient.v1.shell_commands import context as dci_context
 
 from dcipipeline import pipeline_utils as pu
 
 
-def main(args=sys.argv):
-
-    u_context = None
-
-    if os.getenv("DCI_LOGIN") and os.getenv("DCI_PASSWORD") and os.getenv("DCI_CS_URL"):
-        print(
-            "using environment with dci_login: %s, dci_cs_url: %s"
-            % (os.getenv("DCI_LOGIN"), os.getenv("DCI_CS_URL"))
-        )
-        u_context = dci_context.build_dci_context(
-            dci_cs_url=os.getenv("DCI_CS_URL"),
-            dci_login=os.getenv("DCI_LOGIN"),
-            dci_password=os.getenv("DCI_PASSWORD"),
-        )
-        if len(sys.argv) < 3:
-            print("usage: %s <job-id1> <job-id2>" % sys.argv[0])
-            sys.exit(1)
-        job_id_1 = sys.argv[1]
-        job_id_2 = sys.argv[2]
+def get_component_info(comp):
+    if comp["type"] in ("rpm", "git"):
+        c_type, c_name = comp["name"].split(" ", 1)
+        return (c_type, c_name)
     else:
+        return (comp["type"], comp["name"])
+
+
+def parse_arguments(args, environment={}):
+    p = ArgumentParser(
+        prog="dci-diff-pipeline",
+        description=(
+            "Tool to compare components from 2 pipelines"
+            "(https://docs.distributed-ci.io/dci-pipeline/#how-to-see-components-diff-between-two-pipelines)"
+        ),
+    )
+    dci_context.parse_arguments(p, args, environment)
+    p.add_argument(
+        "--job_id_1",
+        help="First job id",
+        type=str,
+        default=None,
+    )
+    p.add_argument(
+        "--job_id_2",
+        help="Second job id",
+        type=str,
+        default=None,
+    )
+    args = p.parse_args(args)
+
+    return args
+
+
+def search(args=sys.argv):
+    args = parse_arguments(sys.argv[1:], os.environ)
+    u_context = dci_context.build_context(args)
+
+    if not u_context:
+        print("Unable to authenticate. aborting", file=sys.stderr)
+        sys.exit(2)
+
+    if args.job_id_1 is None:
         print(
-            "using local development environment with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000"
+            "no job_id_1 provided, getting latest known job with a pipeline",
+            file=sys.stderr,
         )
-        u_context = dci_context.build_dci_context(
-            dci_cs_url="http://127.0.0.1:5000/",
-            dci_login="pipeline-user",
-            dci_password="pipeline-user",
+        pipelines = dci_pipeline.list(u_context, limit=10, offset=0).json()["pipelines"]
+        for idx in range(len(pipelines)):
+            pipeline_id = pipelines[idx]["id"]
+            jobs = dci_job.list(
+                u_context, limit=1, offset=0, where=f"pipeline_id:{pipeline_id}"
+            ).json()["jobs"]
+            if len(jobs) == 1:
+                args.job_id_1 = jobs[0]["id"]
+                break
+        if args.job_id_1 is None:
+            print("no job_id_1 found", file=sys.stderr)
+            sys.exit(1)
+    else:
+        pipeline_id = None
+
+    if args.job_id_2 is None:
+        print("no job_id_2 provided, getting a similar job", file=sys.stderr)
+        if pipeline_id is None:
+            job1 = dci_job.get(u_context, args.job_id_1).json()["job"]
+            pipeline_id = job1["pipeline_id"]
+        if pipeline_id is None:
+            print("No pipeline found", file=sys.stderr)
+            sys.exit(1)
+        pipeline_name = dci_pipeline.get(u_context, pipeline_id).json()["pipeline"][
+            "name"
+        ]
+        pipelines = dci_pipeline.list(
+            u_context, where=f"name:{pipeline_name}", limit=2, offset=0
+        ).json()["pipelines"]
+        jobs = dci_job.list(
+            u_context, limit=1, offset=0, where=f"pipeline_id:{pipelines[1]['id']}"
         )
+        if jobs.status_code == 200:
+            if len(jobs.json()["jobs"]) > 0:
+                args.job_id_2 = jobs.json()["jobs"][0]["id"]
+                print("job id 2: %s" % args.job_id_2, file=sys.stderr)
+            else:
+                print("no job_id_2 found", file=sys.stderr)
+                sys.exit(1)
 
-        job_id_1 = None
-        job_id_2 = None
-        if len(sys.argv) < 3:
-            print("no job ids provided, getting latest known job")
-            jobs = dci_job.list(u_context, limit=1, offset=0)
-            if jobs.status_code == 200:
-                if len(jobs.json()["jobs"]) > 0:
-                    job_id_1 = jobs.json()["jobs"][0]["id"]
-                    job_id_2 = job_id_1
-                    print("job id 1: %s" % job_id_1)
-                    print("job id 1: %s" % job_id_2)
-                else:
-                    print("no job found")
-                    sys.exit(1)
-        else:
-            job_id_1 = sys.argv[1]
-            job_id_2 = sys.argv[2]
-
-    pipeline_1 = pu.get_pipeline_from_job(u_context, job_id_1)
-    pipeline_2 = pu.get_pipeline_from_job(u_context, job_id_2)
+    pipeline_1 = pu.get_pipeline_from_job(u_context, args.job_id_1)
+    pipeline_2 = pu.get_pipeline_from_job(u_context, args.job_id_2)
 
     if len(pipeline_1) != len(pipeline_2):
-        print("not the same pipeline structure")
+        print("not the same pipeline structure", file=sys.stderr)
         sys.exit(1)
 
     pipeline_1_stages_types = set([j["data"]["pipeline"]["type"] for j in pipeline_1])
@@ -84,40 +126,62 @@ def main(args=sys.argv):
     if pipeline_1_stages_types != pipeline_2_stages_types:
         print(
             "not the same pipeline types: pipeline_1=%s,pipeline_2=%s"
-            % (pipeline_1_stages_types, pipeline_2_stages_types)
+            % (pipeline_1_stages_types, pipeline_2_stages_types),
+            file=sys.stderr,
         )
         sys.exit(1)
 
-    pt = PrettyTable()
-    pt.field_names = [
-        "\033[95m pipeline 1 \033[0m",
-        "\033[95m pipeline 2 \033[0m",
-        "\033[95m stage \033[0m",
-        "\033[95m component type \033[0m",
-        "\033[95m component 1 \033[0m",
-        "\033[95m component 2 \033[0m",
-    ]
-
+    pt = []
     for i in range(0, len(pipeline_1)):
-        components_1 = pu.get_job_components(u_context, pipeline_1[i]["id"])
-        components_2 = pu.get_job_components(u_context, pipeline_2[i]["id"])
+        components_1 = {}
+        components_2 = {}
+        for c in pu.get_job_components(u_context, pipeline_1[i]["id"]):
+            c_type, c_name = get_component_info(c)
+            components_1[c_type] = c_name
+        for c in pu.get_job_components(u_context, pipeline_2[i]["id"]):
+            c_type, c_name = get_component_info(c)
+            components_2[c_type] = c_name
         for c1 in components_1:
-            c_type = c1["type"]
-            for c2 in components_2:
-                if c_type == c2["type"]:
-                    if c1["name"] != c2["name"]:
-                        pt.add_row(
-                            [
-                                pipeline_1[i]["id"],
-                                pipeline_2[i]["id"],
-                                pipeline_1[i]["data"]["pipeline"]["name"],
-                                c_type,
-                                "\033[91m %s \033[0m" % c1["name"],
-                                "\033[91m %s \033[0m" % c2["name"],
-                            ]
-                        )
-    print(pt)
+            if c1 in components_2:
+                if components_1[c1] != components_2[c1]:
+                    pt.append(
+                        {
+                            "name": c1,
+                            "pipeline": pipeline_1[i]["data"]["pipeline"]["name"],
+                            "component job 1": components_1[c1],
+                            "component job 2": components_2[c1],
+                        }
+                    )
+            else:
+                pt.append(
+                    {
+                        "name": c1,
+                        "pipeline": pipeline_1[i]["data"]["pipeline"]["name"],
+                        "component job 1": components_1[c1],
+                        "component job 2": "Not found",
+                    }
+                )
+        for c2 in components_2:
+            if c2 not in components_1:
+                pt.append(
+                    {
+                        "name": c2,
+                        "pipeline": pipeline_1[i]["data"]["pipeline"]["name"],
+                        "component job 1": "Not found",
+                        "component job 2": components_2[c2],
+                    }
+                )
+    print_result(
+        pt,
+        args.format,
+        args.verbose,
+        ["name", "pipeline", "component job 1", "component job 2"],
+    )
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def main(args=sys.argv):
+    try:
+        return search(args)
+    except Exception as ex:
+        print(f"Unable to perform search: {ex}", file=sys.stderr)
+        return 1

@@ -547,7 +547,7 @@ be used for this purpose. To do so, you need to get any job id that was part of 
 Once this is get. You need to run, for example, the following command:
 
 ```ShellSession
-$ dci-rebuild-pipeline 2441f3a5-aa97-45e9-8122-36dfc6f17d84
+$ dci-rebuild-pipeline --job_id 2441f3a5-aa97-45e9-8122-36dfc6f17d84
 ```
 
 At the end of the command you will get a file `rebuilt-pipeline.yml` in the current directory.
@@ -574,6 +574,8 @@ components:
 
 This rebuilt pipeline can be used as a regular one with the `dci-pipeline` command.
 
+If you do not specify `--job_id`, `dci-rebuild-pipeline` is using the last job that has run.
+
 ## How to see components diff between two pipelines
 
 In case of a pipeline failulre, one might check if some components has changed from the previous run. The
@@ -586,8 +588,7 @@ teams components.
 You can see the component differentiation with the following command:
 
 ```ShellSession
-$ dci-diff-pipeline 610953f7-ad4a-442c-a934-cd5506127ec9 f7677627-5780-46f8-b35f-c4bd1f781d90
-using local development environment with dci_login: pipeline-user, dci_cs_url: http://127.0.0.1:5000
+$ dci-diff-pipeline --job_id_1 610953f7-ad4a-442c-a934-cd5506127ec9 --job_id_2 f7677627-5780-46f8-b35f-c4bd1f781d90
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
 |              pipeline 1              |              pipeline 2              |       stage       |  component type  |          component 1           |          component 2           |
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
@@ -595,6 +596,12 @@ using local development environment with dci_login: pipeline-user, dci_cs_url: h
 | 610953f7-ad4a-442c-a934-cd5506127ec9 | f7677627-5780-46f8-b35f-c4bd1f781d90 |       rh-cnf      |      rh-cnf      |  rh-cnf-0.1.nightly-20200708   |  rh-cnf-0.1.nightly-20200703   |
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
 ```
+
+If you do not specify `--job_id_1`, `dci-diff-pipeline` looks up the last job.
+
+If you do not specify `--job_id_2`, `dci-diff-pipeline` looks up the
+first job from the last pipeline with the same name as the one from
+`--job_id_1`.
 
 ## Development
 
