@@ -98,13 +98,14 @@ get_project() {
 extract_dirs() {
     for path in $(grep -vP "^s*#.*" "$@" |
             grep -Po "[\s,[\"']/[\w/._-]+" |
-            sed -e "s#[ ,[\"']##g"); do
+            sed -e "s#[ ,[\"']##g" |
+            sort -u); do
         if [ -d "${path}" ]; then
             get_project "$path"
         elif [ -f "${path}" ]; then
             get_project "$(dirname ${path})"
         fi
-    done | sort -u
+    done
 }
 
 TOPDIR=$(cd $(dirname $0); pwd)
