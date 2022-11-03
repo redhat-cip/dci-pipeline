@@ -52,7 +52,7 @@
     description: Build and push dci-pipeline container
     vars:
       registry: quay.io
-      tag: "distributedci/dci-analytics"
+      tag: "distributedci/dci-pipeline"
       version: latest
     required-projects:
       - python-dciclient
