@@ -30,10 +30,13 @@
     parent: dci-build-and-push-container-job
     description: Build and push dci-pipeline dev container
     vars:
-      registry: quay.io
+      build_registry: "registry.access.redhat.com"
+      registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: "gerrit-{{ zuul.change }}"
       push_stable_tag: false
+      ignore_build_registry_login_errors: false
+      hide_build_registry_login_errors: false
     required-projects:
       - python-dciclient
       - python-dciauth
@@ -51,9 +54,11 @@
     parent: dci-build-and-push-container-job
     description: Build and push dci-pipeline container
     vars:
-      registry: quay.io
+      build_registry: "registry.access.redhat.com"
+      registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: latest
+      ignore_build_registry_login_errors: false
     required-projects:
       - python-dciclient
       - python-dciauth

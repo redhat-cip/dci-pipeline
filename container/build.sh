@@ -24,6 +24,11 @@ fi
 
 cd $(dirname $(cd $(dirname $0); pwd))
 
+if [ $(id -u) -eq 0 ]; then
+    wget -O /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta  https://www.redhat.com/security/data/897da07a.txt
+    chcon --reference /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta
+fi
+
 for dir in . ../python-dciclient ../python-dciauth; do
     cd $dir
     rm -rf dist
@@ -50,8 +55,6 @@ done
 
 cp ../python-dciclient/dist/* dist/
 cp ../python-dciauth/dist/* dist/
-
-env
 
 podman build -t "$TAG" .
 

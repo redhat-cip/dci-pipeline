@@ -30,9 +30,9 @@ if [ -w /usr/share ]; then
         # remove python libraries provided as local source directories
         sed -i -e '/dciclient/d'  -e '/dciauth.*/d' requirements.txt
         if [ -r setup.py ]; then
-            pip install -r requirements.txt .
+            pip3 install -r requirements.txt .
         else
-            pip install -r requirements.txt
+            pip3 install -r requirements.txt
         fi
     done
 fi
