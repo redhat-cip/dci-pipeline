@@ -54,7 +54,6 @@ while read line; do
               curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
           fi
 
-
           if [ ! -d $dir ]; then
               if [ -n "$GITHUB_SSH_ID" ]; then
                   ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git clone git@github.com:$proj $dir"
@@ -71,15 +70,23 @@ while read line; do
           git checkout "$BRANCH"
           # remove old branch if it exists
           git branch -D pr$pr || :
-          ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin pull/$pr/head:pr$pr"
+          if [ -n "$GITHUB_SSH_ID" ]; then
+              ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin pull/$pr/head:pr$pr"
+          else
+              git fetch origin "pull/$pr/head:pr$pr"
+          fi
           # check if branch is already merged
           if git branch -d pr$pr; then
               git checkout "$BRANCH"
           else
               git checkout pr$pr
-              ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin $BRANCH"
+              if [ -n "$GITHUB_SSH_ID" ]; then
+                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin $BRANCH"
+              else
+                  git fetch origin "$BRANCH"
+              fi
               if ! git rebase "origin/$BRANCH"; then
-                  $BASEDIR/send-feedback $TARGET "error in check dallas: unable to rebase PR $pr from $proj branch $BRANCH"
+                  $BASEDIR/send-feedback $TARGET "ERROR unable to rebase PR $pr from $proj branch $BRANCH"
                   rm -rf $TARGET
                   exit 1
               fi
@@ -92,7 +99,6 @@ while read line; do
           curl -s https://softwarefactory-project.io/r/changes/${changeid}?o=CURRENT_REVISION | tail -n +2 > ${changeid}.json
           PROJECT=$(jq -r .project ${changeid}.json)
           CURREV=$(jq -r .current_revision ${changeid}.json)
-          PATCHSET=$(jq -r ".revisions[\"$CURREV\"]._number" ${changeid}.json)
           REPOURL=$(jq -r ".revisions[\"$CURREV\"].fetch[\"anonymous http\"].url" ${changeid}.json)
           REVID=$(jq -r ".revisions[\"$CURREV\"].fetch[\"anonymous http\"].ref" ${changeid}.json)
 
@@ -113,7 +119,7 @@ while read line; do
               git checkout gr$changeid
               git fetch origin master
               if ! git rebase origin/master; then
-                  $BASEDIR/send-feedback $TARGET "error in check dallas: unable to rebase Gerrit review $changeid from $PROJECT"
+                  $BASEDIR/send-feedback $TARGET "ERROR unable to rebase Gerrit review $changeid from $PROJECT"
                   rm -rf $TARGET
                   exit 1
               fi

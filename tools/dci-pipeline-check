@@ -143,7 +143,7 @@ esac
 if [ -d $DIR ]; then
     jobid="$(dci-queue searchdir $QUEUE $DIR)"
     if [ -z "$jobid" ]; then
-        $BASEDIR/send-feedback $DIR "A job is already scheduled or running in $DIR (unable to find job id). Aborting."
+        $BASEDIR/send-feedback $DIR "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
         exit
     fi
     dci-queue unschedule $QUEUE $jobid
