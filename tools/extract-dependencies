@@ -16,6 +16,7 @@
 
 set -e
 set -x
+GIT_CLONE_OPTIONS="--filter=tree:0"
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
@@ -56,11 +57,11 @@ while read line; do
 
           if [ ! -d $dir ]; then
               if [ -n "$GITHUB_SSH_ID" ]; then
-                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git clone git@github.com:$proj $dir"
+                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git clone ${GIT_CLONE_OPTIONS} git@github.com:$proj $dir"
               elif [ -n "$GITHUB_LOGIN" ] && [ -n "$GITHUB_TOKEN" ]; then
-                  git clone "https://$GITHUB_LOGIN:$GITHUB_TOKEN@github.com/$proj" "$dir"
+                  git clone ${GIT_CLONE_OPTIONS} "https://$GITHUB_LOGIN:$GITHUB_TOKEN@github.com/$proj" "$dir"
               else
-                  git clone "https://github.com/$proj" "$dir"
+                  git clone ${GIT_CLONE_OPTIONS} "https://github.com/$proj" "$dir"
               fi
           fi
 
@@ -103,7 +104,7 @@ while read line; do
           REVID=$(jq -r ".revisions[\"$CURREV\"].fetch[\"anonymous http\"].ref" ${changeid}.json)
 
           if [ ! -d $PROJECT ]; then
-              git clone $REPOURL $PROJECT
+              git clone ${GIT_CLONE_OPTIONS} $REPOURL $PROJECT
           fi
 
           cd $PROJECT
