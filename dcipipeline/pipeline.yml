@@ -1,6 +1,6 @@
 ---
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     configuration: myconf
     url: https://lwn.net/
     ansible_playbook: agents/openshift-vanilla/agent.yml

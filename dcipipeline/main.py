@@ -78,45 +78,45 @@ class SignalHandler:
         return self.signum != 0
 
 
-def pre_process_stage(stage):
+def pre_process_jobdef(jobdef):
     metas = {}
-    if "ansible_envvars" not in stage:
-        stage["ansible_envvars"] = {}
+    if "ansible_envvars" not in jobdef:
+        jobdef["ansible_envvars"] = {}
 
     # create sane default env variables
-    if "JUNIT_TEST_CASE_PREFIX" not in stage["ansible_envvars"]:
-        stage["ansible_envvars"]["JUNIT_TEST_CASE_PREFIX"] = "test_"
-    if "JUNIT_TASK_CLASS" not in stage["ansible_envvars"]:
-        stage["ansible_envvars"]["JUNIT_TASK_CLASS"] = "yes"
-    if "JUNIT_OUTPUT_DIR" not in stage["ansible_envvars"]:
-        stage["ansible_envvars"]["JUNIT_OUTPUT_DIR"] = "/@tmpdir"
+    if "JUNIT_TEST_CASE_PREFIX" not in jobdef["ansible_envvars"]:
+        jobdef["ansible_envvars"]["JUNIT_TEST_CASE_PREFIX"] = "test_"
+    if "JUNIT_TASK_CLASS" not in jobdef["ansible_envvars"]:
+        jobdef["ansible_envvars"]["JUNIT_TASK_CLASS"] = "yes"
+    if "JUNIT_OUTPUT_DIR" not in jobdef["ansible_envvars"]:
+        jobdef["ansible_envvars"]["JUNIT_OUTPUT_DIR"] = "/@tmpdir"
 
-    for k, v in stage["ansible_envvars"].items():
+    for k, v in jobdef["ansible_envvars"].items():
         if v != "/@tmpdir":
             continue
-        stage["ansible_envvars"][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
-        log.info("Created %s for env var %s" % (stage["ansible_envvars"][k], k))
+        jobdef["ansible_envvars"][k] = tempfile.mkdtemp(prefix="dci-pipeline-tmpdir")
+        log.info("Created %s for env var %s" % (jobdef["ansible_envvars"][k], k))
         if "tmpdirs" not in metas:
-            metas["tmpdirs"] = [{"name": k, "path": stage["ansible_envvars"][k]}]
+            metas["tmpdirs"] = [{"name": k, "path": jobdef["ansible_envvars"][k]}]
         else:
-            metas["tmpdirs"].append({"name": k, "path": stage["ansible_envvars"][k]})
-    return metas, stage
+            metas["tmpdirs"].append({"name": k, "path": jobdef["ansible_envvars"][k]})
+    return metas, jobdef
 
 
-def post_process_stage(context, stage, metas):
+def post_process_jobdef(context, jobdef, metas):
     if "tmpdirs" not in metas:
         return
 
     for tmpdir in metas["tmpdirs"]:
         if tmpdir["name"] == "JUNIT_OUTPUT_DIR":
-            upload_junit_files_from_dir(context, stage, tmpdir["path"])
+            upload_junit_files_from_dir(context, jobdef, tmpdir["path"])
         try:
             shutil.rmtree(tmpdir["path"])
         except OSError as e:
             log.warning("unable to delete %s: %s" % (tmpdir, str(e)))
 
 
-def upload_junit_files_from_dir(context, stage, dir):
+def upload_junit_files_from_dir(context, jobdef, dir):
     for f in os.listdir(dir):
         _abs_file_path = os.path.join(dir, f)
         if os.path.isfile(_abs_file_path) and f.endswith(".xml"):
@@ -126,7 +126,7 @@ def upload_junit_files_from_dir(context, stage, dir):
                 f[:-4],  # remove .xml at the end
                 file_path=_abs_file_path,
                 mime="application/junit",
-                job_id=stage["job_info"]["job"]["id"],
+                job_id=jobdef["job_info"]["job"]["id"],
             )
         else:
             log.warning("%s is not a junit file" % _abs_file_path)
@@ -136,16 +136,16 @@ def clean_ansible_objects(data):
     return yaml.load(yaml.dump(data, Dumper=AnsibleDumper), Loader=yaml.BaseLoader)
 
 
-def load_stage_file(path, config_dir):
-    # Read the pipeline stages in 2 passes to be able to load first
+def load_jobdef_file(path, config_dir):
+    # Read the pipeline jobdefs in 2 passes to be able to load first
     # the credentials file to be able to decrypt !vault statements in
     # the second pass.
     with open(path) as stream:
         data = stream.read(-1)
     # First pass without decrypting !vault
-    stages_raw_data = yaml.load(data, Loader=yaml.BaseLoader)
+    jobdefs_raw_data = yaml.load(data, Loader=yaml.BaseLoader)
     try:
-        creds = load_credentials(stages_raw_data[0], config_dir)
+        creds = load_credentials(jobdefs_raw_data[0], config_dir)
     except (KeyError, IndexError):
         log.warning("No credentials found to decrypt vault encrypted data.")
         creds = {"DCI_API_SECRET": "fake-secret"}
@@ -162,11 +162,11 @@ def load_stage_file(path, config_dir):
     return ansible_yaml
 
 
-def load_credentials(stage, config_dir):
-    cred_path = stage.get(
+def load_credentials(jobdef, config_dir):
+    cred_path = jobdef.get(
         "dci_credentials",
         "%s/%s/dci_credentials.yml"
-        % (config_dir, os.path.dirname(stage["ansible_playbook"])),
+        % (config_dir, os.path.dirname(jobdef["ansible_playbook"])),
     )
 
     if cred_path[0] != "/":
@@ -220,36 +220,41 @@ log_path           = ansible.log
         )
 
 
-def get_types_of_stage(pipeline):
+def get_jobdef_name(jobdef):
+    return jobdef.get("stage", jobdef.get("type"))
+
+
+def get_names_of_jobdefs(pipeline):
     names = []
-    for stage in pipeline:
-        if stage["type"] not in names:
-            names.append(stage["type"])
+    for jobdef in pipeline:
+        name = get_jobdef_name(jobdef)
+        if name not in names:
+            names.append(name)
     return names
 
 
-def get_stages(names, pipeline):
-    stages = []
+def get_jobdefs(names, pipeline):
+    jobdefs = []
     if names:
         # manage cases where a single entry is provided
         if not is_list(names):
             names = [names]
-        for stage in pipeline:
+        for jobdef in pipeline:
             for name in names:
-                if stage["name"] == name or stage["type"] == name:
-                    stages.append(stage)
-    return stages
+                if jobdef["name"] == name or get_jobdef_name(jobdef) == name:
+                    jobdefs.append(jobdef)
+    return jobdefs
 
 
-def get_prev_stages(stage, pipeline):
-    stages = get_stages(stage.get("prev_stages"), pipeline)
+def get_prev_jobdefs(jobdef, pipeline):
+    jobdefs = get_jobdefs(jobdef.get("prev_stages"), pipeline)
     try:
-        idx = stages.index(stage)
-        stages = stages[:idx]
+        idx = jobdefs.index(jobdef)
+        jobdefs = jobdefs[:idx]
     except ValueError:
         pass
-    stages.reverse()
-    return stages
+    jobdefs.reverse()
+    return jobdefs
 
 
 def build_remoteci_context(dci_credentials):
@@ -268,18 +273,18 @@ def build_pipeline_user_context(dci_credentials):
     )
 
 
-def is_stage_with_fixed_components(stage):
-    for component_type in stage["components"]:
+def is_jobdef_with_fixed_components(jobdef):
+    for component_type in jobdef["components"]:
         if "=" in component_type:
             return True
     return False
 
 
-def get_components(context, stage, topic_id, tag=None):
+def get_components(context, jobdef, topic_id, tag=None):
     components = []
-    if "components" not in stage:
-        stage["components"] = []
-    for component_type in stage["components"]:
+    if "components" not in jobdef:
+        jobdef["components"] = []
+    for component_type in jobdef["components"]:
         c_type = component_type
         c_name = ""
         where_query = "type:%s%s" % (c_type, (",tags:%s" % tag) if tag else "")
@@ -306,26 +311,26 @@ def get_components(context, stage, topic_id, tag=None):
         else:
             log.error(
                 "Unable to fetch component %s/%s for topic %s: %s"
-                % (c_type, c_name, stage["topic"], resp.text)
+                % (c_type, c_name, jobdef["topic"], resp.text)
             )
-    return components, stage
+    return components, jobdef
 
 
-def get_topic_id(context, stage):
-    topic_res = dci_topic.list(context, where="name:" + stage["topic"])
+def get_topic_id(context, jobdef):
+    topic_res = dci_topic.list(context, where="name:" + jobdef["topic"])
     if topic_res.status_code == 200:
         topics = topic_res.json()["topics"]
         log.debug("topics: %s" % topics)
         if len(topics) == 0:
-            log.error("topic %s not found" % stage["topic"])
+            log.error("topic %s not found" % jobdef["topic"])
             return None
         return topics[0]["id"]
     else:
-        log.error("Unable to get topic %s: %s" % (stage["topic"], topic_res.text))
+        log.error("Unable to get topic %s: %s" % (jobdef["topic"], topic_res.text))
     return None
 
 
-def get_data_dir(job_info, stage):
+def get_data_dir(job_info, jobdef):
     for base_dir in (
         os.getenv("DCI_PIPELINE_DATADIR"),
         "/var/lib/dci-pipeline",
@@ -333,12 +338,12 @@ def get_data_dir(job_info, stage):
     ):
         try:
             if base_dir:
-                d = os.path.join(base_dir, stage["name"], job_info["job"]["id"])
+                d = os.path.join(base_dir, jobdef["name"], job_info["job"]["id"])
                 os.makedirs(d, mode=0o700)
                 with open(os.path.join(d, "job_info.yaml"), "w") as f:
                     yaml.dump(job_info, f, Dumper=AnsibleDumper)
-                with open(os.path.join(d, "stage.yaml"), "w") as f:
-                    yaml.dump(stage, f, Dumper=AnsibleDumper)
+                with open(os.path.join(d, "jobdef.yaml"), "w") as f:
+                    yaml.dump(jobdef, f, Dumper=AnsibleDumper)
                 job_info["data_dir"] = d
                 break
         except PermissionError:
@@ -354,7 +359,7 @@ def get_data_dir(job_info, stage):
 
 
 def schedule_job(
-    stage,
+    jobdef,
     remoteci_context,
     pipeline_user_context,
     tag=None,
@@ -365,26 +370,26 @@ def schedule_job(
     log.info(
         "scheduling job %s on topic %s%s previous_job_id=%s pipeline_id=%s"
         % (
-            stage["name"],
-            stage["topic"],
+            jobdef["name"],
+            jobdef["topic"],
             " with tag %s" % tag if tag else "",
             previous_job_id,
             pipeline_id,
         )
     )
 
-    topic_id = get_topic_id(remoteci_context, stage)
+    topic_id = get_topic_id(remoteci_context, jobdef)
     if not topic_id:
         return None
     user_context = remoteci_context
     if pipeline_user_context:
         user_context = pipeline_user_context
-    components, stage = get_components(user_context, stage, topic_id, tag)
+    components, jobdef = get_components(user_context, jobdef, topic_id, tag)
 
-    if len(stage["components"]) != len(components):
+    if len(jobdef["components"]) != len(components):
         log.error(
             "Unable to get all components %d out of %d"
-            % (len(components), len(stage["components"]))
+            % (len(components), len(jobdef["components"]))
         )
         return None
 
@@ -403,7 +408,7 @@ def schedule_job(
             )
             return None
 
-    pipeline_data = dict(stage)
+    pipeline_data = dict(jobdef)
     if "job_info" in pipeline_data:
         del pipeline_data["job_info"]
     if (
@@ -415,10 +420,10 @@ def schedule_job(
     schedule = dci_job.create(
         remoteci_context,
         topic_id=topic_id,
-        comment=stage.get("comment"),
-        name=stage.get("name"),
-        configuration=stage.get("configuration"),
-        url=stage.get("url"),
+        comment=jobdef.get("comment"),
+        name=jobdef.get("name"),
+        configuration=jobdef.get("configuration"),
+        url=jobdef.get("url"),
         components=[c["id"] for c in components],
         data={"pipeline": clean_ansible_objects(pipeline_data)},
         previous_job_id=previous_job_id,
@@ -442,7 +447,7 @@ def schedule_job(
                     )
                     return None
             job_info = scheduled_job.json()
-            get_data_dir(job_info, stage)
+            get_data_dir(job_info, jobdef)
 
             log.info("Scheduled DCI job %s" % job_id)
 
@@ -465,8 +470,8 @@ def add_tag_to_component(component_id, tag, context):
     dci_component.add_tag(context, component_id, tag)
 
 
-def get_list(stage, key):
-    val = stage.get(key)
+def get_list(jobdef, key):
+    val = jobdef.get(key)
     if val and isinstance(val, str):
         val = [val]
     return val
@@ -476,27 +481,27 @@ def get_vault_client():
     return os.getenv("DCI_VAULT_CLIENT", shutil.which("dci-vault-client"))
 
 
-def build_cmdline(stage):
+def build_cmdline(jobdef):
     cmd = "--vault-id %s" % get_vault_client()
     for key, switch in (
         ("ansible_tags", "--tags"),
         ("ansible_skip_tags", "--skip-tags"),
     ):
-        lst = get_list(stage, key)
+        lst = get_list(jobdef, key)
 
         if lst:
             cmd += " " + switch + " " + ",".join(lst)
 
-    if "ansible_extravars" in stage:
+    if "ansible_extravars" in jobdef:
         cmd += " -e '%s'" % json.dumps(
-            stage["ansible_extravars"], cls=AnsibleJSONEncoder
+            jobdef["ansible_extravars"], cls=AnsibleJSONEncoder
         )
 
-    if "ansible_extravars_files" in stage:
-        for extra_file in stage["ansible_extravars_files"]:
+    if "ansible_extravars_files" in jobdef:
+        for extra_file in jobdef["ansible_extravars_files"]:
             if extra_file[0] != "/":
                 extra_file = os.path.join(
-                    os.path.abspath(os.path.dirname(stage["_pipeline_path_"])),
+                    os.path.abspath(os.path.dirname(jobdef["_pipeline_path_"])),
                     extra_file,
                 )
             cmd += f" -e '@{extra_file}'"
@@ -517,8 +522,8 @@ def check_stats(stats):
     return True
 
 
-def stage_check_path(stage, key, data_dir):
-    path = stage.get(key)
+def jobdef_check_path(jobdef, key, data_dir):
+    path = jobdef.get(key)
     if path:
         if path[0] != "/":
             path = os.path.join(data_dir, path)
@@ -528,10 +533,10 @@ def stage_check_path(stage, key, data_dir):
     return path
 
 
-def find_dci_ansible_dir(stage):
+def find_dci_ansible_dir(jobdef):
     for dci_ansible_dir in (
         os.getenv("DCI_ANSIBLE_DIR"),
-        stage.get("dci_ansible_dir"),
+        jobdef.get("dci_ansible_dir"),
         os.path.join(os.path.dirname(TOPDIR), "dci-ansible"),
         "/usr/share/dci",
     ):
@@ -542,11 +547,11 @@ def find_dci_ansible_dir(stage):
             envvars = {
                 "ANSIBLE_CALLBACK_PLUGINS": os.path.join(dci_ansible_dir, "callback"),
             }
-            if stage.get("ansible_envvars"):
-                if not isinstance(stage.get("ansible_envvars"), dict):
-                    log.error("The 'ansible_envvars' stage key is not a dict.")
+            if jobdef.get("ansible_envvars"):
+                if not isinstance(jobdef.get("ansible_envvars"), dict):
+                    log.error("The 'ansible_envvars' jobdef key is not a dict.")
                     sys.exit(1)
-                envvars.update(stage.get("ansible_envvars"))
+                envvars.update(jobdef.get("ansible_envvars"))
             return dci_ansible_dir, envvars
     else:
         log.warning(
@@ -556,7 +561,7 @@ def find_dci_ansible_dir(stage):
         return dci_ansible_dir, {}
 
 
-def upload_ansible_log(context, ansible_log_dir, stage):
+def upload_ansible_log(context, ansible_log_dir, jobdef):
     ansible_log = os.path.join(ansible_log_dir, "ansible.log")
     if os.path.exists(ansible_log):
         log.info("Uploading ansible.log from %s" % ansible_log)
@@ -564,36 +569,36 @@ def upload_ansible_log(context, ansible_log_dir, stage):
             context,
             "ansible.log",
             file_path=ansible_log,
-            job_id=stage["job_info"]["job"]["id"],
+            job_id=jobdef["job_info"]["job"]["id"],
         )
     else:
         log.error("ansible.log not found in %s" % ansible_log)
 
 
-def update_job_info(context, stage):
-    resp = dci_job.get(context, stage["job_info"]["job"]["id"])
+def update_job_info(context, jobdef):
+    resp = dci_job.get(context, jobdef["job_info"]["job"]["id"])
     if resp.status_code != 200:
         log.error("Unable to get job info: %s" % resp.text())
     else:
-        stage["job_info"].update(resp.json())
+        jobdef["job_info"].update(resp.json())
 
 
-def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
-    stage = dict(stage)
-    stage_metas, stage = pre_process_stage(stage)
-    job_info = stage["job_info"]
+def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
+    jobdef = dict(jobdef)
+    jobdef_metas, jobdef = pre_process_jobdef(jobdef)
+    job_info = jobdef["job_info"]
     private_data_dir = job_info["data_dir"]
-    inventory = stage_check_path(stage, "ansible_inventory", data_dir)
-    dci_ansible_dir, envvars = find_dci_ansible_dir(stage)
-    ansible_cfg = stage_check_path(stage, "ansible_cfg", data_dir)
+    inventory = jobdef_check_path(jobdef, "ansible_inventory", data_dir)
+    dci_ansible_dir, envvars = find_dci_ansible_dir(jobdef)
+    ansible_cfg = jobdef_check_path(jobdef, "ansible_cfg", data_dir)
     if ansible_cfg:
         shutil.copy(ansible_cfg, os.path.join(private_data_dir, "ansible.cfg"))
     else:
         generate_ansible_cfg(dci_ansible_dir, private_data_dir)
     log.info(
-        "running stage: %s%s private_data_dir=%s env=%s"
+        "running jobdef: %s%s private_data_dir=%s env=%s"
         % (
-            stage["name"],
+            jobdef["name"],
             " with inventory %s" % inventory if inventory else "",
             private_data_dir,
             envvars,
@@ -602,28 +607,28 @@ def run_stage(context, stage, dci_credentials, data_dir, cancel_cb):
     envvars.update(dci_credentials)
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
-        playbook=os.path.join(data_dir, stage["ansible_playbook"]),
+        playbook=os.path.join(data_dir, jobdef["ansible_playbook"]),
         verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         # Variables are passed on the cmdline to allow vault encrypted
         # vars to work
-        cmdline=build_cmdline(stage),
+        cmdline=build_cmdline(jobdef),
         extravars={"job_info": job_info},
         inventory=inventory,
         quiet=False,
         cancel_callback=cancel_cb,
     )
-    stage["job_info"]["stats"] = run.stats
-    stage["job_info"]["rc"] = run.rc
+    jobdef["job_info"]["stats"] = run.stats
+    jobdef["job_info"]["rc"] = run.rc
     log.info("stats=%s" % run.stats)
-    upload_ansible_log(context, private_data_dir, stage)
-    post_process_stage(context, stage, stage_metas)
-    update_job_info(context, stage)
+    upload_ansible_log(context, private_data_dir, jobdef)
+    post_process_jobdef(context, jobdef, jobdef_metas)
+    update_job_info(context, jobdef)
     return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
 def usage(ret, cmd):
-    print("Usage: %s [<stage name>:<key>=<value>...] [<pipeline file>]" % cmd)
+    print("Usage: %s [<jobdef name>:<key>=<value>...] [<pipeline file>]" % cmd)
     sys.exit(ret)
 
 
@@ -631,7 +636,7 @@ def process_args(args):
     """process command line arguments
 
     return file names and overload parameters as a dict
-    from <stage name>:<key>=<value> arguments"""
+    from <jobdef name>:<key>=<value> arguments"""
     cmd = args[0]
     args = args[1:]
     ret = []
@@ -648,7 +653,7 @@ def process_args(args):
         if ":" not in arg:
             ret.append(arg)
             continue
-        # Allow these syntaxes to overload stage settings:
+        # Allow these syntaxes to overload jobdef settings:
         # <name>:<key>=<value> value can be a list separated by ','
         # <name>:<key>=<subkey>:<value> to return a dict
         try:
@@ -744,9 +749,9 @@ def get_config(args):
     pipeline = []
     for config in args:
         config_dir = os.path.abspath(os.path.dirname(config))
-        stages = load_stage_file(config, config_dir)
-        pipeline += stages
-    # When 2 consecutive stages have the same name, do a
+        jobdefs = load_jobdef_file(config, config_dir)
+        pipeline += jobdefs
+    # When 2 consecutive jobdefs have the same name, do a
     # special merge
     for idx in range(len(pipeline) - 1, 0, -1):
         if pipeline[idx - 1]["name"] == pipeline[idx]["name"]:
@@ -770,29 +775,29 @@ def get_config(args):
     # Process global options from @pipeline
     for overload in lst:
         for name in overload:
-            stage = get_stages(name, pipeline)
-            if not stage:
-                log.error("No such stage %s" % name)
+            jobdef = get_jobdefs(name, pipeline)
+            if not jobdef:
+                log.error("No such jobdef %s" % name)
                 sys.exit(3)
-            overload_dicts(overload[name], stage[0])
+            overload_dicts(overload[name], jobdef[0])
     return config_dir, pipeline, opts
 
 
-def set_success_tag(stage, job_info, context):
-    if "success_tag" in stage:
+def set_success_tag(jobdef, job_info, context):
+    if "success_tag" in jobdef:
         for component in job_info["job"]["components"]:
-            add_tag_to_component(component["id"], stage["success_tag"], context)
+            add_tag_to_component(component["id"], jobdef["success_tag"], context)
 
 
-def lookup_stage_by_outputs(key, stages):
-    for stage in stages:
-        if "outputs" in stage and "job_info" in stage and key in stage["outputs"]:
-            return stage
+def lookup_jobdef_by_outputs(key, jobdefs):
+    for jobdef in jobdefs:
+        if "outputs" in jobdef and "job_info" in jobdef and key in jobdef["outputs"]:
+            return jobdef
     return None
 
 
-def create_inputs(config_dir, prev_stages, stage, job_info):
-    if "inputs" not in stage:
+def create_inputs(config_dir, prev_jobdefs, jobdef, job_info):
+    if "inputs" not in jobdef:
         return
 
     top_dir = "%s/inputs" % job_info["data_dir"]
@@ -802,56 +807,58 @@ def create_inputs(config_dir, prev_stages, stage, job_info):
         pass
 
     job_info["inputs"] = {}
-    for key in stage["inputs"]:
-        prev_stage = lookup_stage_by_outputs(key, prev_stages)
-        if prev_stage:
-            prev_stage_outputs_key = prev_stage["job_info"]["outputs"][key]
-            stage_inputs_key = "%s/%s" % (
+    for key in jobdef["inputs"]:
+        prev_jobdef = lookup_jobdef_by_outputs(key, prev_jobdefs)
+        if prev_jobdef:
+            prev_jobdef_outputs_key = prev_jobdef["job_info"]["outputs"][key]
+            jobdef_inputs_key = "%s/%s" % (
                 top_dir,
-                os.path.basename(prev_stage_outputs_key),
+                os.path.basename(prev_jobdef_outputs_key),
             )
-            log.info("Copying %s into %s" % (prev_stage_outputs_key, stage_inputs_key))
-            with open(stage_inputs_key, "wb") as ofile:
-                with open(prev_stage_outputs_key, "rb") as ifile:
+            log.info(
+                "Copying %s into %s" % (prev_jobdef_outputs_key, jobdef_inputs_key)
+            )
+            with open(jobdef_inputs_key, "wb") as ofile:
+                with open(prev_jobdef_outputs_key, "rb") as ifile:
                     ofile.write(ifile.read())
-            if "ansible_extravars" not in stage:
-                stage["ansible_extravars"] = {}
+            if "ansible_extravars" not in jobdef:
+                jobdef["ansible_extravars"] = {}
             log.debug(
                 "setting ansible var %s to %s"
-                % (stage["inputs"][key], stage_inputs_key)
+                % (jobdef["inputs"][key], jobdef_inputs_key)
             )
-            stage["ansible_extravars"][stage["inputs"][key]] = stage_inputs_key
+            jobdef["ansible_extravars"][jobdef["inputs"][key]] = jobdef_inputs_key
         else:
             log.error(
-                "Unable to find outputs for key %s in stages %s"
-                % (key, ", ".join([s["name"] for s in prev_stages]))
+                "Unable to find outputs for key %s in jobdefs %s"
+                % (key, ", ".join([s["name"] for s in prev_jobdefs]))
             )
 
 
-def add_outputs_paths(job_info, stage):
+def add_outputs_paths(job_info, jobdef):
 
-    if "outputs" not in stage:
+    if "outputs" not in jobdef:
         return
 
     outputs_job_directory_prefix = "%s/outputs" % job_info["data_dir"]
     os.makedirs(outputs_job_directory_prefix)
     outputs_keys_paths = {}
-    for key in stage["outputs"]:
+    for key in jobdef["outputs"]:
         outputs_keys_paths[key] = "%s/%s" % (
             outputs_job_directory_prefix,
-            stage["outputs"][key],
+            jobdef["outputs"][key],
         )
     job_info["outputs"] = outputs_keys_paths
 
 
-def compute_tags(stage, prev_stages):
-    tags = ["job:" + stage["name"], "job-type:" + stage["type"]]
+def compute_tags(jobdef, prev_jobdefs):
+    tags = ["job:" + jobdef["name"], "job-type:" + get_jobdef_name(jobdef)]
 
     if "DCI_QUEUE_JOBID" in os.environ:
         tags.append("pipeline-id:%s" % os.environ["DCI_QUEUE_JOBID"])
 
-    if "ansible_inventory" in stage:
-        tags.append("inventory:" + os.path.basename(stage["ansible_inventory"]))
+    if "ansible_inventory" in jobdef:
+        tags.append("inventory:" + os.path.basename(jobdef["ansible_inventory"]))
 
     return tags
 
@@ -877,8 +884,8 @@ def set_job_to_final_state(context, job_id, killed_func):
             dci_jobstate.create(context, "error", job_id=job_id, comment="error")
 
 
-def run_stages(
-    stage_type,
+def run_jobdefs(
+    jobdef_type,
     pipeline,
     config_dir,
     previous_job_id,
@@ -886,16 +893,16 @@ def run_stages(
     cancel_cb,
     options,
 ):
-    stages = get_stages(stage_type, pipeline)
+    jobdefs = get_jobdefs(jobdef_type, pipeline)
     errors = 0
-    for stage in stages:
-        dci_credentials = load_credentials(stage, config_dir)
+    for jobdef in jobdefs:
+        dci_credentials = load_credentials(jobdef, config_dir)
         dci_remoteci_context = build_remoteci_context(dci_credentials)
 
         dci_pipeline_user_context = None
-        if "pipeline_user" in stage:
+        if "pipeline_user" in jobdef:
             dci_pipeline_user_credentials = load_pipeline_user_credentials(
-                stage["pipeline_user"]
+                jobdef["pipeline_user"]
             )
             dci_pipeline_user_context = build_pipeline_user_context(
                 dci_pipeline_user_credentials
@@ -913,94 +920,96 @@ def run_stages(
                 options["pipeline_id"] = res.json()["pipeline"]["id"]
 
         if (
-            "use_previous_topic" in stage
-            and stage["use_previous_topic"] is True
+            "use_previous_topic" in jobdef
+            and jobdef["use_previous_topic"] is True
             and previous_topic is not None
         ):
             log.info(
                 "Setting topic to %s for %s from previous topic"
-                % (previous_topic, stage["name"])
+                % (previous_topic, jobdef["name"])
             )
-            stage["topic"] = previous_topic
+            jobdef["topic"] = previous_topic
 
-        stage["job_info"] = schedule_job(
-            stage,
+        jobdef["job_info"] = schedule_job(
+            jobdef,
             dci_remoteci_context,
             dci_pipeline_user_context,
             previous_job_id=previous_job_id,
             pipeline_id=options["pipeline_id"],
         )
 
-        if not stage["job_info"]:
-            log.error("Unable to schedule job %s. Skipping" % stage["name"])
+        if not jobdef["job_info"]:
+            log.error("Unable to schedule job %s. Skipping" % jobdef["name"])
             errors += 1
             continue
 
-        _job_id = stage["job_info"]["job"]["id"]
-        prev_stages = get_prev_stages(stage, pipeline)
-        create_inputs(config_dir, prev_stages, stage, stage["job_info"])
-        add_outputs_paths(stage["job_info"], stage)
+        _job_id = jobdef["job_info"]["job"]["id"]
+        prev_jobdefs = get_prev_jobdefs(jobdef, pipeline)
+        create_inputs(config_dir, prev_jobdefs, jobdef, jobdef["job_info"])
+        add_outputs_paths(jobdef["job_info"], jobdef)
 
-        tags = compute_tags(stage, prev_stages)
+        tags = compute_tags(jobdef, prev_jobdefs)
         add_tags_to_job(_job_id, tags, dci_remoteci_context)
 
-        if run_stage(
-            dci_remoteci_context, stage, dci_credentials, config_dir, cancel_cb
+        if run_jobdef(
+            dci_remoteci_context, jobdef, dci_credentials, config_dir, cancel_cb
         ):
-            set_success_tag(stage, stage["job_info"], dci_remoteci_context)
+            set_success_tag(jobdef, jobdef["job_info"], dci_remoteci_context)
         else:
             log.error(
                 "Unable to run successfully job %s (%s)"
-                % (stage["name"], stage["job_info"]["job"]["id"])
+                % (jobdef["name"], jobdef["job_info"]["job"]["id"])
             )
             if (
-                "fallback_last_success" in stage
-                and not is_stage_with_fixed_components(stage)
+                "fallback_last_success" in jobdef
+                and not is_jobdef_with_fixed_components(jobdef)
                 and not cancel_cb()
             ):
-                log.info("Retrying with tag %s" % stage["fallback_last_success"])
-                stage["failed_job_info"] = stage["job_info"]
-                stage["job_info"] = schedule_job(
-                    stage,
+                log.info("Retrying with tag %s" % jobdef["fallback_last_success"])
+                jobdef["failed_job_info"] = jobdef["job_info"]
+                jobdef["job_info"] = schedule_job(
+                    jobdef,
                     dci_remoteci_context,
                     dci_pipeline_user_context,
-                    stage["fallback_last_success"],
-                    stage["job_info"]["job"]["components"],
+                    jobdef["fallback_last_success"],
+                    jobdef["job_info"]["job"]["components"],
                     previous_job_id=previous_job_id,
                     pipeline_id=options["pipeline_id"],
                 )
 
-                if not stage["job_info"]:
+                if not jobdef["job_info"]:
                     log.error(
                         "Unable to schedule job %s on tag %s."
-                        % (stage["name"], stage["fallback_last_success"])
+                        % (jobdef["name"], jobdef["fallback_last_success"])
                     )
                     errors += 1
                 else:
-                    _job_id_2 = stage["job_info"]["job"]["id"]
+                    _job_id_2 = jobdef["job_info"]["job"]["id"]
                     tags.append("fallback")
                     add_tags_to_job(_job_id_2, tags, dci_remoteci_context)
-                    create_inputs(config_dir, prev_stages, stage, stage["job_info"])
-                    add_outputs_paths(stage["job_info"], stage)
-                    if run_stage(
+                    create_inputs(config_dir, prev_jobdefs, jobdef, jobdef["job_info"])
+                    add_outputs_paths(jobdef["job_info"], jobdef)
+                    if run_jobdef(
                         dci_remoteci_context,
-                        stage,
+                        jobdef,
                         dci_credentials,
                         config_dir,
                         cancel_cb,
                     ):
-                        set_success_tag(stage, stage["job_info"], dci_remoteci_context)
+                        set_success_tag(
+                            jobdef, jobdef["job_info"], dci_remoteci_context
+                        )
                     else:
                         log.error(
                             "Unable to run successfully job %s on tag %s"
-                            % (stage["name"], stage["fallback_last_success"])
+                            % (jobdef["name"], jobdef["fallback_last_success"])
                         )
                         errors += 1
                     set_job_to_final_state(dci_remoteci_context, _job_id_2, cancel_cb)
             else:
                 errors += 1
         set_job_to_final_state(dci_remoteci_context, _job_id, cancel_cb)
-    return errors, stages
+    return errors, jobdefs
 
 
 PIPELINE = []
@@ -1015,9 +1024,9 @@ def main(args=sys.argv):
 
     previous_job_id = None
     previous_topic = None
-    for stage_type in get_types_of_stage(pipeline):
-        job_in_errors, stages = run_stages(
-            stage_type,
+    for jobdef_type in get_names_of_jobdefs(pipeline):
+        job_in_errors, jobdefs = run_jobdefs(
+            jobdef_type,
             pipeline,
             config_dir,
             previous_job_id,
@@ -1027,40 +1036,42 @@ def main(args=sys.argv):
         )
         if job_in_errors != 0:
             log.error(
-                "%d job%s in error at stage %s"
-                % (job_in_errors, "s" if job_in_errors > 1 else "", stage_type)
+                "%d job%s in error at jobdef %s"
+                % (job_in_errors, "s" if job_in_errors > 1 else "", jobdef_type)
             )
             if signal_handler.called():
                 return 128 + signal_handler.signum
             else:
-                for stage in stages:
-                    if "job_info" in stage and stage["job_info"] is not None:
-                        job_info = stage["job_info"]
+                for jobdef in jobdefs:
+                    if "job_info" in jobdef and jobdef["job_info"] is not None:
+                        job_info = jobdef["job_info"]
                     elif (
-                        "failed_job_info" in stage
-                        and stage["failed_job_info"] is not None
+                        "failed_job_info" in jobdef
+                        and jobdef["failed_job_info"] is not None
                     ):
-                        job_info = stage["failed_job_info"]
+                        job_info = jobdef["failed_job_info"]
                     else:
                         job_info = None
-                        log.error("No job_info found for stage %s" % stage["name"])
+                        log.error("No job_info found for jobdef %s" % jobdef["name"])
                     if job_info and "jobstates" in job_info["job"]:
                         job_states = sorted(
                             job_info["job"]["jobstates"],
                             key=lambda x: x["created_at"],
                         )
                         log.info(
-                            "Stage %s status=%s"
-                            % (stage["name"], job_states[-1]["status"])
+                            "Jobdef %s status=%s"
+                            % (jobdef["name"], job_states[-1]["status"])
                         )
                         if job_states[-1]["status"] == "error":
                             return 2
                     else:
-                        log.error("No job.jobstate found for stage %s" % stage["name"])
+                        log.error(
+                            "No job.jobstate found for jobdef %s" % jobdef["name"]
+                        )
                 return 1
-        if len(stages) > 0:
-            previous_job_id = stages[0]["job_info"]["job"]["id"]
-            previous_topic = stages[0]["job_info"]["job"]["topic"]["name"]
+        if len(jobdefs) > 0:
+            previous_job_id = jobdefs[0]["job_info"]["job"]["id"]
+            previous_topic = jobdefs[0]["job_info"]["job"]["topic"]["name"]
     log.info("Successful end of pipeline")
     return 0
 

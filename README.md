@@ -20,9 +20,9 @@ EOF
 ## dci-pipeline command
 
 The `dci-pipeline` command allows to execute multiple DCI jobs using
-different credentials. Jobs are grouped by type. Each group must
-complete successfully before the next group is started. The jobs with
-their types are described in YAML files that are passed to the
+different credentials. Jobs are grouped by stage. Each stage must
+complete successfully before the next stage is started. The jobs with
+their stages are described in YAML files that are passed to the
 `dci-pipeline` command line. For example:
 
 ```ShellSession
@@ -36,7 +36,7 @@ Here is a pipeline example:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
@@ -54,7 +54,7 @@ Example:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
@@ -110,7 +110,7 @@ For example, a first job will export a `kubeconfig` file:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
@@ -144,12 +144,12 @@ For example, a first job will export a `kubeconfig` file:
 Then to get the file of the `kubecfg` field from a previous job copied
 into the job workspace and its path stored into the `kubeconfig_path`
 variable, you have to define an `inputs` field and a `prev_stages`
-field to specify the types or names of the previous jobs to lookup for
+field to specify the stages or names of the previous jobs to lookup for
 a corresponding `outputs` like this:
 
 ```YAML
 - name: example-cnf
-  type: cnf
+  stage: cnf
   prev_stages: [ocp]
   ansible_playbook: /usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml
   dci_credentials: /etc/dci-openshift-app-agent/dci_credentials.yml
@@ -182,7 +182,7 @@ an example on how to use it:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
@@ -200,7 +200,7 @@ continue testing the next layers in the pipeline. Example:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
     ansible_inventory: /etc/dci-pipeline/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
@@ -217,7 +217,7 @@ If you want to pass environment variables to the agent. Example:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
     ansible_inventory: agents/openshift-vanilla/inventory
     ansible_extravars:
@@ -240,7 +240,7 @@ by an actual path of a temporary directory. Example:
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
     ansible_inventory: agents/openshift-vanilla/inventory
     ansible_extravars:
@@ -257,8 +257,8 @@ by an actual path of a temporary directory. Example:
     fallback_last_success: ocp-vanilla-4.5-ok
 ```
 
-This will create a new temporary directory before running the stage, at the end of
-the stage the directory is removed.
+This will create a new temporary directory before running the job, at the end of
+the job the directory is removed.
 
 ### Special environment variables
 
@@ -281,7 +281,7 @@ You can specify extra Ansible variable files using the
 
 ```YAML
   - name: openshift-vanilla
-    type: ocp
+    stage: ocp
     ansible_playbook: agents/openshift-vanilla/agent.yml
     ansible_inventory: agents/openshift-vanilla/inventory
     ansible_extravars_files:
@@ -300,7 +300,7 @@ configuration of the job. Example:
 
 ```YAML
   - name: workload
-    type: app
+    stage: app
     ansible_playbook: agents/openshift-vanilla/app.yml
     ansible_inventory: agents/openshift-vanilla/inventory
     dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
