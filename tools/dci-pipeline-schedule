@@ -75,7 +75,13 @@ for arg in "$@"; do
                 INV=$("$BASEDIR"/yaml2json "$pipeline" | \
                     jq -r ".[]|select(.name==\"$name\")|.ansible_inventory" | \
                     sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/${RES}/")
-                CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
+                # for a pipeline definition split in multiple files
+                # there could be no inventory in the current file
+                if [ "$INV" != null ]; then
+                    CMD="$CMD $name:ansible_inventory=${INV} $name:configuration=$DCI_QUEUE $pipeline"
+                else
+                    CMD="$CMD $name:configuration=$DCI_QUEUE $pipeline"
+                fi
             done
             ;;
     esac
