@@ -18,6 +18,6 @@ cmd=$(basename "$0" -podman)
 
 env="$(env|grep DCI)"
 
-podman run --userns=keep-id --network=host quay.io/distributedci/dci-pipeline:"${DCI_PIPELINE_TAG:=latest}" env $env "$cmd" "$@"
+podman run --userns=keep-id --network=host "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" env $env "$cmd" "$@"
 
 # dcictl-podman ends here

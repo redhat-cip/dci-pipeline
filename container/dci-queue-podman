@@ -16,6 +16,12 @@
 
 set -x
 
-podman run --rm --userns=keep-id --network=host --workdir=/tmp --mount=type=bind,src=$HOME,dst=$HOME,ro=false quay.io/distributedci/dci-pipeline:"${DCI_PIPELINE_TAG:=latest}" dci-queue "$@"
+mounts=''
+for userfile in $(ls -A $HOME); do
+  echo $userfile | grep -Eq '.cache|.local' && continue
+  mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw,Z"
+done
+
+podman run --rm --userns=keep-id --network=host --workdir=/tmp $mounts "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" dci-queue --podman "$@"
 
 # dci-pipeline-podman ends here

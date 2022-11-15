@@ -111,13 +111,19 @@ extract_dirs() {
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -r "$TOPDIR"/common ]; then
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. $BASEDIR/common
+. "$BASEDIR/common$SUFFIX"
 
 PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
 
@@ -282,32 +288,37 @@ for conf in $(ls -d *config 2> /dev/null); do
     sed -i -e "s@\(:\{0,1\}\)[^:]*$conf/@\1$PWD/$conf/@g" ansible.cfg
 done
 
-if [ -d dci-ansible ]; then
-    sed -i -e "s@/usr/share/dci/\(modules\|module_utils\|action_plugins\|filter_plugins\)@$PWD/dci-ansible/\1@g" ansible.cfg
-    export DCI_ANSIBLE_DIR=$PWD/dci-ansible
+# only do these steps in non podman mode
+if [ -z "$SUFFIX" ]; then
+    if [ -d dci-ansible ]; then
+        sed -i -e "s@/usr/share/dci/\(modules\|module_utils\|action_plugins\|filter_plugins\)@$PWD/dci-ansible/\1@g" ansible.cfg
+        export DCI_ANSIBLE_DIR=$PWD/dci-ansible
+    fi
+
+    for d in $(ls -d ansible-role-dci-* 2> /dev/null); do
+        if [ -r $d/tasks/main.yml ]; then
+            sed -i -e "s@\(roles_path\s*=\s*\)@\1${PWD}:@" ansible.cfg
+            break
+        fi
+    done
+
+    ANSIBLE_COLLECTIONS_PATHS=
+    for d in $(ls -d ansible-collection-* 2> /dev/null); do
+        mkdir -p collections
+        LOCAL_COLLECTIONS=$PWD/collections
+        export ANSIBLE_COLLECTIONS_PATHS=$LOCAL_COLLECTIONS:/usr/share/ansible/collections
+        cd $d
+        rm -f *.tar.gz
+        ansible-galaxy collection build
+        ansible-galaxy collection install *.tar.gz -p $LOCAL_COLLECTIONS
+        cd -
+    done
 fi
 
-for d in $(ls -d ansible-role-dci-* 2> /dev/null); do
-    if [ -r $d/tasks/main.yml ]; then
-        sed -i -e "s@\(roles_path\s*=\s*\)@\1${PWD}:@" ansible.cfg
-        break
-    fi
-done
-
-ANSIBLE_COLLECTIONS_PATHS=
-for d in $(ls -d ansible-collection-* 2> /dev/null); do
-    mkdir -p collections
-    LOCAL_COLLECTIONS=$PWD/collections
-    export ANSIBLE_COLLECTIONS_PATHS=$LOCAL_COLLECTIONS:/usr/share/ansible/collections
-    cd $d
-    rm -f *.tar.gz
-    ansible-galaxy collection build
-    ansible-galaxy collection install *.tar.gz -p $LOCAL_COLLECTIONS
-    cd -
-done
-
 if [ -d dci-openshift-agent ]; then
-    sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-agent/plays/@" $PWD/dci-openshift-agent/dci-openshift-agent.yml
+    if [ -z "$SUFFIX" ]; then
+        sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-agent/plays/@" $PWD/dci-openshift-agent/dci-openshift-agent.yml
+    fi
     for pipeline in $OCP_PIPELINES; do
         sed -i -e "s@ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml@ansible_playbook: $PWD/dci-openshift-agent/dci-openshift-agent.yml@" $pipeline
     done
@@ -323,7 +334,9 @@ fi
 
 # configure the ocp playbook to run from the change
 if [ -d dci-openshift-app-agent ]; then
-    sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-app-agent/plays/@" dci-openshift-app-agent/dci-openshift-app-agent.yml
+    if [ -z "$SUFFIX" ]; then
+        sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-app-agent/plays/@" dci-openshift-app-agent/dci-openshift-app-agent.yml
+    fi
     [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" fake-cnf-pipeline.yml
     [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
@@ -332,8 +345,8 @@ if [ -d dci-openshift-app-agent ]; then
     for NAME in $CNF_NAMES; do
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
-elif [ -d example-cnf-config/testpmd ]; then
-    sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" $PWD/example-cnf-pipeline.yml
+elif [ -d example-cnf-config/testpmd ] && [ -r example-cnf-pipeline.yml ]; then
+    sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-pipeline.yml
 else
     # use the default from the pipeline
     OCP_APP_OPT=
@@ -382,16 +395,22 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
 done
 
-# activate the virtualenv created by the check command if present
-if [ -d $PWD/.venv/bin ]; then
-    . $PWD/.venv/bin/activate
+if [ -z "$SUFFIX" ]; then
+    # activate the virtualenv created by the check command if present
+    if [ -d "$PWD/.venv/bin" ]; then
+        . "$PWD/.venv/bin/activate"
+    fi
+
+    if [ -d python-dciclient ]; then
+        export DCI_VAULT_CLIENT=$PWD/.venv/bin/dci-vault-client
+    fi
+else
+    if [ -d dci-pipeline ]; then
+        export PATH=$PWD/dci-pipeline/tools:$PWD/dci-pipeline/container:$PATH
+    fi
 fi
 
-if [ -d python-dciclient ]; then
-    export DCI_VAULT_CLIENT=$PWD/.venv/bin/dci-vault-client
-fi
-
-dci-pipeline "${ARGS[@]}" $OPTVERS $ALL_TAGS $OCP_APP_OPT $ALL_PIPELINES >& output &
+"dci-pipeline$SUFFIX" "${ARGS[@]}" $OPTVERS $ALL_TAGS $OCP_APP_OPT $ALL_PIPELINES >& output &
 
 PID=$!
 

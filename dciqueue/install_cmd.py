@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
+# Copyright (C) 2021-2022 Red Hat, Inc.
 #
 # Author: Frederic Lepied <flepied@redhat.com>
 #
@@ -21,7 +21,7 @@
 import logging
 import os
 
-from dciqueue import lib
+from dciqueue import add_crontab_cmd, lib
 
 log = logging.getLogger(__name__)
 
@@ -38,9 +38,12 @@ def execute_command(args):
     if not lib.check_pool(args):
         return 1
 
-    cmd = "env EDITOR='dci-queue add-crontab %s' crontab -e" % args.pool
-    log.info("Editing crontab with: '%s'" % cmd)
-    os.system(cmd)
+    if args.podman:
+        add_crontab_cmd.execute_command(args)
+    else:
+        cmd = "env EDITOR='dci-queue add-crontab %s' crontab -e" % args.pool
+        log.info("Editing crontab with: '%s'" % cmd)
+        os.system(cmd)
 
     return 0
 

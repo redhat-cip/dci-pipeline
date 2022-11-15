@@ -5,3 +5,4 @@ dciclient
 junit-xml
 jmespath
 selinux
+psutil

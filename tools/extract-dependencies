@@ -20,13 +20,19 @@ GIT_CLONE_OPTIONS="--filter=tree:0"
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -r "$TOPDIR"/common ]; then
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. $BASEDIR/common
+. "$BASEDIR/common$SUFFIX"
 
 export GIT_COMMITTER_NAME="Extractor"
 export GIT_COMMITTER_EMAIL="noaddress@nowhere.com"
@@ -36,12 +42,12 @@ test -n "$TARGET" -a -d "$TARGET" && cd "$TARGET"
 
 # git log -1 | while read line; do
 while read line; do
-  if ! egrep -iq '^\s*(build-depends|depends-on):' <<< $line; then
+  if ! grep -Eiq '^\s*(build-depends|depends-on):' <<< $line; then
       continue
   fi
   echo "Processing line '$line'"
   # try to find a github pr first
-  if egrep -iq 'https://github.com/.*/pull' <<< $line; then
+  if grep -Eiq 'https://github.com/.*/pull' <<< $line; then
       pr=$(sed -e 's@.*/pull/'@@ <<< $line)
       proj=$(sed -e 's@\(build-Depends\|depends-on\):\s*https://github.com/\(.*\)/pull/.*@\2@i' <<< $line)
       dir=$(basename $proj)

@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.1.0
+Version:        0.2.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -17,6 +17,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 
 Requires:       jq
+Requires:       dci-queue = %{version}-%{release}
 
 %if 0%{?with_python2}
 BuildRequires:  python2-devel
@@ -52,8 +53,16 @@ CI pipeline management for DCI jobs
 %package podman
 Summary:        dci-pipeline podman flavour
 Requires:       podman
+Requires:       dci-queue = %{version}-%{release}
 
 %description podman
+CI pipeline management for DCI jobs (via podman)
+
+%package -n dci-queue
+Summary:        dci-pipeline podman flavour
+Requires:       podman
+
+%description -n dci-queue
 CI pipeline management for DCI jobs (via podman)
 
 %prep -a -v
@@ -83,10 +92,13 @@ install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
 install -d -m 755 %{buildroot}%{_datadir}/%{name}/
 for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
+    install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool-podman
 done
 install -m 644 tools/common %{buildroot}%{_datadir}/%{name}/common
 install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule
 install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
+install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule-podman
+install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check-podman
 install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
 install -d -m 700 %{buildroot}/var/lib/%{name}
 install -d -m 700 %{buildroot}/var/lib/dci-queue
@@ -102,7 +114,6 @@ EOF
 
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
-getent group dci-queue >/dev/null || groupadd -r dci-queue
 getent passwd %{name} >/dev/null || \
     useradd -m -g %{name} -d %{_sharedstatedir}/%{name} -s /bin/bash \
             -c "%{summary}" %{name}
@@ -120,6 +131,10 @@ exit 0
 %systemd_postun %{name}.service
 %systemd_postun %{name}.timer
 
+%pre -n dci-queue
+getent group dci-queue >/dev/null || groupadd -r dci-queue
+exit 0
+
 %files
 %license LICENSE
 %doc README.md
@@ -132,12 +147,10 @@ exit 0
 %{_bindir}/dci-pipeline-schedule
 %{_bindir}/dci-pipeline-check
 %{_bindir}/dci-agent-ctl
-%{_bindir}/dci-queue
 %{_bindir}/dci-rebuild-pipeline
 %{_bindir}/dci-settings2pipeline
 %{_bindir}/dci-diff-pipeline
 %attr(770, %{name}, %{name}) /var/lib/%{name}
-%attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/pipeline.yml
 %config(noreplace) %{_sysconfdir}/bash_completion.d/dci-queue
@@ -154,8 +167,18 @@ exit 0
 
 %files podman
 %{_bindir}/*-podman
+%{_datadir}/%{name}/*-podman
+
+%files -n dci-queue
+%{_bindir}/dci-queue
+%attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Thu Nov 17 2022 Frederic Lepied <flepied@redhat.com> 0.2.0-1
+- add a dci-queue sub-package
+- add dci-pipeline-check-podman and dci-pipeline-schedule-podman to
+  the podman package
+
 * Thu Nov  3 2022 Frederic Lepied <flepied@redhat.com> 0.1.0-1
 - create the podman sub-package
 - add a dependency on python-libselinux

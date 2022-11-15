@@ -35,6 +35,7 @@
       tag: "distributedci/dci-pipeline"
       version: "gerrit-{{ zuul.change }}"
       push_stable_tag: false
+      rhel_subscribed: true
       ignore_registry_login_errors: false
       hide_registry_login_errors: true
     required-projects:

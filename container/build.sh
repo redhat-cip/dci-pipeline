@@ -51,8 +51,6 @@ for dir in dci-ansible \
     cd -
 done
 
-
-
 cp ../python-dciclient/dist/* dist/
 cp ../python-dciauth/dist/* dist/
 

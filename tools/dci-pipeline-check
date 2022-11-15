@@ -18,13 +18,19 @@ set -e
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -r "$TOPDIR"/common ]; then
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. $BASEDIR/common
+. "$BASEDIR/common$SUFFIX"
 QUEUE="$DEFAULT_QUEUE"
 
 if [ $# = 0 -o "$1" = -h ]; then
@@ -46,6 +52,7 @@ EOF
 fi
 
 LAUNCHER=
+DCI_PIPELINE_TAG=
 
 set -x
 
@@ -53,42 +60,42 @@ ARGS=("$@")
 
 # -F: run using loop_until_failure
 if [ "$1" = "-F" ]; then
-    LAUNCHER="$BASEDIR/loop_until_failure"
+    LAUNCHER="$BASEDIR/loop_until_failure$SUFFIX"
     shift
 fi
 
 # -S: run using loop_until_success
 if [ "$1" = "-S" ]; then
-    LAUNCHER="$BASEDIR/loop_until_success"
+    LAUNCHER="$BASEDIR/loop_until_success$SUFFIX"
     shift
 fi
 
 # -Fr: run using loop_until_failure -r
 if [ "$1" = "-Fr" ]; then
-    LAUNCHER="$BASEDIR/loop_until_failure -r"
+    LAUNCHER="$BASEDIR/loop_until_failure$SUFFIX -r"
     shift
 fi
 
 # -Sr: run using loop_until_success -r
 if [ "$1" = "-Sr" ]; then
-    LAUNCHER="$BASEDIR/loop_until_success -r"
+    LAUNCHER="$BASEDIR/loop_until_success$SUFFIX -r"
     shift
 fi
 
-# force a suffix to be added on -f
+# force a job suffix to be added on -f
 if [ "$1" = "-f" ]; then
     shift
     # manage recursive call (bootstrap): extract the directory name
     # from the path of the command
     if grep -Fq '.bootstrap' <<< $TOPDIR; then
-        SUFFIX=
+        JOBSUFFIX=
         DIR=$(dirname $(dirname $TOPDIR))
         DIR=$(sed -e 's/\.bootstrap//' <<< $DIR)
     else
-        SUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')-$$
+        JOBSUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')-$$
     fi
 else
-    SUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')
+    JOBSUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')
     DIR=
 fi
 
@@ -131,32 +138,37 @@ case $CHANGEID in
             echo "Unable to extract PR from $CHANGEID" 1>&2
             exit 1
         fi
-        [ -n "$DIR" ] || DIR=$HOME/github/$PR$SUFFIX
+        [ -n "$DIR" ] || DIR=$HOME/github/$PR$JOBSUFFIX
         TYPE=github
         ;;
     *)
-        [ -n "$DIR" ] || DIR=$HOME/gerrit/$CHANGEID$SUFFIX
+        [ -n "$DIR" ] || DIR=$HOME/gerrit/$CHANGEID$JOBSUFFIX
         TYPE=gerrit
+        # In podman mode, export the tag pointing to the image that
+        # was built by the zuul pipeline.
+        if [ -n "$SUFFIX" ]; then
+            export DCI_PIPELINE_TAG="gerrit-$CHANGEID"
+        fi
         ;;
 esac
 
-if [ -d $DIR ]; then
+if [ -d "$DIR" ]; then
     jobid="$(dci-queue searchdir $QUEUE $DIR)"
     if [ -z "$jobid" ]; then
-        $BASEDIR/send-feedback $DIR "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
+        "$BASEDIR/send-feedback$SUFFIX" $DIR "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
         exit 1
     fi
-    dci-queue unschedule $QUEUE $jobid
-    if [ -d $DIR ]; then
-        find $DIR -type d -not -perm -u=w -exec chmod u+w {} \;
-        rm -rf $DIR
+    "dci-queue" unschedule "$QUEUE" "$jobid"
+    if [ -d "$DIR" ]; then
+        find "$DIR" -type d -not -perm -u=w -exec chmod u+w {} \;
+        rm -rf "$DIR"
     fi
 fi
 
-mkdir -p $DIR
-cd $DIR
+mkdir -p "$DIR"
+cd "$DIR" || exit 1
 
-echo "Depends-On: $CHANGEID" | $BASEDIR/extract-dependencies $DIR
+echo "Depends-On: $CHANGEID" | "$BASEDIR/extract-dependencies$SUFFIX" "$DIR"
 
 # rerun check from the local repo
 if [ -d dci-pipeline ]; then
@@ -175,12 +187,22 @@ if [ "$TYPE" = "github" ]; then
 fi
 
 # we should have only one directory and one or zero json file
+MAINDIR="$(ls|grep -Fv .json)"
 (
   # extract depends-on from a pr body
   jq -r .body *.json || :
   # extract depends-on from the last commit message
-  cd $(ls|fgrep -v .json); git log -1
-) | tr -d '\r' | sort -u | $BASEDIR/extract-dependencies $DIR
+  cd "$MAINDIR"; git log -1
+) | tr -d '\r' | sort -u | "$BASEDIR/extract-dependencies$SUFFIX" $DIR
+
+# in podman mode for a main change from github, find the first gerrit
+# depends-on and use it as the tag for the container image.
+if [ -n "$SUFFIX" ] && [ "$TYPE" = github ]; then
+    GERRIT_CHANGE=$(jq -r .body github.json | tr -d '\r' | grep -Eiq '^\s*(build-depends|depends-on):' | head -1 | sed -e 's@\s*\(build-depends\|depends-on\):\s*\(.*\)\s*@\2@i')
+    if [ -n "$GERRIT_CHANGE" ]; then
+        export DCI_PIPELINE_TAG="gerrit-$GERRIT_CHANGE"
+    fi
+fi
 
 # take test-runner from the local dir
 if [ -d dci-pipeline ]; then
@@ -192,10 +214,10 @@ if [ -z "$KBCFG" ]; then
     # if the resource is set explicitly, do not launch through
     # dci-queue
     if [ -z "$DCI_QUEUE_RESOURCE" ]; then
-        PREFIX="dci-queue schedule $QUEUE"
+        PREFIX="dci-queue schedule $QUEUE env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
         RES="@RESOURCE"
     else
-        PREFIX=""
+        PREFIX="env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
         RES=""
     fi
 else
@@ -221,16 +243,16 @@ else
         esac
     done
     if [ -z "$first_pipeline" ]; then
-        "$BASEDIR"/send-feedback "$DIR" "ERROR unable to find a pipeline file" 1>&2
+        "$BASEDIR/send-feedback$SUFFIX" "$DIR" "ERROR unable to find a pipeline file" 1>&2
         rm -rf $DIR
         exit 1
     fi
-    PREFIX="env DCI_QUEUE=$QUEUE"
+    PREFIX="env DCI_QUEUE=$QUEUE DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
     # find the name of the resource from the oc command
     cluster_names=( $(oc --kubeconfig "$KBCFG" config view -o json | jq -r '.clusters[].name') )
     for cluster_name in "${cluster_names[@]}"; do
-        INV=$("$BASEDIR"/yaml2json "$first_pipeline" | jq -r '.[0].ansible_inventory' | \
-              sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/" -e "s@^~/@${HOME}/@")
+        INV=$("$BASEDIR/yaml2json$SUFFIX" "$first_pipeline" | jq -r '.[0].ansible_inventory' | \
+            sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/" -e "s@^~/@${HOME}/@")
         if [ -f "$INV" ]; then
             RES=${cluster_name}
             break
@@ -238,16 +260,16 @@ else
     done
 
     if [ -z "$RES" ]; then
-        $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) for queue $QUEUE" 1>&2
+        "$BASEDIR/send-feedback$SUFFIX" "$DIR" "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) for queue $QUEUE" 1>&2
         rm -rf $DIR
         exit 1
     fi
 fi
 
 if [ -n "$LAUNCHER" ]; then
-    CMD="$PREFIX $LAUNCHER $RES $BASEDIR/test-runner $DIR $KBCFG"
+    CMD="$PREFIX $LAUNCHER $RES $BASEDIR/test-runner$SUFFIX $DIR $KBCFG"
 else
-    CMD="$PREFIX $BASEDIR/test-runner $DIR $RES $KBCFG"
+    CMD="$PREFIX $BASEDIR/test-runner$SUFFIX $DIR $RES $KBCFG"
 fi
 
 # create a python virtualenv if there is any project with a
@@ -284,9 +306,9 @@ if [ -d "$DIR.bootstrap" ]; then
 fi
 
 if [ "$RES" = "@RESOURCE" ]; then
-    $BASEDIR/send-feedback $DIR "QUEUED" pending
+    "$BASEDIR/send-feedback$SUFFIX" "$DIR" "QUEUED" pending
     $CMD "${OPT[@]}"
-    dci-queue list "$QUEUE"
+    "dci-queue" list "$QUEUE"
 else
     exec $CMD "${OPT[@]}"
 fi
