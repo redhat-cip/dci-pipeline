@@ -33,60 +33,56 @@ fi
 for json in $(ls $DIR/*.json); do
     # gerrit
     if [ $(jq -r .url $json) = null ]; then
-        [ -n "$STARTING" ] && exit 0
+        if [ -n "$STARTING" ] || [ -z "$GERRIT_SSH_ID" ] || [ -z "$GERRIT_SSH_LOGIN" ]; then
+            continue
+        fi
         CHANGEID=$(jq -r ._number $json)
         CURREV=$(jq -r .current_revision $json)
         PATCHSET=$(jq -r ".revisions[\"$CURREV\"]._number" $json)
-        if [ -z "$GERRIT_SSH_ID" ]; then
-            continue
-        fi
         # Use json to allow message to be formatted
         echo '{"message": "'${BODY}'"}' |
           ssh \
           -i ~/.ssh/"$GERRIT_SSH_ID" \
           -p 29418 \
-          dci-ci-bot@softwarefactory-project.io \
-            gerrit review -j $CHANGEID,$PATCHSET
+          "${GERRIT_SSH_LOGIN}@softwarefactory-project.io" \
+            gerrit review -j "$CHANGEID,$PATCHSET"
     # github
     else
         if [ -z "$GITHUB_TOKEN" ]; then
             continue
         fi
         REPO_NAME=$(jq -r .head.repo.name $json)
-        case "$REPO_NAME" in
-            # voting on some GH projects
-            cnf-certification-test)
-                # doc in https://docs.github.com/en/rest/commits/statuses
-                STATUSES_URL=$(jq -r .statuses_url $json)
-                if [ -n "$STARTING" ]; then
-                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
-                else
-                    DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- *//' -e 's/ .*//')
-                    DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
-                    # when no DCI job is found
-                    if [ -z "$DCI_STATUS" ]; then
-                        DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE)")
-                    fi
-                    case "$DCI_STATUS" in
-                        SUCCESS*)
-                            GITHUB_STATUS=success;;
-                        FAILURE*)
-                            GITHUB_STATUS=failure;;
-                        ERROR*)
-                            GITHUB_STATUS=error;;
-                        *)
-                            GITHUB_STATUS=pending;;
-                    esac
-                    curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+        # voting on some GH projects
+        if [[ -n "$GITHUB_VOTING_REPOS" && "$REPO_NAME" =~ $GITHUB_VOTING_REPOS ]]; then
+            # doc in https://docs.github.com/en/rest/commits/statuses
+            STATUSES_URL=$(jq -r .statuses_url $json)
+            if [ -n "$STARTING" ]; then
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+            else
+                DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- *//' -e 's/ .*//')
+                DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
+                # when no DCI job is found
+                if [ -z "$DCI_STATUS" ]; then
+                    DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE)")
                 fi
-                ;;
-            # non voting, only commenting
-            *)
-                [ -n "$STARTING" ] && exit 0
-                COMMENTS_URL=$(jq -r .comments_url $json)
-                curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
-                ;;
-        esac
+                case "$DCI_STATUS" in
+                    SUCCESS*)
+                        GITHUB_STATUS=success;;
+                    FAILURE*)
+                        GITHUB_STATUS=failure;;
+                    ERROR*)
+                        GITHUB_STATUS=error;;
+                    *)
+                        GITHUB_STATUS=pending;;
+                esac
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+            fi
+        # non voting, only commenting
+        else
+            [ -n "$STARTING" ] && exit 0
+            COMMENTS_URL=$(jq -r .comments_url $json)
+            curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
+        fi
     fi
 done
 
