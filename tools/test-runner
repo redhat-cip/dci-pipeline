@@ -72,9 +72,10 @@ finish() {
             RESULT+="- ERROR no DCI job found"
         fi
 
-        # do not send feedback on a killed run
         if [ -z "$KILLED" ]; then
             $BASEDIR/send-feedback $DIR "$RESULT from $URL"
+        else
+            $BASEDIR/send-feedback $DIR "ERROR JOB KILLED"
         fi
     fi
 

@@ -63,7 +63,7 @@ for json in $(ls $DIR/*.json); do
                 DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
                 # when no DCI job is found
                 if [ -z "$DCI_STATUS" ]; then
-                    DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE)")
+                    DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE|KILLED)")
                 fi
                 case "$DCI_STATUS" in
                     SUCCESS*)
@@ -79,7 +79,9 @@ for json in $(ls $DIR/*.json); do
             fi
         # non voting, only commenting
         else
-            [ -n "$STARTING" ] && exit 0
+            if [ -n "$STARTING" ] || [[ "$BODY" =~ KILLED ]]; then
+                continue
+            fi
             COMMENTS_URL=$(jq -r .comments_url $json)
             curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
         fi
