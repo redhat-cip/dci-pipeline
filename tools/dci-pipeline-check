@@ -144,7 +144,7 @@ if [ -d $DIR ]; then
     jobid="$(dci-queue searchdir $QUEUE $DIR)"
     if [ -z "$jobid" ]; then
         $BASEDIR/send-feedback $DIR "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
-        exit
+        exit 1
     fi
     dci-queue unschedule $QUEUE $jobid
     if [ -d $DIR ]; then
@@ -199,6 +199,11 @@ if [ -z "$KBCFG" ]; then
         RES=""
     fi
 else
+    # use the pipelines from the change if present
+    PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
+    if [ -d "$PIPELINES_REPO" ]; then
+        PIPELINES_DIR="$PWD/$PIPELINES_REPO"
+    fi
     # lookup the first pipeline file
     first_pipeline=
     for arg in "$@"; do
@@ -217,6 +222,7 @@ else
     done
     if [ -z "$first_pipeline" ]; then
         "$BASEDIR"/send-feedback "$DIR" "ERROR unable to find a pipeline file" 1>&2
+        rm -rf $DIR
         exit 1
     fi
     PREFIX="env DCI_QUEUE=$QUEUE"
@@ -233,6 +239,7 @@ else
 
     if [ -z "$RES" ]; then
         $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: no matching cluster_name (${cluster_names[*]}) for queue $QUEUE" 1>&2
+        rm -rf $DIR
         exit 1
     fi
 fi

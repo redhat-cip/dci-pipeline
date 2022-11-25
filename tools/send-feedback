@@ -61,8 +61,12 @@ for json in $(ls $DIR/*.json); do
             else
                 DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- *//' -e 's/ .*//')
                 DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
+                # when no real url is found don't pass garbage to Github
+                if ! [[ "$DCI_URL" =~ ^http.* ]]; then
+                    DCI_URL=
+                fi
                 # when no DCI job is found
-                if [ -z "$DCI_STATUS" ]; then
+                if [ -z "$DCI_URL" ]; then
                     DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE|KILLED)")
                 fi
                 case "$DCI_STATUS" in
@@ -70,7 +74,7 @@ for json in $(ls $DIR/*.json); do
                         GITHUB_STATUS=success;;
                     FAILURE*)
                         GITHUB_STATUS=failure;;
-                    ERROR*)
+                    ERROR*|KILLED*)
                         GITHUB_STATUS=error;;
                     *)
                         GITHUB_STATUS=pending;;
