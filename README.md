@@ -534,10 +534,18 @@ You can unschedule the command `1` from the pool `8nodes`:
 $ dci-queue unschedule 8nodes 1
 ```
 
-Remove resource `cluster4` from the `8nodes` pool:
+Remove `cluster4` from available resources in the `8nodes` pool:
 
 ```ShellSession
 $ dci-queue remove-resource 8nodes cluster4 'reserved to debug blabla (fred)'
+```
+
+You can also force the removal of a resource with `dci-queue remove-resource -f`, so that the resource will no
+longer be available in the pool (you will need to reinclude it with `dci-queue add-resource` command). Example
+with `cluster6`:
+
+```ShellSession
+$ dci-queue remove-resource -f 8nodes cluster6 'whatever reason'
 ```
 
 Remove the `8nodes` pool:

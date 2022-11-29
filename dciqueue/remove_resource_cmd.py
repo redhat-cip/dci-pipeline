@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 
 from dciqueue import lib
 
@@ -32,6 +33,12 @@ COMMAND = "remove-resource"
 
 def register_command(subparsers):
     parser = subparsers.add_parser(COMMAND, help="Remove a resource from a pool")
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force the removal of the resource from the pool",
+    )
     parser.add_argument("pool", help="Name of the pool")
     parser.add_argument("name", help="Name of the resource")
     parser.add_argument("reason", help="Reason of the removal")
@@ -42,6 +49,15 @@ def execute_command(args):
     if not lib.check_pool(args):
         return 1
 
+    # if we are trying to remove a resource that does not exist, but not forcing the
+    # removal of the resource, then exit
+    path = os.path.join(args.top_dir, "pool", args.pool, args.name)
+    if not (os.path.exists(path) or args.force):
+        msg = "Trying to remove resource %s that does not exist." % (args.name,)
+        sys.stderr.write(msg)
+        return 1
+
+    # this step is common when forcing and not forcing the removal
     for key in ("available", "pool"):
         path = os.path.join(args.top_dir, key, args.pool, args.name)
         if os.path.exists(path) or os.path.islink(path):
@@ -58,7 +74,17 @@ def execute_command(args):
             raise
 
     path = os.path.join(args.top_dir, "reason", args.pool, args.name)
+    if args.force:
+        # files under available and pool directories have already been removed
+        # if present
+        # now, just check if the resource is already blocked, to remove it from
+        # the blocked resources (reason directory), then finish the execution
+        if os.path.exists(path):
+            os.unlink(path)
+        return 0
 
+    # if we're not forcing the removal of the resource, just move it to the
+    # removed resources including the reason of the removal if provided
     # Use tmux session name as a prefix if any
     prefix = ""
     if os.environ.get("TMUX"):

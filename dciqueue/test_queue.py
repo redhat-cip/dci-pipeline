@@ -141,6 +141,102 @@ class TestQueue(unittest.TestCase):
         )
         self.doesnt_exist("reason", "8nodes", "cluster4")
 
+    def test_force_remove_resource(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        with self.assertRaises(SystemExit):
+            main.main(["dci-queue", "remove-resource", "-f", "8nodes", "cluster4"])
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "-f",
+                    "8nodes",
+                    "cluster4",
+                    "not needed",
+                ]
+            ),
+            0,
+        )
+        for key in ("pool", "available", "reason"):
+            self.doesnt_exist(key, "8nodes", "cluster4")
+
+    def test_force_remove_blocked_resource(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "8nodes",
+                    "cluster4",
+                    "reserved to debug blabla (fred)",
+                ]
+            ),
+            0,
+        )
+        for key in ("pool", "available"):
+            self.doesnt_exist(key, "8nodes", "cluster4")
+        self.file_exists("reason", "8nodes", "cluster4")
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "-f",
+                    "8nodes",
+                    "cluster4",
+                    "not needed",
+                ]
+            ),
+            0,
+        )
+        for key in ("pool", "available", "reason"):
+            self.doesnt_exist(key, "8nodes", "cluster4")
+
+    def test_remove_nonexistent_resource(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "8nodes",
+                    "cluster_not_created",
+                    "does not matter this",
+                ]
+            ),
+            1,
+        )
+        for key in ("pool", "available", "reason"):
+            self.doesnt_exist(key, "8nodes", "cluster_not_created")
+
+    def test_force_remove_nonexistent_resource(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "remove-resource",
+                    "-f",
+                    "8nodes",
+                    "cluster_not_created",
+                    "does not matter this",
+                ]
+            ),
+            0,
+        )
+        for key in ("pool", "available", "reason"):
+            self.doesnt_exist(key, "8nodes", "cluster_not_created")
+
     def test_schedule(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
