@@ -84,11 +84,10 @@ def main(args=sys.argv):
                 print("no job found")
                 sys.exit(1)
         else:
-            job_id = sys.argv[1]
-            print("job id: %s" % job_id)
+            args.job_id = sys.argv[1]
+    print("job id: %s" % args.job_id, file=sys.stderr)
 
     pipeline_jobs = pu.get_pipeline_from_job(u_context, args.job_id)
-
     update_pipeline_with_component_version(u_context, pipeline_jobs)
 
     save_pipeline(pipeline_jobs, args.pipeline_filename)

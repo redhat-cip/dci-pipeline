@@ -48,49 +48,14 @@ def get_stage_components(context, job_id):
         sys.exit(1)
 
 
-def get_previous_jobs(context, prev_job):
-    previous_jobs = []
-    while True:
-        prev_job_id = prev_job["previous_job_id"]
-        if not prev_job_id:
-            break
-        prev_job = get_job(context, prev_job_id)
-        previous_jobs.append(prev_job)
-    return previous_jobs[::-1]
-
-
-def get_next_job(context, job):
-    j = dci_job.list(context, where="tags:prev-job:%s" % job["id"])
-    if j.status_code == 200:
-        if len(j.json()["jobs"]) > 0:
-            _job_id = j.json()["jobs"][0]["id"]
-            return get_job(context, _job_id)
-        else:
-            return None
-    else:
-        print("get_next_job_id error: %s" % j.text)
-        sys.exit(1)
-
-
-def get_next_jobs(context, job):
-    next_jobs = []
-    _current_job = job
-    while True:
-        next_job = get_next_job(context, _current_job)
-        if not next_job:
-            break
-        next_jobs.append(next_job)
-        _current_job = next_job
-    return next_jobs
+def get_pipeline_jobs(context, pipeline_id):
+    print("pipeline_id=%s" % pipeline_id, file=sys.stderr)
+    jobs = dci_job.list(
+        context, sort="created_at", where="pipeline_id:%s" % pipeline_id
+    )
+    return [get_job(context, job["id"]) for job in jobs.json()["jobs"]]
 
 
 def get_pipeline_from_job(context, job_id):
     initial_job = get_job(context, job_id)
-    previous_jobs = get_previous_jobs(context, initial_job)
-    next_jobs = get_next_jobs(context, initial_job)
-
-    pipeline_jobs = previous_jobs
-    pipeline_jobs.append(initial_job)
-    pipeline_jobs.extend(next_jobs)
-
-    return pipeline_jobs
+    return get_pipeline_jobs(context, initial_job["pipeline_id"])
