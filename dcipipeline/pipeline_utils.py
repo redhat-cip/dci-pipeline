@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) Red Hat, Inc
+# Copyright (C) 2021-2022 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,6 +20,7 @@ from dciclient.v1.api import job as dci_job
 
 
 def get_job(context, job_id):
+    print("getting info for job %s" % job_id, file=sys.stderr)
     j = dci_job.get(context, job_id)
     if j.status_code == 200:
         return j.json()["job"]
@@ -47,23 +48,14 @@ def get_stage_components(context, job_id):
         sys.exit(1)
 
 
-def get_previous_job_id(job):
-    for t in job["tags"]:
-        if t.startswith("prev-job"):
-            return t.split(":")[1]
-    return None
-
-
-def get_previous_jobs(context, job):
-    _current_job = job
+def get_previous_jobs(context, prev_job):
     previous_jobs = []
     while True:
-        prev_job_id = get_previous_job_id(_current_job)
+        prev_job_id = prev_job["previous_job_id"]
         if not prev_job_id:
             break
         prev_job = get_job(context, prev_job_id)
         previous_jobs.append(prev_job)
-        _current_job = prev_job
     return previous_jobs[::-1]
 
 

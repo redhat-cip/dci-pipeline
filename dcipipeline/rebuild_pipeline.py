@@ -25,9 +25,9 @@ from dciclient.v1.shell_commands import context as dci_context
 from dcipipeline import pipeline_utils as pu
 
 
-def save_pipeline(pipeline_jobs):
+def save_pipeline(pipeline_jobs, pipeline_filename):
     pipeline = [pj["data"]["pipeline"] for pj in pipeline_jobs]
-    with open("./rebuilt-pipeline.yml", "w") as f:
+    with open(pipeline_filename, "w") as f:
         yaml.dump(pipeline, f, default_flow_style=False)
 
 
@@ -51,6 +51,13 @@ def parse_arguments(args, environment={}):
         help="DCI job id",
         type=str,
         default=None,
+        required=False,
+    )
+    p.add_argument(
+        "--pipeline_filename",
+        help="Pipeline filename to write to",
+        type=str,
+        default="./rebuilt-pipeline.yml",
         required=False,
     )
     args = p.parse_args(args)
@@ -84,9 +91,12 @@ def main(args=sys.argv):
 
     update_pipeline_with_component_version(u_context, pipeline_jobs)
 
-    save_pipeline(pipeline_jobs)
+    save_pipeline(pipeline_jobs, args.pipeline_filename)
 
-    print("pipeline rebuilt successfully, please see the 'rebuilt-pipeline.yml' file")
+    print(
+        "pipeline rebuilt successfully, please see the '%s' file"
+        % args.pipeline_filename
+    )
 
 
 if __name__ == "__main__":

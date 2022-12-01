@@ -60,6 +60,10 @@ def parse_arguments(args, environment={}):
     return args
 
 
+def get_stage(pipeline):
+    return pipeline.get("stage", pipeline.get("type"))
+
+
 def search(args=sys.argv):
     args = parse_arguments(sys.argv[1:], os.environ)
     u_context = dci_context.build_context(args)
@@ -120,13 +124,17 @@ def search(args=sys.argv):
         print("not the same pipeline structure", file=sys.stderr)
         sys.exit(1)
 
-    pipeline_1_stages_types = set([j["data"]["pipeline"]["type"] for j in pipeline_1])
-    pipeline_2_stages_types = set([j["data"]["pipeline"]["type"] for j in pipeline_2])
+    pipeline_1_stages_stages = set(
+        [get_stage(j["data"]["pipeline"]) for j in pipeline_1]
+    )
+    pipeline_2_stages_stages = set(
+        [get_stage(j["data"]["pipeline"]) for j in pipeline_2]
+    )
 
-    if pipeline_1_stages_types != pipeline_2_stages_types:
+    if pipeline_1_stages_stages != pipeline_2_stages_stages:
         print(
-            "not the same pipeline types: pipeline_1=%s,pipeline_2=%s"
-            % (pipeline_1_stages_types, pipeline_2_stages_types),
+            "not the same pipeline stages: pipeline_1=%s,pipeline_2=%s"
+            % (pipeline_1_stages_stages, pipeline_2_stages_stages),
             file=sys.stderr,
         )
         sys.exit(1)
