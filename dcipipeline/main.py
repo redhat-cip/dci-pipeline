@@ -140,7 +140,7 @@ def load_jobdef_file(path, config_dir):
     # Read the pipeline jobdefs in 2 passes to be able to load first
     # the credentials file to be able to decrypt !vault statements in
     # the second pass.
-    with open(path) as stream:
+    with open(os.path.expanduser(path)) as stream:
         data = stream.read(-1)
     # First pass without decrypting !vault
     jobdefs_raw_data = yaml.load(data, Loader=yaml.BaseLoader)
@@ -169,11 +169,11 @@ def load_credentials(jobdef, config_dir):
         % (config_dir, os.path.dirname(jobdef["ansible_playbook"])),
     )
 
-    if cred_path[0] != "/":
+    if cred_path[0] not in ("/", "~"):
         cred_path = "%s/%s" % (config_dir, cred_path)
 
     log.info("Loading credentials from %s" % cred_path)
-    with open(cred_path) as stream:
+    with open(os.path.expanduser(cred_path)) as stream:
         dci_credentials = yaml.load(stream, Loader=yaml.SafeLoader)
 
     if "DCI_CS_URL" not in dci_credentials:
@@ -183,7 +183,7 @@ def load_credentials(jobdef, config_dir):
 
 
 def load_pipeline_user_credentials(pipeline_user_path):
-    pipeline_user_abs_path = os.path.abspath(pipeline_user_path)
+    pipeline_user_abs_path = os.path.abspath(os.path.expanduser(pipeline_user_path))
     if not os.path.exists(pipeline_user_abs_path):
         log.error("unable to find pipeline user file at %s" % pipeline_user_abs_path)
         sys.exit(1)
@@ -195,7 +195,7 @@ def load_pipeline_user_credentials(pipeline_user_path):
 
 
 def generate_ansible_cfg(dci_ansible_dir, config_dir):
-    fname = os.path.join(config_dir, "ansible.cfg")
+    fname = os.path.join(os.path.expanduser(config_dir), "ansible.cfg")
     log.info("Generating %s using dci_ansible_dir=%s" % (fname, dci_ansible_dir))
     with open(fname, "w") as f:
         f.write(
@@ -338,7 +338,9 @@ def get_data_dir(job_info, jobdef):
     ):
         try:
             if base_dir:
-                d = os.path.join(base_dir, jobdef["name"], job_info["job"]["id"])
+                d = os.path.join(
+                    os.path.expanduser(base_dir), jobdef["name"], job_info["job"]["id"]
+                )
                 os.makedirs(d, mode=0o700)
                 with open(os.path.join(d, "job_info.yaml"), "w") as f:
                     yaml.dump(job_info, f, Dumper=AnsibleDumper)
@@ -499,7 +501,7 @@ def build_cmdline(jobdef):
 
     if "ansible_extravars_files" in jobdef:
         for extra_file in jobdef["ansible_extravars_files"]:
-            if extra_file[0] != "/":
+            if extra_file[0] not in ("/", "~"):
                 extra_file = os.path.join(
                     os.path.abspath(os.path.dirname(jobdef["_pipeline_path_"])),
                     extra_file,
@@ -525,6 +527,8 @@ def check_stats(stats):
 def jobdef_check_path(jobdef, key, data_dir):
     path = jobdef.get(key)
     if path:
+        if path[0] == "~":
+            path = os.path.expanduser(path)
         if path[0] != "/":
             path = os.path.join(data_dir, path)
             if not os.path.exists(path):
@@ -800,7 +804,7 @@ def create_inputs(config_dir, prev_jobdefs, jobdef, job_info):
     if "inputs" not in jobdef:
         return
 
-    top_dir = "%s/inputs" % job_info["data_dir"]
+    top_dir = os.path.expanduser("%s/inputs" % job_info["data_dir"])
     try:
         os.makedirs(top_dir)
     except Exception:

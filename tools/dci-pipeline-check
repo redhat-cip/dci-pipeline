@@ -230,7 +230,7 @@ else
     cluster_names=( $(oc --kubeconfig "$KBCFG" config view -o json | jq -r '.clusters[].name') )
     for cluster_name in "${cluster_names[@]}"; do
         INV=$("$BASEDIR"/yaml2json "$first_pipeline" | jq -r '.[0].ansible_inventory' | \
-            sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/")
+              sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/" -e "s@^~/@${HOME}/@")
         if [ -f "$INV" ]; then
             RES=${cluster_name}
             break
