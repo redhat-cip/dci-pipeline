@@ -220,14 +220,14 @@ log_path           = ansible.log
         )
 
 
-def get_jobdef_name(jobdef):
+def get_jobdef_stage(jobdef):
     return jobdef.get("stage", jobdef.get("type"))
 
 
 def get_names_of_jobdefs(pipeline):
     names = []
     for jobdef in pipeline:
-        name = get_jobdef_name(jobdef)
+        name = get_jobdef_stage(jobdef)
         if name not in names:
             names.append(name)
     return names
@@ -241,7 +241,7 @@ def get_jobdefs(names, pipeline):
             names = [names]
         for jobdef in pipeline:
             for name in names:
-                if jobdef["name"] == name or get_jobdef_name(jobdef) == name:
+                if jobdef["name"] == name or get_jobdef_stage(jobdef) == name:
                     jobdefs.append(jobdef)
     return jobdefs
 
@@ -856,7 +856,7 @@ def add_outputs_paths(job_info, jobdef):
 
 
 def compute_tags(jobdef, prev_jobdefs):
-    tags = ["job:" + jobdef["name"], "job-type:" + get_jobdef_name(jobdef)]
+    tags = ["stage:" + get_jobdef_stage(jobdef)]
 
     if "DCI_QUEUE_JOBID" in os.environ:
         tags.append("pipeline-id:%s" % os.environ["DCI_QUEUE_JOBID"])
