@@ -263,7 +263,6 @@ GIT_REPOS=ansible_extravars=dev_gits_to_components:
 for repo in $(ls -d */.git);do
     GIT_REPOS="$GIT_REPOS$PWD/${repo%/.git},"
 done
-GIT_REPOS="${GIT_REPOS%,}"
 
 if [ -r $PIPELINES/ansible.cfg ]; then
     cp $PIPELINES/ansible.cfg ansible.cfg
