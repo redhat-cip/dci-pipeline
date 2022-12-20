@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022 Red Hat, Inc.
+# Copyright (C) 2022-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -227,7 +227,7 @@ for arg in "$@"; do
             pipeline="$PWD/$(basename $pipeline)"
             if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-agent/dci-openshift-agent.yml' $pipeline; then
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"
-            else
+            elif grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             fi
             ALL_PIPELINES="$ALL_PIPELINES $pipeline"
@@ -340,14 +340,14 @@ else
 fi
 
 # extract all git directories from the pipeline files into ALL_DIRS
-extract_dirs $OCP_PIPELINES $CNF_PIPELINES
+extract_dirs $ALL_PIPELINES
 
 for key in "${!ALL_DIRS[@]}"; do
     echo "$key => ${ALL_DIRS[$key]}"
 done
 
 # edit pipeline files to reflect local changes
-for pipeline in $OCP_PIPELINES $CNF_PIPELINES; do
+for pipeline in $ALL_PIPELINES; do
     # replace the local dirs
     for local_dir in $(ls -d */); do
         local_path=${ALL_DIRS[${local_dir%/}]}
