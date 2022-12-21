@@ -58,11 +58,14 @@ done
 ## ansible collection deps
 
 # remove collections provided as local source directories
-sed -i -e '/community.kubernetes/d' -e '/community.libvirt/d' -e '/containers.podman/d' "$TOPDIR"/dci-openshift-*/requirements.yml
+sed -i -e '/community.kubernetes/d' -e '/community.libvirt/d' -e '/containers.podman/d' -e '/version: 1.2.1/d' "$TOPDIR"/dci-openshift-*/requirements.yml
 
-cat "$TOPDIR"/dci-openshift*/requirements.yml
+# skip the app-agent as the requirements.yml is invalid after the edit
+for req in "$TOPDIR"/dci-openshift-agent*/requirements.yml; do
+    cat "$req"
+    ansible-galaxy collection install -r "$req"
+done
 
-ansible-galaxy collection install -r "$TOPDIR"/dci-openshift-agent*/requirements.yml
 ansible-galaxy list
 
 ## agents

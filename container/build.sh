@@ -46,7 +46,7 @@ for dir in dci-ansible \
     ansible-role-dci-sync-registry \
     ; do
     cd  ../$dir
-    VERS=$(sed -n -e "s/Version:\s*//p" $dir.spec)
+    VERS=$(sed -n -e "s/Version:\s*\([^ ]*\)\s*/\1/p" $dir.spec)
     git archive "--output=../dci-pipeline/dist/$dir-$VERS.tar.gz" "--prefix=$dir-$VERS/" --format=tar HEAD
     cd -
 done

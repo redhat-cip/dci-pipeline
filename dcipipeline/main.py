@@ -280,6 +280,99 @@ def is_jobdef_with_fixed_components(jobdef):
     return False
 
 
+def filter2(li, func):
+    yes = []
+    no = []
+    for e in li:
+        if func(e):
+            yes.append(e)
+        else:
+            no.append(e)
+    return yes, no
+
+
+def extract_tags(fields):
+    tags, others = filter2(fields, lambda x: x.startswith("tags:"))
+    return [f[5:] for f in tags], others
+
+
+def extract_build_tags(fields):
+    build_tags = []
+    other_tags = []
+    for field in fields:
+        y, n = filter2(field.split(","), lambda x: x.startswith("build:"))
+        build_tags += y
+        other_tags += n
+    return [t[6:] for t in build_tags], other_tags
+
+
+def get_build_list(build):
+    li = ["nightly", "dev", "candidate", "ga"]
+    return li[li.index(build) :]
+
+
+def get_comp(context, topic_id, c_type, where_query, error=True):
+    comp = None
+    resp = dci_topic.list_components(
+        context, topic_id, limit=1, offset=0, sort="-released_at", where=where_query
+    )
+    if resp.status_code == 200:
+        log.info(
+            "Got comp query result: %s[%s]: %s" % (c_type, where_query, resp.json())
+        )
+        if resp.json()["_meta"]["count"] > 0:
+            comp = resp.json()["components"][0]
+        else:
+            if error:
+                log.error(
+                    "No %s[%s] component, topic_id %s" % (c_type, where_query, topic_id)
+                )
+    else:
+        log.error(
+            "Unable to fetch component %s[%s]: %s" % (c_type, where_query, resp.text)
+        )
+    return comp
+
+
+def get_component_by_build(
+    context,
+    topic_id,
+    c_type,
+    c_query_others,
+    c_query_build_tags,
+    c_query_other_tags,
+    tag,
+):
+    comp = None
+
+    if tag:
+        c_query_other_tags.append(tag)
+
+    # No build:<tag> so looking for one component only
+    if c_query_build_tags == []:
+        where_query = ",".join([f"type:{c_type}"] + c_query_others)
+        comp = get_comp(context, topic_id, c_type, where_query)
+    # loop on build:<tag> that are superior or equal to the one provided
+    else:
+        comps = []
+        for build_tag in get_build_list(c_query_build_tags[-1]):
+            build_tag = "build:" + build_tag
+            where_query = ",".join(
+                [f"type:{c_type}"]
+                + c_query_others
+                + ["tags:" + t for t in (c_query_other_tags + [build_tag])]
+            )
+            comp = get_comp(context, topic_id, c_type, where_query, False)
+            if comp:
+                comps.append(comp)
+        sorted(comps, key=lambda c: c["released_at"])
+        log.info(f"sorted components: {comps}")
+        comp = comps[-1]
+
+    log.info(f"Selected component {comp}")
+    return comp
+
+
 def get_components(context, jobdef, topic_id, tag=None):
     components = []
     if "components" not in jobdef:
@@ -289,30 +382,38 @@ def get_components(context, jobdef, topic_id, tag=None):
         c_name = ""
         where_query = "type:%s%s" % (c_type, (",tags:%s" % tag) if tag else "")
         if "?" in c_type:
+            c_type = c_type.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
             c_type, c_query = c_type.split("?", 1)
-            where_query = "type:%s,%s" % (c_type, ",".join(c_query.split("&")))
-        elif "=" in c_type:
-            c_type, c_name = c_type.split("=", 1)
-            where_query = "type:%s,name:%s" % (c_type, c_name)
-        where_query = (
-            where_query.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
-        )
-        resp = dci_topic.list_components(
-            context, topic_id, limit=1, offset=0, sort="-released_at", where=where_query
-        )
-        if resp.status_code == 200:
-            log.info("Got component %s[%s]: %s" % (c_type, c_name, resp.text))
-            if resp.json()["_meta"]["count"] > 0:
-                components.append(resp.json()["components"][0])
-            else:
-                log.error(
-                    "No %s[%s] component, topic_id %s" % (c_type, c_name, topic_id)
-                )
-        else:
-            log.error(
-                "Unable to fetch component %s/%s for topic %s: %s"
-                % (c_type, c_name, jobdef["topic"], resp.text)
+            c_query_tags, c_query_others = extract_tags(c_query.split("&"))
+            log.info(f"{c_query_tags} {c_query_others}")
+            c_query_build_tags, c_query_other_tags = extract_build_tags(c_query_tags)
+            c_query_fields = c_query_other_tags + c_query_others
+            where_query = "type:%s,%s" % (c_type, ",".join(c_query_fields))
+            comp = get_component_by_build(
+                context,
+                topic_id,
+                c_type,
+                c_query_others,
+                c_query_build_tags,
+                c_query_other_tags,
+                tag,
             )
+            if comp:
+                components.append(comp)
+        else:
+            if "=" in c_type:
+                c_type, c_name = c_type.split("=", 1)
+                where_query = "type:%s,name:%s" % (c_type, c_name)
+            else:
+                where_query = "type:%s" % c_type
+            where_query = (
+                where_query.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
+            )
+            if tag:
+                where_query = f"{where_query},tags:{tag}"
+            comp = get_comp(context, topic_id, c_type, where_query)
+            if comp:
+                components.append(comp)
     return components, jobdef
 
 
@@ -390,8 +491,7 @@ def schedule_job(
 
     if len(jobdef["components"]) != len(components):
         log.error(
-            "Unable to get all components %d out of %d"
-            % (len(components), len(jobdef["components"]))
+            f"Unable to get all components {len(components)} out of {len(jobdef['components'])}: {[c['name'] for c in components]}"
         )
         return None
 

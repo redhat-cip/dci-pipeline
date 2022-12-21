@@ -1,44 +1,47 @@
 ---
-  - name: openshift-vanilla
-    stage: ocp
-    configuration: myconf
-    url: https://lwn.net/
-    ansible_playbook: agents/openshift-vanilla/agent.yml
-    ansible_inventory: agents/openshift-vanilla/inventory
-    ansible_extravars:
-      answer: 42
-    ansible_extravars_files:
-      - agents/openshift-vanilla/vars.yml
-    ansible_envvars:
-      ENVVAR_42: 42
-      ENVVAR_43: 43
-      ENVVAR_TMPDIR: /@tmpdir
-    ansible_tags:
-      - working
-    outputs:
-      hosts: etc/hosts
-      ocp_comp: ocp_component_id
-    topic: OCP-4.8
-    components:
-      - ocp=ocp-4.8.0-0.nightly-20200701
-      - ose-tests?tags:ocp-vanilla-4.8-ok&name:ose-tests-20200628
-      - cnf-tests
-    comment: debugging comment
-    success_tag: ocp-vanilla-4.8-simple-ok
-    fallback_last_success: ocp-vanilla-4.8-simple-ok
 
-  - name: rh-cnf
-    type: cnf
-    configuration: myconf
-    prev_stages: openshift-vanilla
-    ansible_playbook: agents/rh-cnf/agent.yml
-    inputs:
-      hosts: hosts_path
-      ocp_comp: ocp_comp_path
-    ansible_extravars:
-      answer: 42
-    use_previous_topic: true
-    components:
-      - rh-cnf
-    success_tag: ocp-vanilla-4.8-simple-ok
-    fallback_last_success: ocp-vanilla-4.8-simple-ok
+- name: openshift-vanilla
+  stage: ocp
+  configuration: myconf
+  url: https://lwn.net/
+  ansible_playbook: agents/openshift-vanilla/agent.yml
+  ansible_inventory: agents/openshift-vanilla/inventory
+  ansible_extravars:
+    answer: 42
+  ansible_extravars_files:
+    - agents/openshift-vanilla/vars.yml
+  ansible_envvars:
+    ENVVAR_42: 42
+    ENVVAR_43: 43
+    ENVVAR_TMPDIR: /@tmpdir
+  ansible_tags:
+    - working
+  outputs:
+    hosts: etc/hosts
+    ocp_comp: ocp_component_id
+  topic: OCP-4.8
+  components:
+    - "ocp=ocp-4.8.0-0.nightly-20200701"
+    - "ose-tests?tags:ocp-vanilla-4.8-ok,build:dev&name:ose-tests-20200628"
+    - cnf-tests
+  comment: debugging comment
+  success_tag: ocp-vanilla-4.8-simple-ok
+  fallback_last_success: ocp-vanilla-4.8-simple-ok
+
+- name: rh-cnf
+  type: cnf
+  configuration: myconf
+  prev_stages: openshift-vanilla
+  ansible_playbook: agents/rh-cnf/agent.yml
+  inputs:
+    hosts: hosts_path
+    ocp_comp: ocp_comp_path
+  ansible_extravars:
+    answer: 42
+  use_previous_topic: true
+  components:
+    - rh-cnf
+  success_tag: ocp-vanilla-4.8-simple-ok
+  fallback_last_success: ocp-vanilla-4.8-simple-ok
+
+...

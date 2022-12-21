@@ -19,6 +19,9 @@ import unittest
 import mock
 
 from dcipipeline.main import (
+    extract_build_tags,
+    extract_tags,
+    get_build_list,
     get_components,
     get_config,
     get_prev_jobdefs,
@@ -234,6 +237,28 @@ class TestMain(unittest.TestCase):
             ],
         )
         self.assertEqual(jobdefs[0]["ansible_extravars"], {"var": 43, "var2": 42})
+
+    def test_extract_tags(self):
+        query = "tags:build:dev,daily&name:4.11.41".split("&")
+        tags, others = extract_tags(query)
+        self.assertEqual(others, ["name:4.11.41"])
+        self.assertEqual(tags, ["build:dev,daily"])
+        build_tags, other_tags = extract_build_tags(tags)
+        self.assertEqual(build_tags, ["dev"])
+        self.assertEqual(other_tags, ["daily"])
+        build_list = get_build_list(build_tags[0])
+        self.assertEqual(build_list, ["dev", "candidate", "ga"])
+
+    def test_extract_tags2(self):
+        query = "tags:ocp-vanilla-4.8-ok,build:dev&name:ose-tests-20200628".split("&")
+        tags, others = extract_tags(query)
+        self.assertEqual(others, ["name:ose-tests-20200628"])
+        self.assertEqual(tags, ["ocp-vanilla-4.8-ok,build:dev"])
+        build_tags, other_tags = extract_build_tags(tags)
+        self.assertEqual(build_tags, ["dev"])
+        self.assertEqual(other_tags, ["ocp-vanilla-4.8-ok"])
+        build_list = get_build_list(build_tags[0])
+        self.assertEqual(build_list, ["dev", "candidate", "ga"])
 
 
 if __name__ == "__main__":

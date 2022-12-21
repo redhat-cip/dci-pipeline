@@ -35,8 +35,8 @@
       tag: "distributedci/dci-pipeline"
       version: "gerrit-{{ zuul.change }}"
       push_stable_tag: false
-      ignore_build_registry_login_errors: false
-      hide_build_registry_login_errors: false
+      ignore_registry_login_errors: false
+      hide_registry_login_errors: true
     required-projects:
       - python-dciclient
       - python-dciauth
@@ -58,7 +58,7 @@
       registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: latest
-      ignore_build_registry_login_errors: false
+      ignore_registry_login_errors: false
     required-projects:
       - python-dciclient
       - python-dciauth
