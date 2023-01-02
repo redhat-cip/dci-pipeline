@@ -20,6 +20,7 @@ RET=0
 KILLED=
 ERROR=
 declare -A ALL_DIRS
+declare -A NAME_TO_PIPELINE
 
 error() {
     ERROR="$1"
@@ -231,6 +232,9 @@ for arg in "$@"; do
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             fi
             ALL_PIPELINES="$ALL_PIPELINES $pipeline"
+            for NAME in $("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name'); do
+                NAME_TO_PIPELINE[$NAME]="$pipeline"
+            done
             ;;
     esac
 done
@@ -374,9 +378,12 @@ done
 
 # set the tags, comment, configuration, change_dir and git repos on all the pipelines
 ALL_TAGS=
-QUEUE_OPT=
 for NAME in $OCP_NAMES $CNF_NAMES; do
-    if [ -n "$DCI_QUEUE" ]; then
+    QUEUE_OPT=
+    CONF=$("$BASEDIR"/yaml2json "${NAME_TO_PIPELINE[$NAME]}" | \
+        jq -r ".[]|select(.name==\"$NAME\")|.configuration" | \
+        sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
+    if [ -n "$CONF" ] && [ "$CONF" != null ]; then
         QUEUE_OPT="$NAME:configuration=$DCI_QUEUE"
     fi
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"

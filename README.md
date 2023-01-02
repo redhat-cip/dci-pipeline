@@ -554,6 +554,16 @@ Remove the `8nodes` pool:
 $ dci-queue remove-pool 8nodes
 ```
 
+### Interactions with dci-pipeline-check and dci-pipeline-schedule
+
+When `dci-pipeline-check` and `dci-pipeline-schedule` are used in
+conjunction with `dci-queue`, they automatically schedule the commands
+to run through `dci-queue`. They also perform the substitution of the
+`@QUEUE` and `@RESOURCE` strings in the `ansible_inventory` and
+`configuration` settings of the jobs allowing to have flexible job
+definitions regarding inventories and configurations without having to
+change the command lines.
+
 ## How to rebuild a pipeline
 
 In case of a pipeline failure, one might need to rebuild the original one. The command `dci-rebuild-pipeline` can
