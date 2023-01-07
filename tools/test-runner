@@ -90,9 +90,21 @@ finish() {
 }
 
 get_project() {
-    local dir="$1"
-    local project=$(cd "$dir"; basename $(git config --local remote.origin.url) .git)
-    if [ -n "$project" ]; then
+    local path="$1"
+    local dir
+    local project
+    if [ ! -d "$path" ]; then
+        dir="$(dirname "$path")"
+        if [ "$dir" = "$path" ]; then
+            return
+        fi
+        get_project "$dir"
+        return
+    else
+        dir="$path"
+    fi
+    project=$(cd "$dir"; basename $(git config --local remote.origin.url 2> /dev/null) .git)
+    if [ -n "$project" ] && [ "$project" != .git ]; then
         ALL_DIRS["$project"]=$(cd "$dir"; git rev-parse --show-toplevel)
     fi
 }
@@ -102,11 +114,7 @@ extract_dirs() {
             grep -Po "[\s,[\"']/[\w/._-]+" |
             sed -e "s#[ ,[\"']##g" |
             sort -u); do
-        if [ -d "${path}" ]; then
-            get_project "$path"
-        elif [ -f "${path}" ]; then
-            get_project "$(dirname ${path})"
-        fi
+        get_project "$path"
     done
 }
 
