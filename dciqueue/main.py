@@ -112,6 +112,13 @@ def main(cmdargs=sys.argv):
         help="Output logs to the console",
         default=default_console,
     )
+    parser.add_argument(
+        "-p",
+        "--podman",
+        action="store_true",
+        help="Called from inside a container",
+        default=False,
+    )
 
     subparsers = parser.add_subparsers(
         title="Subcommands", description="valid subcommands", dest="command"

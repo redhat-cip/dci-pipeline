@@ -18,12 +18,17 @@ if [ -r /etc/dci-openshift-app-agent/config ]; then
     . /etc/dci-openshift-app-agent/config
 fi
 
-ARGS="--mount=type=bind,src=/etc/dci-openshift-app-agent,dst=/etc/dci-openshift-app-agent "
-
+ARGS=''
 if [ -n "$CONFIG_DIR" ]; then
     ARGS="$ARGS --mount=type=bind,src=$CONFIG_DIR,dst=$CONFIG_DIR"
 fi
 
-podman run --rm --userns=keep-id --network=host $ARGS quay.io/distributedci/dci-pipeline:"${DCI_PIPELINE_TAG:=latest}" dci-openshift-agent-app-ctl "$@"
+mounts=''
+for userfile in $(ls -A $HOME); do
+  echo $userfile | grep -Eq '.cache|.local' && continue
+  mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw,Z"
+done
+
+podman run --rm --userns=keep-id --network=host $mounts $ARGS "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" dci-openshift-agent-app-ctl "$@"
 
 # dci-openshift-app-agent-ctl-podman ends here

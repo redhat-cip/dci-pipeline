@@ -39,8 +39,8 @@ def execute_command(args):
         return 1
 
     CRONLINES = [
-        lib.CRONTAB_LINE_FMT % args.pool,
-        lib.CRONTAB_CLEAN_LINE_FMT % args.pool,
+        lib.CRONTAB_LINE_FMT % ("-podman" if args.podman else "", args.pool),
+        lib.CRONTAB_CLEAN_LINE_FMT % ("-podman" if args.podman else "", args.pool),
     ]
 
     with open(args.file) as f:

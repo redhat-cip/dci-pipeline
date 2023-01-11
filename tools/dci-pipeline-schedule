@@ -16,13 +16,19 @@
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -r "$TOPDIR"/common ]; then
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. $BASEDIR/common
+. "$BASEDIR/common$SUFFIX"
 DCI_QUEUE="$DEFAULT_QUEUE"
 
 # get an optional dci-queue pool name with -p
@@ -46,7 +52,7 @@ else
 fi
 
 # set PATH for yaml2json
-PATH=$(dirname $0):/usr/share/dci-pipeline:$PATH
+PATH=$BASEDIR:$PATH
 
 CMD=
 OPTS=
@@ -95,10 +101,10 @@ for arg in "$@"; do
     esac
 done
 
-if [ -n "$DCI_QUEUE_RESOURCE" ]; then
-    CMD="dci-pipeline $CMD"
+if [ -z "$DCI_QUEUE" ] || [ -n "$DCI_QUEUE_RESOURCE" ]; then
+    CMD="dci-pipeline$SUFFIX $CMD"
 else
-    CMD="dci-queue schedule $OPTS $DCI_QUEUE dci-pipeline $CMD"
+    CMD="dci-queue$SUFFIX schedule $OPTS $DCI_QUEUE dci-pipeline $CMD"
 fi
 
 echo "+ $CMD" 1>&2

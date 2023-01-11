@@ -22,13 +22,19 @@ STARTING="$3"
 
 TOPDIR=$(cd $(dirname $0); pwd)
 
-if [ -r "$TOPDIR"/common ]; then
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
     BASEDIR="$TOPDIR"
 else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. $BASEDIR/common
+. "$BASEDIR/common$SUFFIX"
 
 for json in $(ls $DIR/*.json); do
     # gerrit

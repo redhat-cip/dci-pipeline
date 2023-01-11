@@ -19,6 +19,7 @@
 """
 
 import logging
+import sys
 
 from dciqueue import lib
 
@@ -39,22 +40,26 @@ def execute_command(args):
         return 1
 
     CRONLINES = [
-        lib.CRONTAB_LINE_FMT % args.pool,
-        lib.CRONTAB_CLEAN_LINE_FMT % args.pool,
+        lib.CRONTAB_LINE_FMT % ("-podman" if args.podman else "", args.pool),
+        lib.CRONTAB_CLEAN_LINE_FMT % ("-podman" if args.podman else "", args.pool),
     ]
 
-    with open(args.file) as f:
-        lines = f.readlines()
-
-    for LINE in CRONLINES:
-        for line in lines:
-            line = line.strip("\n")
-            if line == LINE:
-                break
-        else:
-            with open(args.file, "a") as f:
-                f.write("%s\n" % LINE)
-
+    if args.podman:
+        print(
+            "Add the following line using crontab -e:\n%s" % "\n".join(CRONLINES),
+            file=sys.stderr,
+        )
+    else:
+        with open(args.file) as f:
+            lines = f.readlines()
+        for LINE in CRONLINES:
+            for line in lines:
+                line = line.strip("\n")
+                if line == LINE:
+                    break
+                else:
+                    with open(args.file, "a") as f:
+                        f.write("%s\n" % LINE)
     return 0
 
 
