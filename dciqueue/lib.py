@@ -77,7 +77,7 @@ def check_pool(args):
         if not os.path.exists(d):
             msg = "Directory %s doesn't exist. Use add-pool to create it." % (d,)
             log.error(msg)
-            sys.stderr.write(msg)
+            print(msg, file=sys.stderr)
             return False
     return True
 
