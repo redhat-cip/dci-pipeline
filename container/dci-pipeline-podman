@@ -14,53 +14,18 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-ARGS=
-
-function print_directory() {
-    param="$1"
-    echo "$(cd $(dirname $param); pwd)"
-    for path in $(sed -n -e "s@.* /@/@p" "$param"); do
-        if [ -f "$path" ]; then
-            echo $(dirname "$path")
-        else
-            echo "$path"
-        fi
-    done
-}
-
-function print_directories() {
-    for param in "$@"; do
-        case "$param" in
-            .*)
-                print_directory "$PWD/$param"
-                ;;
-            /*)
-                if ! grep "^/@" <<< $param; then
-                    print_directory "$param"
-                fi
-                ;;
-        esac
-    done
-}
-
-for dir in $(print_directories "$@"|sort -u|grep -v "@"); do
-    if [ -w "$dir" ]; then
-        ARGS="$ARGS --mount=type=bind,src=$dir,dst=$dir,ro=false"
-        #ARGS="$ARGS -v $dir:$dir:rw"
-    else
-        ARGS="$ARGS --mount=type=bind,src=$dir,dst=$dir,ro=true"
-        #ARGS="$ARGS -v $dir:$dir:ro"
-    fi
-done
-
 mounts=''
 for userfile in $(ls -A $HOME); do
   echo $userfile | grep -Eq '.cache|.local' && continue
-  mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw,Z"
+  echo $userfile | grep -Eq '.ssh|.netrc' && \
+    mounts="$mounts -v ${HOME}/${userfile}:/root/${userfile}:rw" || \
+    mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw"
 done
 
 set -x
 
-podman run --rm --userns=keep-id --network=host --workdir=/tmp $mounts $ARGS "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" dci-pipeline "$@"
+podman run --rm --security-opt label=disable --privileged --user=root --workdir=${HOME} $mounts \
+       "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
+       dci-pipeline "$@"
 
 # dci-pipeline-podman ends here

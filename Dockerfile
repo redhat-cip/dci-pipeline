@@ -10,15 +10,40 @@ ENV LANG en_US.UTF-8
 ADD dist/* /usr/src/
 
 RUN set -ex && \
-    dnf -y install git python3-devel python3-pip python3-setuptools python3-cryptography make sudo policycoreutils libvirt-libs && \
-    dnf -y upgrade && \
+    dnf -y update && \
+    dnf -y install git gcc gettext python3-devel python3-pip python3-setuptools python3-cryptography \
+        make sudo policycoreutils libvirt-libs fuse-overlayfs wget podman jq \
+        --exclude container-selinux && \
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
-    dnf -y install python3-openshift && \
+    dnf -y install python3-openshift python3-passlib && \
     dnf clean all && \
     mkdir -p /usr/share/dci /usr/share/ansible/roles /etc/ansible/roles /usr/share/ansible/collections && \
     export ANSIBLE_ROLES_PATH=/usr/share/ansible/roles:/etc/ansible/roles && \
     export ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections && \
     ANSIBLE_DIR="/usr/share/dci/" /usr/src/dci-pipeline-*/container/install-from-source.sh && \
     cd /usr/src/dci-ansible* && cp -r modules module_utils callback action_plugins filter_plugins /usr/share/dci/ && \
+    adduser --home /var/lib/dci-openshift-agent dci-openshift-agent && \
+    chown -R dci-openshift-agent: /var/lib/dci-openshift-agent && \
+    sed -i 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+NOPASSWD:\s\+ALL\)/\1/' /etc/sudoers && \
+    rm -rf /var/cache /var/log/dnf* /var/log/yum.* && \
     rm -rf /usr/src/* ~/.cache
+
+ARG _REPO_URL="https://raw.githubusercontent.com/containers/podman/main/contrib/podmanimage/stable"
+ADD $_REPO_URL/containers.conf /etc/containers/containers.conf
+
+RUN sed -i -e 's|^#mount_program|mount_program|g' \
+           -e '/additionalimage.*/a "/var/lib/shared",' \
+           -e 's|^mountopt[[:space:]]*=.*$|mountopt = "nodev,fsync=0"|g' \
+           /etc/containers/storage.conf
+
+VOLUME /var/lib/containers
+
+RUN mkdir -p /var/lib/shared/overlay-images \
+             /var/lib/shared/overlay-layers \
+             /var/lib/shared/vfs-images \
+             /var/lib/shared/vfs-layers && \
+    touch /var/lib/shared/overlay-images/images.lock &&\
+    touch /var/lib/shared/overlay-layers/layers.lock && \
+    touch /var/lib/shared/vfs-images/images.lock && \
+    touch /var/lib/shared/vfs-layers/layers.lock
 

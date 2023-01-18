@@ -74,7 +74,6 @@ ansible-galaxy list
 if [ -w /usr/share ]; then
     cd "$TOPDIR"/dci-openshift-agent*
     make install
-
     cd "$TOPDIR"/dci-openshift-app-agent*
     make install
 fi
