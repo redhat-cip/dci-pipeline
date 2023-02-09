@@ -74,6 +74,8 @@
 
 - project:
 
+    queue: dci
+
     check:
       jobs:
         - dci-build-and-push-dci-pipeline-dev-container-job
@@ -90,7 +92,6 @@
             voting: false
 
     dci-post:
-      queue: dci
       jobs:
         - dci-build-and-push-dci-pipeline-container-job
         - dci-rpm-build-with-doc-el8
