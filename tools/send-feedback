@@ -74,6 +74,7 @@ for json in $(ls $DIR/*.json); do
                 # when no DCI job is found
                 if [ -z "$DCI_URL" ]; then
                     DCI_STATUS=$(echo -e "$BODY"|grep -E "^(SUCCESS|ERROR|FAILURE|KILLED)")
+                    DCI_STATUS=$(echo -e "$BODY"|sed -e '/- /d' | grep -Eo "^(SUCCESS|ERROR|FAILURE|KILLED)")
                 fi
                 case "$DCI_STATUS" in
                     SUCCESS*)
