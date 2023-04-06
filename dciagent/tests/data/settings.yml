@@ -8,8 +8,8 @@ dci_configuration: myconf
 dci_url: https://lwn.net/
 dci_comment: debugging comment
 dci_components_by_query:
-  - 'type:ocp,name:ocp-4.8.0-0.nightly-20200701'
-  - 'type:ose-tests,tags:ocp-vanilla-4.8-ok,name:ose-tests-20200628'
+  - 'type:ocp,version:4.8.0-0.nightly-20200701'
+  - 'type:ose-tests,tags:ocp-vanilla-4.8-ok,version:20200628'
   - 'type:cnf-tests'
 answer: 42
 answer2: 42

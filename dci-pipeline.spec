@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.2.0
+Version:        0.3.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -23,7 +23,7 @@ Requires:       dci-queue = %{version}-%{release}
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
 Requires:       PyYAML
-Requires:       python2-dciclient >= 2.3.0
+Requires:       python2-dciclient >= 3.1.0
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
 Requires:       python2-junit_xml
@@ -34,7 +34,7 @@ Requires:       python2-libselinux
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 Requires:       python3-PyYAML
-Requires:       python3-dciclient >= 2.3.0
+Requires:       python3-dciclient >= 3.1.0
 Requires:       python3-ansible-runner
 Requires:       python3-junit_xml
 Requires:       python3-libselinux
@@ -44,7 +44,7 @@ BuildRequires:  systemd
 %{?systemd_requires}
 Requires(pre):  shadow-utils
 Requires:       ansible
-Requires:       dci-ansible >= 0.3.0
+Requires:       dci-ansible >= 0.3.1
 Requires:       /usr/bin/sudo
 
 %description
@@ -175,6 +175,10 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Fri Apr 28 2023 Frederic Lepied <flepied@redhat.com> 0.3.0-1
+- requires dci-ansible >= 0.3.1 and dciclient >= 3.1.0 for the new
+  fields of components
+
 * Thu Nov 17 2022 Frederic Lepied <flepied@redhat.com> 0.2.0-1
 - add a dci-queue sub-package
 - add dci-pipeline-check-podman and dci-pipeline-schedule-podman to

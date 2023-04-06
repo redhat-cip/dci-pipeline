@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi9/ubi
 
 LABEL name="dci-pipeline"
 # keep in sync with setup.py and dci-pipeline.spec
-LABEL version="0.2.0"
+LABEL version="0.3.0"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 ENV LANG en_US.UTF-8
@@ -46,4 +46,3 @@ RUN mkdir -p /var/lib/shared/overlay-images \
     touch /var/lib/shared/overlay-layers/layers.lock && \
     touch /var/lib/shared/vfs-images/images.lock && \
     touch /var/lib/shared/vfs-layers/layers.lock
-
