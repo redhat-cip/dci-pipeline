@@ -100,7 +100,6 @@
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-with-doc-el8
-              - dci-rpm-build-with-doc-el9
         - dci-deploy:
             dependencies:
               - dci-rpm-publish
