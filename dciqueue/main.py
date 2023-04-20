@@ -127,7 +127,7 @@ def main(cmdargs=sys.argv):
     topdir = os.path.dirname(__file__)
 
     commands = {}
-    for (_, name, _) in pkgutil.iter_modules([topdir]):
+    for _, name, _ in pkgutil.iter_modules([topdir]):
         if name.endswith("_cmd"):
             imported_module = importlib.import_module("dciqueue." + name)
             if REGISTER_ENTRY_POINT not in dir(

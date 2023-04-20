@@ -1,0 +1,11 @@
+---
+
+- name: 'Set dci variables'
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: "Validate job id"
+      shell: "env|grep DCI_JOB_ID"
+
+...

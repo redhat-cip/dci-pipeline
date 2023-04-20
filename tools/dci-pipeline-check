@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022 Red Hat, Inc.
+# Copyright (C) 2022-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -278,6 +278,8 @@ REQS=$(ls */requirements.txt 2> /dev/null || :)
 
 if [ -n "$REQS" ]; then
     rm -rf .venv
+    # use --system-site-packages to get libselinux-python from the
+    # system (not possible via pip)
     virtualenv --system-site-packages .venv
     . .venv/bin/activate
 
@@ -292,13 +294,18 @@ if [ -n "$REQS" ]; then
         fi
     done
 
+    for req in $REQS; do
+        cat "$req"
+    done
+
     # install python dependencies into the virtualenv
     for req in $REQS; do
-        pip install -r $req
+        pip install -I -r $req
         cd $(dirname $req)
         python setup.py develop || :
         cd -
     done
+    pip freeze
 fi
 
 if [ -d "$DIR.bootstrap" ]; then

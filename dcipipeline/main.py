@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2022 Red Hat, Inc
+# Copyright (C) 2020-2023 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -367,7 +367,8 @@ def get_component_by_build(
                 comps.append(comp)
         sorted(comps, key=lambda c: c["released_at"])
         log.info(f"sorted components: {comps}")
-        comp = comps[-1]
+        if len(comps) > 0:
+            comp = comps[-1]
 
     log.info(f"Selected component {comp}")
     return comp
@@ -709,6 +710,7 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
         )
     )
     envvars.update(dci_credentials)
+    envvars["DCI_JOB_ID"] = job_info["job"]["id"]
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=os.path.join(data_dir, jobdef["ansible_playbook"]),
@@ -940,7 +942,6 @@ def create_inputs(config_dir, prev_jobdefs, jobdef, job_info):
 
 
 def add_outputs_paths(job_info, jobdef):
-
     if "outputs" not in jobdef:
         return
 
