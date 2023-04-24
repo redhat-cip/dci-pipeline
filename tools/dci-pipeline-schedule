@@ -104,7 +104,7 @@ done
 if [ -z "$DCI_QUEUE" ] || [ -n "$DCI_QUEUE_RESOURCE" ]; then
     CMD="dci-pipeline$SUFFIX $CMD"
 else
-    CMD="dci-queue$SUFFIX schedule $OPTS $DCI_QUEUE dci-pipeline $CMD"
+    CMD="dci-queue schedule $OPTS $DCI_QUEUE dci-pipeline$SUFFIX $CMD"
 fi
 
 echo "+ $CMD" 1>&2
