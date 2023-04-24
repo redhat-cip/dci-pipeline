@@ -59,6 +59,7 @@
       registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: latest
+      rhel_subscribed: true
       ignore_registry_login_errors: false
     required-projects:
       - python-dciclient
