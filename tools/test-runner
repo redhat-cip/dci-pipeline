@@ -303,7 +303,7 @@ done
 # only do these steps in non podman mode
 if [ -z "$SUFFIX" ]; then
     if [ -d dci-ansible ]; then
-        sed -i -e "s@/usr/share/dci/\(modules\|module_utils\|action_plugins\|filter_plugins\)@$PWD/dci-ansible/\1@g" ansible.cfg
+        sed -i -e "s@/usr/share/dci/\(callback\|modules\|module_utils\|action_plugins\|filter_plugins\)@$PWD/dci-ansible/\1@g" ansible.cfg
         export DCI_ANSIBLE_DIR=$PWD/dci-ansible
     fi
 
@@ -384,6 +384,8 @@ for pipeline in $ALL_PIPELINES; do
     sed -i -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
 done
 
+cat ansible.cfg
+
 # inject certification variables and topic
 for NAME in $CNF_NAMES; do
     if [ -n "$OCP_TOPIC" ]; then
@@ -411,7 +413,7 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
 done
 
 if [ -z "$SUFFIX" ]; then
-    # activate the virtualenv created by the check command if present
+    # activate the virtualenv created by the dci-pipeline-check command if present
     if [ -d "$PWD/.venv/bin" ]; then
         . "$PWD/.venv/bin/activate"
     fi
@@ -424,6 +426,8 @@ else
         export PATH=$PWD/dci-pipeline/tools:$PWD/dci-pipeline/container:$PATH
     fi
 fi
+
+type -p "dci-pipeline$SUFFIX"
 
 "dci-pipeline$SUFFIX" "${ARGS[@]}" $OPTVERS $ALL_TAGS $OCP_APP_OPT $ALL_PIPELINES >& output &
 

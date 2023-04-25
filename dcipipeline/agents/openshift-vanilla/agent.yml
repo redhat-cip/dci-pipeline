@@ -139,7 +139,7 @@
         status: "running"
 
     - name: install ocp
-      shell: echo 'installing some ocp here'
+      shell: "ansible-playbook subplaybook.yml"
 
 - name: Rescue construct
   hosts: runner
