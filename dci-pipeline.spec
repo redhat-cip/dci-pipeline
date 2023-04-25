@@ -95,9 +95,10 @@ for tool in extract-dependencies loop_until_failure loop_until_success send-feed
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool-podman
 done
 install -m 644 tools/common %{buildroot}%{_datadir}/%{name}/common
+install -m 644 tools/common %{buildroot}%{_datadir}/%{name}/common-podman
 install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule
-install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
 install -m 755 tools/dci-pipeline-schedule %{buildroot}%{_bindir}/dci-pipeline-schedule-podman
+install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check
 install -m 755 tools/dci-pipeline-check %{buildroot}%{_bindir}/dci-pipeline-check-podman
 install -p -D -m 644 dciqueue/dci-queue.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/dci-queue
 install -d -m 700 %{buildroot}/var/lib/%{name}
