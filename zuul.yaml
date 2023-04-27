@@ -34,6 +34,7 @@
       registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: "gerrit-{{ zuul.change }}"
+      build_repo_source: "softwarefactory-project.io/dci-pipeline"
       push_stable_tag: false
       rhel_subscribed: true
       ignore_registry_login_errors: false
@@ -44,6 +45,7 @@
       - dci-ansible
       - dci-openshift-agent
       - dci-openshift-app-agent
+      - dci-pipeline
       - ansible-collection-community-kubernetes
       - ansible-collection-community-libvirt
       - ansible-collection-containers-podman
@@ -59,6 +61,7 @@
       registry: "quay.io"
       tag: "distributedci/dci-pipeline"
       version: latest
+      build_repo_source: "softwarefactory-project.io/dci-pipeline"
       rhel_subscribed: true
       ignore_registry_login_errors: false
     required-projects:
@@ -67,6 +70,7 @@
       - dci-ansible
       - dci-openshift-agent
       - dci-openshift-app-agent
+      - dci-pipeline
       - ansible-collection-community-kubernetes
       - ansible-collection-community-libvirt
       - ansible-collection-containers-podman
