@@ -35,7 +35,7 @@ QUEUE="$DEFAULT_QUEUE"
 
 if [ $# = 0 -o "$1" = -h ]; then
     cat 1>&2 <<EOF
-Usage: $(basename $0) [-F] [-S] [-Fr] [-Sr] [-f] (<GitHub PR URL>|<Gerrit review id>)
+Usage: $(basename $0) [-F] [-S] [-Fr] [-Sr] [-f] [-n] (<GitHub PR URL>|<Gerrit review id>)
              [-p <pool name>] [-r <resource name>]
              [[<kubeconfig path>] <pipeline name> [(<pipeline name2>|<pipeline var>)*]]
 
@@ -46,6 +46,7 @@ Usage: $(basename $0) [-F] [-S] [-Fr] [-Sr] [-f] (<GitHub PR URL>|<Gerrit review
     -f   Force a suffix to be added (uses PID as suffix)
     -p   Specify a pool name (default: $DEFAULT_QUEUE)
     -r   Specify a resource name
+    -n   Do not launch the dci-pipeline command.
     -h   Print this help
 EOF
     exit 1
@@ -97,6 +98,11 @@ if [ "$1" = "-f" ]; then
 else
     JOBSUFFIX=-$(echo "$@"|md5sum|cut -f1|cut -f1 -d ' ')
     DIR=
+fi
+
+if [ "$1" = "-n" ]; then
+    LAUNCHER=echo
+    shift
 fi
 
 CHANGEID=$1
@@ -283,6 +289,9 @@ if [ -n "$REQS" ]; then
     virtualenv --system-site-packages .venv
     . .venv/bin/activate
 
+    pip install pip --upgrade
+    pip install pyopenssl --upgrade
+
     # substitute dependencies from the changes into requirements.txt
     for req in $REQS; do
         reqdir=$(dirname $req)
@@ -300,7 +309,7 @@ if [ -n "$REQS" ]; then
 
     # install python dependencies into the virtualenv
     for req in $REQS; do
-        pip install -I -r $req
+        pip install -U -I -r $req
         cd $(dirname $req)
         python setup.py develop || :
         cd -

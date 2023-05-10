@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Red Hat, Inc.
+# Copyright (C) 2020-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -123,12 +123,12 @@ class TestMain(unittest.TestCase):
         )
 
     def test_overload_dicts_replace_list_search(self):
-        overload = {"components": ["ocp?name:12", "ose-tests"]}
+        overload = {"components": ["ocp?version:12", "ose-tests"]}
         jobdef = {"components": ["ocp", "cnf-tests"], "topic": "OCP-4.4"}
         self.assertEqual(
             overload_dicts(overload, jobdef),
             {
-                "components": ["ocp?name:12", "cnf-tests", "ose-tests"],
+                "components": ["ocp?version:12", "cnf-tests", "ose-tests"],
                 "topic": "OCP-4.4",
             },
         )
@@ -239,9 +239,9 @@ class TestMain(unittest.TestCase):
         self.assertEqual(jobdefs[0]["ansible_extravars"], {"var": 43, "var2": 42})
 
     def test_extract_tags(self):
-        query = "tags:build:dev,daily&name:4.11.41".split("&")
+        query = "tags:build:dev,daily&version:4.11.41".split("&")
         tags, others = extract_tags(query)
-        self.assertEqual(others, ["name:4.11.41"])
+        self.assertEqual(others, ["version:4.11.41"])
         self.assertEqual(tags, ["build:dev,daily"])
         build_tags, other_tags = extract_build_tags(tags)
         self.assertEqual(build_tags, ["dev"])
@@ -250,9 +250,9 @@ class TestMain(unittest.TestCase):
         self.assertEqual(build_list, ["dev", "candidate", "ga"])
 
     def test_extract_tags2(self):
-        query = "tags:ocp-vanilla-4.8-ok,build:dev&name:ose-tests-20200628".split("&")
+        query = "tags:ocp-vanilla-4.8-ok,build:dev&version:20200628".split("&")
         tags, others = extract_tags(query)
-        self.assertEqual(others, ["name:ose-tests-20200628"])
+        self.assertEqual(others, ["version:20200628"])
         self.assertEqual(tags, ["ocp-vanilla-4.8-ok,build:dev"])
         build_tags, other_tags = extract_build_tags(tags)
         self.assertEqual(build_tags, ["dev"])

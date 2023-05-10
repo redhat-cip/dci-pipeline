@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Red Hat, Inc.
+# Copyright (C) 2021-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -43,7 +43,7 @@ def test_dci_agent_ctl():
     rc = main(
         [
             "dci-agent-ctl",
-            "openshift-vanilla:components=ocp=ocp-4.8.0-0.nightly-20200703",
+            "openshift-vanilla:components=ocp=4.8.0-0.nightly-20200703",
             p("settings.yml"),
         ]
     )
@@ -56,7 +56,7 @@ def test_dci_agent_ctl():
     ocp_component = [comp for comp in jobs2[0]["components"] if comp["type"] == "ocp"]
     assert (
         len(ocp_component) == 1
-        and ocp_component[0]["name"] == "ocp-4.8.0-0.nightly-20200703"
+        and ocp_component[0]["version"] == "4.8.0-0.nightly-20200703"
     )
 
 

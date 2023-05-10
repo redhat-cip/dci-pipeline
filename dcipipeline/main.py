@@ -404,7 +404,7 @@ def get_components(context, jobdef, topic_id, tag=None):
         else:
             if "=" in c_type:
                 c_type, c_name = c_type.split("=", 1)
-                where_query = "type:%s,name:%s" % (c_type, c_name)
+                where_query = "type:%s,version:%s" % (c_type, c_name)
             else:
                 where_query = "type:%s" % c_type
             where_query = (

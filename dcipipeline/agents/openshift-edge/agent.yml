@@ -51,7 +51,8 @@
 
     - name: 'Create git repo component'
       dci_component:
-        name: "Edgy_v1_baremetal"
+        display_name: "Edgy_v1_baremetal"
+        version: "sha1"
         team_id: "{{ job_info['job']['team_id'] }}"
         topic_id: "{{ job_info['job']['topic_id'] }}"
         type: edgy

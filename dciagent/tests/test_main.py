@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Red Hat, Inc.
+# Copyright (C) 2021-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,6 +17,7 @@ import os
 import unittest
 
 import yaml
+
 import dciagent.main as main
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -53,8 +54,8 @@ class TestMain(unittest.TestCase):
         self.assertEqual(
             pipelines[0]["components"],
             [
-                "ocp?name:ocp-4.8.0-0.nightly-20200701",
-                "ose-tests?tags:ocp-vanilla-4.8-ok&name:ose-tests-20200628",
+                "ocp?version:4.8.0-0.nightly-20200701",
+                "ose-tests?tags:ocp-vanilla-4.8-ok&version:20200628",
                 "cnf-tests",
             ],
         )

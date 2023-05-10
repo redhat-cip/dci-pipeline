@@ -410,12 +410,16 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
         QUEUE_OPT="$NAME:configuration=$DCI_QUEUE"
     fi
     ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
+    if [ -x "$PWD/.venv/bin/python3" ]; then
+        ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars=ansible_playbook_python:$PWD/.venv/bin/python3"
+    fi
 done
 
 if [ -z "$SUFFIX" ]; then
     # activate the virtualenv created by the dci-pipeline-check command if present
-    if [ -d "$PWD/.venv/bin" ]; then
+    if [ -x "$PWD/.venv/bin/python3" ]; then
         . "$PWD/.venv/bin/activate"
+        sed -i -e '/interpreter_python/d' ansible.cfg
     fi
 
     if [ -d python-dciclient ]; then

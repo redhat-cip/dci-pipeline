@@ -21,8 +21,8 @@
     ocp_comp: ocp_component_id
   topic: OCP-4.8
   components:
-    - "ocp=ocp-4.8.0-0.nightly-20200701"
-    - "ose-tests?tags:ocp-vanilla-4.8-ok,build:dev&name:ose-tests-20200628"
+    - "ocp?version:4.8.0-0.nightly-20200701"
+    - "ose-tests?tags:ocp-vanilla-4.8-ok,build:dev&version:20200628"
     - cnf-tests
   comment: debugging comment
   success_tag: ocp-vanilla-4.8-simple-ok

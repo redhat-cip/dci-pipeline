@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2022 Red Hat, Inc
+# Copyright (C) 2021-2023 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -42,7 +42,7 @@ def parse_arguments(args, environment={}):
             "(https://docs.distributed-ci.io/dci-pipeline/#how-to-see-components-diff-between-two-pipelines)"
         ),
     )
-    dci_context.parse_arguments(p, args, environment)
+    dci_context.parse_auth_arguments(p, environment)
     p.add_argument(
         "--job_id_1",
         help="First job id",
