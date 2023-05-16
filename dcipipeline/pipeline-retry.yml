@@ -16,4 +16,6 @@
       - ose-tests
       - cnf-tests
     success_tag: ocp-vanilla-4.8-ok
-    fallback_last_success: ocp-vanilla-4.8-ok
+    fallback_last_success:
+      - ocp-vanilla-4.8-ok
+      - ocp?build:dev

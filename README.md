@@ -194,7 +194,7 @@ an example on how to use it:
 
 If you want the job to restart on failure to the last known good
 components, you can specify `fallback_last_success` to lookup
-components with this tag. This is useful to be sure to have a
+components with these tags. This is useful to be sure to have a
 successful job for a group even when a new delivery is broken to
 continue testing the next layers in the pipeline. Example:
 
@@ -207,9 +207,14 @@ continue testing the next layers in the pipeline. Example:
     topic: OCP-4.5
     components:
       - ocp
+      - cnf
     success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.5-ok
+    fallback_last_success:
+      - ocp-vanilla-4.5-ok
+      - ocp?build:ga
 ```
+
+In this example, when a fallback happens, `dci-pipeline` looks up the `ocp-vanilla-4.5-ok` and `build:ga` tags for the `ocp` component and only the `ocp-vanilla-4.5-ok` tag for the `cnf` component.
 
 ### Passing environment variables
 

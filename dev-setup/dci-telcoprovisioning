@@ -155,7 +155,7 @@ def associate_product_to_team(product_id, team_id):
 
 def create_component(name, version, topic_id, tag=None, team_id=None, dev=True):
     data = {
-        "display_name": name,
+        "display_name": f"{name.upper()} {version}",
         "version": version,
         "type": name,
         "topic_id": topic_id,
@@ -329,19 +329,20 @@ def main():
 
     # Create OCP components
     ocp48_components = (
-        ("ocp", "4.8.0-0.nightly-20200701", "ocp-vanilla-4.8-ok"),
-        ("ose-tests", "20200628", "ocp-vanilla-4.8-ok"),
-        ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok"),
+        ("ocp", "4.8.0-0.nightly-20200701", "ocp-vanilla-4.8-ok", True),
+        ("ose-tests", "20200628", "ocp-vanilla-4.8-ok", False),
+        ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok", False),
     )
-    for name, version, tag in ocp48_components:
-        create_component(name, version, topic["OCP-4.8"]["id"], tag=tag)
+    for name, version, tag, dev in ocp48_components:
+        create_component(name, version, topic["OCP-4.8"]["id"], tag=tag, dev=dev)
 
     ocp48_components_2 = (
-        ("ocp", "4.8.0-0.nightly-20200703"),
-        ("ose-tests", "20200703"),
+        ("ocp", "4.8.0-0.nightly-20200703", True),
+        ("ose-tests", "20200703", False),
+        ("cnf-tests", "20200728", False),
     )
-    for name, version in ocp48_components_2:
-        create_component(name, version, topic["OCP-4.8"]["id"])
+    for name, version, dev in ocp48_components_2:
+        create_component(name, version, topic["OCP-4.8"]["id"], dev=dev)
 
     ocp49_components = (
         ("ocp", "4.9.0-0.nightly-20200701"),
