@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2022 Red Hat, Inc
+# Copyright (C) 2020-2023 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -515,7 +515,13 @@ class TestQueue(unittest.TestCase):
         with open(os.path.join(self.queue_dir, res), "w") as f:
             f.write("dcipipeline.main - Scheduled DCI job %s\n" % job_id)
             f.write(
-                "dcipipeline.main - Setting tag job:%s on job %s\n" % (job_name, job_id)
+                "dcipipeline.main - INFO - running jobdef: %s with inventory"
+                "/var/lib/dci/inventories/clusterX"
+                "private_data_dir=/var/lib/dci-pipeline/%s/%s "
+                "env={'ANSIBLE_CALLBACK_PLUGINS': '/usr/share/dci/callback',"
+                "'JUNIT_TEST_CASE_PREFIX': 'test_', 'JUNIT_TASK_CLASS': 'yes',"
+                "'JUNIT_OUTPUT_DIR': '/tmp/dci-pipeline-tmpdirX'}"
+                % (job_name, job_name, job_id)
             )
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(main.main(["dci-queue", "add-resource", "8nodes", res]), 0)

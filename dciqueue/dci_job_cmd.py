@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022 Red Hat, Inc
+# Copyright (C) 2022-2023 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -50,9 +50,8 @@ def execute_command(args):
         log.error("No log file found in (pool/id): %s/%s\n" % (args.pool, args.id))
         return 1
 
-    jobs = []
     dci_pipeline_job_id_regex = re.compile(
-        r"Setting tag job:([\w-]+) on job ([0-9a-f-]+)$"
+        r"running jobdef: ([\w-]+) with.*/([0-9a-f-]+) .*$"
     )
     dci_check_change_job_id_regex = re.compile(
         r'^changed: \[[\w-]+\] => (\{"changed": true, "job":.+\})$'
@@ -61,17 +60,19 @@ def execute_command(args):
     with open(logfile, "r") as f:
         lines = f.readlines()
 
+    jobs = {}
     for line in lines:
         m = dci_pipeline_job_id_regex.search(line)
         if m:
-            jobs.append("%s:%s" % (m.group(1), m.group(2)))
+            jobs[m.group(2)] = m.group(1)
         m = dci_check_change_job_id_regex.search(line)
         if m:
             j = json.loads(m.group(1))
-            jobs.append("%s:%s" % (j["job"].get("name"), j["job"].get("id")))
+            jobs[j["job"].get("id")] = j["job"].get("name")
 
     if jobs:
-        _ = sys.stdout.write("\n".join(list(set(jobs))) + "\n")
+        for job in jobs:
+            sys.stdout.write("%s:%s\n" % (jobs[job], job))
     else:
         sys.stderr.write(
             "No DCI job IDs found in (pool/id): %s/%s\n" % (args.pool, args.id)
@@ -82,4 +83,4 @@ def execute_command(args):
     return 0
 
 
-# info_cmd.py ends here
+# dci_job_cmd.py ends here
