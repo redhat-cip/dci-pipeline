@@ -22,9 +22,10 @@ for userfile in $(ls -A $HOME); do
     mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw"
 done
 
-set -x
+# Consever logs
+mounts="$mounts -v /var/consoles/:/var/consoles/:ro"
 
-podman run --rm --security-opt label=disable --privileged --user=root --workdir=${HOME} $mounts \
+podman run --rm --security-opt label=disable --privileged --user=root --pull=newer --workdir=${HOME} $mounts \
        "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
        dci-pipeline "$@"
 
