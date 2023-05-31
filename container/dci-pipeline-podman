@@ -23,7 +23,7 @@ for userfile in $(ls -A $HOME); do
 done
 
 # Consever logs
-mounts="$mounts -v /var/consoles/:/var/consoles/:ro"
+mounts="$mounts -v /var/consoles/:/var/consoles/:rw"
 
 podman run --rm --security-opt label=disable --privileged --user=root --pull=newer --workdir=${HOME} $mounts \
        "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
