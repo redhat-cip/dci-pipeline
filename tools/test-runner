@@ -235,10 +235,10 @@ for arg in "$@"; do
             if [ ! -r $pipeline ]; then
                 error "Unable to find $arg pipeline"
             fi
-            # remove succes_tag and fallback_last_success lines from
+            # remove succes_tag and change fallback_last_success lines from
             # the pipelines to be sure the jobs will not tag the
             # components and launch fallback jobs
-            sed -e '/success_tag\|fallback_last_success/d' < $pipeline > $PWD/$(basename $pipeline)
+            sed -e '/success_tag/d' -e 's/fallback_last_success/allback_last_success/' < $pipeline > $PWD/$(basename $pipeline)
             pipeline="$PWD/$(basename $pipeline)"
             if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-agent/dci-openshift-agent.yml' $pipeline; then
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"

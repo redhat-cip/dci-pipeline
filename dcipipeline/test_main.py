@@ -21,7 +21,10 @@ import mock
 from dcipipeline.main import (
     extract_build_tags,
     extract_tags,
-    get_build_list,
+    filter_type_tags,
+    generate_and_query_clause,
+    generate_query,
+    generate_query_from_tags,
     get_components,
     get_config,
     get_prev_jobdefs,
@@ -244,10 +247,8 @@ class TestMain(unittest.TestCase):
         self.assertEqual(others, ["version:4.11.41"])
         self.assertEqual(tags, ["build:dev,daily"])
         build_tags, other_tags = extract_build_tags(tags)
-        self.assertEqual(build_tags, ["dev"])
+        self.assertEqual(build_tags, ["build:dev"])
         self.assertEqual(other_tags, ["daily"])
-        build_list = get_build_list(build_tags[0])
-        self.assertEqual(build_list, ["dev", "candidate", "ga"])
 
     def test_extract_tags2(self):
         query = "tags:ocp-vanilla-4.8-ok,build:dev&version:20200628".split("&")
@@ -255,10 +256,54 @@ class TestMain(unittest.TestCase):
         self.assertEqual(others, ["version:20200628"])
         self.assertEqual(tags, ["ocp-vanilla-4.8-ok,build:dev"])
         build_tags, other_tags = extract_build_tags(tags)
-        self.assertEqual(build_tags, ["dev"])
+        self.assertEqual(build_tags, ["build:dev"])
         self.assertEqual(other_tags, ["ocp-vanilla-4.8-ok"])
-        build_list = get_build_list(build_tags[0])
-        self.assertEqual(build_list, ["dev", "candidate", "ga"])
+
+    def test_filter_type_tags(self):
+        self.assertEqual(filter_type_tags(["ocp?toto"], "ocp"), ["toto"])
+
+    def test_generate_and_query_clause_simple(self):
+        self.assertEqual(
+            generate_and_query_clause(["status:failure"]), ",eq(status,failure)"
+        )
+
+    def test_generate_and_query_clause_multiple(self):
+        self.assertEqual(
+            generate_and_query_clause(["status:failure", "state:active"]),
+            ",eq(status,failure),eq(state,active)",
+        )
+
+    def test_generate_and_query_clause_none(self):
+        self.assertEqual(generate_and_query_clause([]), "")
+
+    def test_generate_query_from_tags_empty(self):
+        self.assertEqual(generate_query_from_tags([], [], "ocp"), "")
+
+    def test_generate_query_from_tags(self):
+        self.assertEqual(
+            generate_query_from_tags(["ocp?ocp_tag", "other_tag"], [], "ocp"),
+            ",contains(tags,ocp_tag),contains(tags,other_tag)",
+        )
+
+    def test_generate_query_from_tags_duplicate(self):
+        self.assertEqual(
+            generate_query_from_tags(
+                ["ocp?ocp_tag", "other_tag", "build:nightly"], ["build:dev"], "ocp"
+            ),
+            ",contains(tags,ocp_tag),contains(tags,other_tag),or(contains(tags,build:dev),contains(tags,build:candidate),contains(tags,build:ga))",
+        )
+
+    def test_generate_query(self):
+        self.assertEqual(
+            generate_query("ocp", []),
+            "and(eq(type,ocp))",
+        )
+
+    def test_generate_query_fallback(self):
+        self.assertEqual(
+            generate_query("ocp", ["fallback"]),
+            "and(eq(type,ocp),contains(tags,fallback))",
+        )
 
 
 if __name__ == "__main__":

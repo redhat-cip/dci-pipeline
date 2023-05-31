@@ -28,6 +28,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.objects import AnsibleSequence
 from dciclient.v1.api import component as dci_component
 from dciclient.v1.api import context as dci_context
 from dciclient.v1.api import file as dci_file
@@ -275,9 +276,9 @@ def build_pipeline_user_context(dci_credentials):
 
 def is_jobdef_with_fixed_components(jobdef):
     for component_type in jobdef["components"]:
-        if "=" in component_type:
-            return True
-    return False
+        if "=" not in component_type:
+            return False
+    return True
 
 
 def filter2(li, func):
@@ -300,122 +301,143 @@ def extract_build_tags(fields):
     build_tags = []
     other_tags = []
     for field in fields:
-        y, n = filter2(field.split(","), lambda x: x.startswith("build:"))
+        y, n = filter2(field.split(","), lambda x: x in ORDERED_TAGS)
         build_tags += y
         other_tags += n
-    return [t[6:] for t in build_tags], other_tags
+    return build_tags, other_tags
 
 
-def get_build_list(build):
-    li = ["nightly", "dev", "candidate", "ga"]
-    return li[li.index(build) :]
+def filter_type_tags(fields, c_type):
+    ret = []
+    for field in fields:
+        if "?" in field:
+            tag_type, tag = field.split("?", 1)
+            if tag_type == c_type:
+                ret.append(tag)
+        else:
+            ret.append(field)
+    return ret
 
 
-def get_comp(context, topic_id, c_type, where_query, error=True):
+ORDERED_TAGS = ["build:nightly", "build:dev", "build:candidate", "build:ga"]
+
+
+def generate_tags_query_clause(op, tags, nested=""):
+    if len(tags) > 0:
+        if op:
+            return (
+                f",{op}(contains(tags,"
+                + "),contains(tags,".join(tags)
+                + (f"){nested})" if nested != "" else "))")
+            )
+        else:
+            return (
+                ",contains(tags,"
+                + "),contains(tags,".join(tags)
+                + (f"){nested}" if nested != "" else ")")
+            )
+    else:
+        return nested
+
+
+def generate_query_from_tags(fallback_tags, build_tags, c_type):
+    extra_build_tags, tags = extract_build_tags(filter_type_tags(fallback_tags, c_type))
+    build_tags += extra_build_tags
+    if len(build_tags) > 0:
+        idx = max([ORDERED_TAGS.index(tag) for tag in build_tags])
+        build_tags = ORDERED_TAGS[idx:]
+    return generate_tags_query_clause(
+        None, tags, generate_tags_query_clause("or", build_tags)
+    )
+
+
+def generate_and_query_clause(fields):
+    if len(fields) > 0:
+        eqs = ["eq(" + ",".join(f.split(":", 1)) + ")" for f in fields]
+        if len(fields) > 1:
+            return "," + ",".join(eqs)
+        else:
+            return "," + eqs[0]
+    else:
+        return ""
+
+
+def generate_query(c_type, fallback_tags):
+    c_type = c_type.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
+    if "?" in c_type:
+        c_type, c_query = c_type.split("?", 1)
+        c_query_tags, c_query_fields = extract_tags(c_query.split("&"))
+        c_query_build_tags, c_query_other_tags = extract_build_tags(
+            c_query_tags + fallback_tags
+        )
+        # "type:%s,%s" % (c_type, ",".join(c_query_fields))
+        query_clause = (
+            f"and(eq(type,{c_type}){generate_and_query_clause(c_query_fields)}"
+            + generate_query_from_tags(c_query_other_tags, c_query_build_tags, c_type)
+            + ")"
+        )
+    else:
+        if "=" in c_type:
+            c_type, c_version = c_type.split("=", 1)
+            prefix = f"and(eq(type,{c_type}),eq(version,{c_version})"
+        else:
+            prefix = f"and(eq(type,{c_type})"
+        query_clause = (
+            prefix + generate_query_from_tags(fallback_tags, [], c_type) + ")"
+        )
+    return query_clause
+
+
+def get_components(context, jobdef, topic_id, fallback_tags):
+    components = []
+    if fallback_tags and type(fallback_tags) not in (list, AnsibleSequence):
+        fallback_tags = [fallback_tags]
+    if "components" not in jobdef:
+        jobdef["components"] = []
+    for c_type in jobdef["components"]:
+        query_clause = generate_query(c_type, fallback_tags)
+        comp = get_comp(context, topic_id, c_type, None, query=query_clause)
+        if comp:
+            components.append(comp)
+    return components, jobdef
+
+
+def get_comp(context, topic_id, c_type, where_clause, error=True, query=None):
     comp = None
+    log.info(
+        f"get_comp topic_id={topic_id} c_type={c_type} where_clause={where_clause} query={query}"
+    )
     resp = dci_topic.list_components(
-        context, topic_id, limit=1, offset=0, sort="-released_at", where=where_query
+        context,
+        topic_id,
+        limit=1,
+        offset=0,
+        sort="-released_at",
+        where=where_clause,
+        query=query,
     )
     if resp.status_code == 200:
         log.info(
-            "Got comp query result: %s[%s]: %s" % (c_type, where_query, resp.json())
+            "Got comp query result: %s[%s]: %s"
+            % (
+                c_type,
+                where_clause,
+                [f"{c['type']}={c['version']}" for c in resp.json()["components"]],
+            )
         )
         if resp.json()["_meta"]["count"] > 0:
             comp = resp.json()["components"][0]
         else:
             if error:
                 log.error(
-                    "No %s[%s] component, topic_id %s" % (c_type, where_query, topic_id)
+                    "No %s[%s] component, topic_id %s"
+                    % (c_type, where_clause, topic_id)
                 )
     else:
         log.error(
-            "Unable to fetch component %s[%s]: %s" % (c_type, where_query, resp.text)
+            "Unable to fetch component %s[%s]: %s" % (c_type, where_clause, resp.text)
         )
     return comp
-
-
-def get_component_by_build(
-    context,
-    topic_id,
-    c_type,
-    c_query_others,
-    c_query_build_tags,
-    c_query_other_tags,
-    tag,
-):
-    comp = None
-
-    if tag:
-        c_query_other_tags.append(tag)
-
-    # No build:<tag> so looking for one component only
-    if c_query_build_tags == []:
-        where_query = ",".join([f"type:{c_type}"] + c_query_others)
-        comp = get_comp(context, topic_id, c_type, where_query)
-    # loop on build:<tag> that are superior or equal to the one provided
-    else:
-        comps = []
-        for build_tag in get_build_list(c_query_build_tags[-1]):
-            build_tag = "build:" + build_tag
-            where_query = ",".join(
-                [f"type:{c_type}"]
-                + c_query_others
-                + ["tags:" + t for t in (c_query_other_tags + [build_tag])]
-            )
-            comp = get_comp(context, topic_id, c_type, where_query, False)
-            if comp:
-                comps.append(comp)
-        sorted(comps, key=lambda c: c["released_at"])
-        log.info(f"sorted components: {comps}")
-        if len(comps) > 0:
-            comp = comps[-1]
-
-    log.info(f"Selected component {comp}")
-    return comp
-
-
-def get_components(context, jobdef, topic_id, tag=None):
-    components = []
-    if "components" not in jobdef:
-        jobdef["components"] = []
-    for component_type in jobdef["components"]:
-        c_type = component_type
-        c_name = ""
-        where_query = "type:%s%s" % (c_type, (",tags:%s" % tag) if tag else "")
-        if "?" in c_type:
-            c_type = c_type.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
-            c_type, c_query = c_type.split("?", 1)
-            c_query_tags, c_query_others = extract_tags(c_query.split("&"))
-            log.info(f"{c_query_tags} {c_query_others}")
-            c_query_build_tags, c_query_other_tags = extract_build_tags(c_query_tags)
-            c_query_fields = c_query_other_tags + c_query_others
-            where_query = "type:%s,%s" % (c_type, ",".join(c_query_fields))
-            comp = get_component_by_build(
-                context,
-                topic_id,
-                c_type,
-                c_query_others,
-                c_query_build_tags,
-                c_query_other_tags,
-                tag,
-            )
-            if comp:
-                components.append(comp)
-        else:
-            if "=" in c_type:
-                c_type, c_name = c_type.split("=", 1)
-                where_query = "type:%s,version:%s" % (c_type, c_name)
-            else:
-                where_query = "type:%s" % c_type
-            where_query = (
-                where_query.replace("%3a", ":").replace("%3f", "?").replace("%26", "&")
-            )
-            if tag:
-                where_query = f"{where_query},tags:{tag}"
-            comp = get_comp(context, topic_id, c_type, where_query)
-            if comp:
-                components.append(comp)
-    return components, jobdef
 
 
 def get_topic_id(context, jobdef):
@@ -466,7 +488,7 @@ def schedule_job(
     jobdef,
     remoteci_context,
     pipeline_user_context,
-    tag=None,
+    tags=[],
     prev_components=None,
     previous_job_id=None,
     pipeline_id=None,
@@ -476,7 +498,7 @@ def schedule_job(
         % (
             jobdef["name"],
             jobdef["topic"],
-            " with tag %s" % tag if tag else "",
+            " with tags %s" % tags if tags else "",
             previous_job_id,
             pipeline_id,
         )
@@ -488,7 +510,7 @@ def schedule_job(
     user_context = remoteci_context
     if pipeline_user_context:
         user_context = pipeline_user_context
-    components, jobdef = get_components(user_context, jobdef, topic_id, tag)
+    components, jobdef = get_components(user_context, jobdef, topic_id, tags)
 
     if len(jobdef["components"]) != len(components):
         log.error(
@@ -497,17 +519,17 @@ def schedule_job(
         return None
 
     if prev_components:
-        prev_comp_names = [c["name"] for c in prev_components]
+        prev_comp_versions = [c["version"] for c in prev_components]
         for comp in components:
-            if comp["name"] not in prev_comp_names:
+            if comp["version"] not in prev_comp_versions:
                 log.info(
                     "Found a different component to retry %s from %s"
-                    % (comp["name"], prev_comp_names)
+                    % (comp["version"], prev_comp_versions)
                 )
                 break
         else:
             log.info(
-                "No different components with tag %s. Not restarting the job." % tag
+                "No different components with tags %s. Not restarting the job." % tags
             )
             return None
 
@@ -568,9 +590,11 @@ def add_tags_to_job(job_id, tags, context):
         dci_job.add_tag(context, job_id, tag)
 
 
-def add_tag_to_component(component_id, tag, context):
-    log.info("Setting tag %s on component %s" % (tag, component_id))
-    dci_component.add_tag(context, component_id, tag)
+def add_tag_to_component(component, tag, context):
+    log.info(
+        f"Setting tag {tag} on component {component['id']} {component['type']}={component['version']}"
+    )
+    dci_component.add_tag(context, component["id"], tag)
 
 
 def get_list(jobdef, key):
@@ -892,7 +916,7 @@ def get_config(args):
 def set_success_tag(jobdef, job_info, context):
     if "success_tag" in jobdef:
         for component in job_info["job"]["components"]:
-            add_tag_to_component(component["id"], jobdef["success_tag"], context)
+            add_tag_to_component(component, jobdef["success_tag"], context)
 
 
 def lookup_jobdef_by_outputs(key, jobdefs):
@@ -1070,7 +1094,7 @@ def run_jobdefs(
                 and not is_jobdef_with_fixed_components(jobdef)
                 and not cancel_cb()
             ):
-                log.info("Retrying with tag %s" % jobdef["fallback_last_success"])
+                log.info("Retrying with tags %s" % jobdef["fallback_last_success"])
                 jobdef["failed_job_info"] = jobdef["job_info"]
                 jobdef["job_info"] = schedule_job(
                     jobdef,

@@ -59,7 +59,7 @@
 
     - name: get OCP version from job_info
       set_fact:
-        ocp_version: "{{ item.name }}"
+        ocp_version: "{{ item.version }}"
       with_items: "{{ job_info.job.components }}"
       when: item["type"] == "ocp"
 
@@ -93,8 +93,8 @@
 
     - name: fail on ocp-4.8-4.8.0-0.nightly-20200703
       fail:
-        msg: 'ocp-4.8.0-0.nightly-20200703 is buggy'
-      when: ocp_version == "ocp-4.8.0-0.nightly-20200703"
+        msg: 'ocp 4.8.0-0.nightly-20200703 is buggy'
+      when: ocp_version == "4.8.0-0.nightly-20200703"
 
 - name: Broken tasks
   hosts: runner
