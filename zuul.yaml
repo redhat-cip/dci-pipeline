@@ -16,6 +16,7 @@
       - dci-openshift-agent
       - dci-openshift-app-agent
       - ansible-collection-community-kubernetes
+      - ansible-collection-community-general
       - ansible-collection-community-libvirt
       - ansible-collection-containers-podman
       - ansible-role-dci-podman
@@ -47,6 +48,7 @@
       - dci-openshift-app-agent
       - dci-pipeline
       - ansible-collection-community-kubernetes
+      - ansible-collection-community-general
       - ansible-collection-community-libvirt
       - ansible-collection-containers-podman
       - ansible-role-dci-podman
@@ -72,6 +74,7 @@
       - dci-openshift-app-agent
       - dci-pipeline
       - ansible-collection-community-kubernetes
+      - ansible-collection-community-general
       - ansible-collection-community-libvirt
       - ansible-collection-containers-podman
       - ansible-role-dci-podman

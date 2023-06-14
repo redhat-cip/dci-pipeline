@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022 Red Hat, Inc.
+# Copyright (C) 2022-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -40,6 +40,7 @@ for dir in dci-ansible \
     dci-openshift-agent \
     dci-openshift-app-agent \
     ansible-collection-community-kubernetes \
+    ansible-collection-community-general \
     ansible-collection-community-libvirt \
     ansible-collection-containers-podman \
     ansible-role-dci-podman \

@@ -8,6 +8,7 @@ agents inside a single container.
 Extract all these git repositories in the same directory:
 
 * ansible-collection-community-kubernetes
+* ansible-collection-community-general
 * ansible-collection-community-libvirt
 * ansible-collection-containers-podman
 * ansible-role-dci-podman
