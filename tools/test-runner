@@ -75,6 +75,12 @@ finish() {
 
         if [ -z "$KILLED" ]; then
             $BASEDIR/send-feedback $DIR "$RESULT from $URL"
+
+            # Send alert for unsuccesful jobs in github repos
+            if [[ " ERROR FAILURE " =~ "${LAST_RESULT} " ]] &&
+               [[ -n "${REPO}" ]]; then
+                $BASEDIR/alert "${REPO}" "${RESULT} from ${URL}"
+            fi
         else
             $BASEDIR/send-feedback $DIR "ERROR JOB KILLED"
         fi
