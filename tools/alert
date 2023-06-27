@@ -49,7 +49,7 @@ fi
 if [[ "${MONITORED_REPOS[*]} " =~ " ${REPO} " ]]; then
     curl \
     --silent \
-    --header 'Content-type: application/json; charset=UTF-8' \
+    --header "Content-type: application/json; charset=UTF-8" \
     --data '{"text": "'"$*"'"}' \
     "${GCHAT_URL}"
 fi

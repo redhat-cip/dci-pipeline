@@ -21,12 +21,4 @@ include dciqueue/dci-queue.bash_completion
 include requirements.txt
 include sysconfig/*
 include systemd/*
-include tools/common
-include tools/dci-pipeline-check
-include tools/dci-pipeline-schedule
-include tools/extract-dependencies
-include tools/loop_until_failure
-include tools/loop_until_success
-include tools/send-feedback
-include tools/test-runner
-include tools/yaml2json
+include tools/*

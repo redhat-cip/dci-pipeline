@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.3.0
+Version:        0.4.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -90,7 +90,7 @@ install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{na
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
 install -d -m 755 %{buildroot}%{_datadir}/%{name}/
-for tool in extract-dependencies loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
+for tool in alert extract-dependencies loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool-podman
 done
@@ -158,6 +158,7 @@ exit 0
 %{_unitdir}/dci-pipeline.service
 %{_unitdir}/dci-pipeline.timer
 %{_sysconfdir}/sudoers.d/%{name}
+%{_datadir}/%{name}/alert
 %{_datadir}/%{name}/common
 %{_datadir}/%{name}/extract-dependencies
 %{_datadir}/%{name}/loop_until_failure
@@ -175,6 +176,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Tue Jun 27 2023 Tony Garcia <tonyg@redhat.com> 0.4.0-1
+- add alert tool
+
 * Fri Apr 28 2023 Frederic Lepied <flepied@redhat.com> 0.3.0-1
 - requires dci-ansible >= 0.3.1 and dciclient >= 3.1.0 for the new
   fields of components
