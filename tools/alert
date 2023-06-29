@@ -32,7 +32,7 @@ fi
 
 . "$BASEDIR/common$SUFFIX"
 
-REPO=${1}
+REPO=${1/*\/}
 shift
 
 MONITORED_REPOS=(
