@@ -47,11 +47,30 @@ fi
 
 # Only send alerts for monitored repos
 if [[ "${MONITORED_REPOS[*]} " =~ " ${REPO} " ]]; then
-    curl \
+    # Create a thread key to generate a URL link and send it to the thread
+    thread_key=$(tr -dc a-zA-Z0-9 </dev/urandom |
+        tr -d '\\/' |
+        head -c 11
+    )
+    req=$( curl \
     --silent \
     --header "Content-type: application/json; charset=UTF-8" \
     --data '{"text": "'"$*"'"}' \
-    "${GCHAT_URL}"
+    "${GCHAT_URL}&threadKey=${thread_key}&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
+    )
+    space=$(jq -r .space.name <<< "${req}")
+    thread=$(jq -r .thread.name <<< "${req}")
+    if [[ "${thread}" == 'null' ]]; then
+        echo "Failed to send alert to Google Chat"
+        exit 1
+    fi
+
+    thread_url='https://chat.google.com/room/'"${space/*\/}"'/'"${thread/*\/}"
+    curl \
+    --silent \
+    --header "Content-type: application/json; charset=UTF-8" \
+    --data '{"text": "🔗 '"${thread_url}"'", }' \
+    "${GCHAT_URL}&threadKey=${thread_key}&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
 fi
 
 # alert ends here
