@@ -365,6 +365,19 @@ the `GITHUB_SSH_ID` variable to download the pull request using `ssh` or the
 `GITHUB_LOGIN` variable to use `https`. The ssh key needs to be
 without password for the automation to work.
 
+If you use multiple Github accounts for different Github projects, you
+can use the `~/.config/dci-pipeline/config.yaml` or
+`/etc/dci-pipeline/config.yaml` files to define your specific
+configuration. Example:
+
+```YAML
+https://github.com/org/proj:
+    github_token: mytoken
+    github_login: mylogin
+    github_ssh_id: myid
+    git_clone_options: myoption
+```
+
 For dci-pipeline-check to vote like a regular CI system on GitHub, set
 the variable `GITHUB_VOTING_REPOS` to a regexp matching the
 repositories you want to vote on. Your GitHub token needs the rights to

@@ -76,7 +76,7 @@ finish() {
         if [ -z "$KILLED" ]; then
             $BASEDIR/send-feedback $DIR "$RESULT from $URL"
 
-            # Send alert for unsuccesful jobs in github repos
+            # Send alert for unsuccessful jobs in github repos
             if [[ " ERROR FAILURE " =~ "${LAST_RESULT} " ]] &&
                [[ -n "${REPO}" ]]; then
                 $BASEDIR/alert "${REPO}" "${RESULT} from ${URL}"
@@ -246,10 +246,10 @@ for arg in "$@"; do
             # components and launch fallback jobs
             sed -e '/success_tag/d' -e 's/fallback_last_success/allback_last_success/' < $pipeline > $PWD/$(basename $pipeline)
             pipeline="$PWD/$(basename $pipeline)"
-            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-agent/dci-openshift-agent.yml' $pipeline; then
-                OCP_PIPELINES="$OCP_PIPELINES $pipeline"
-            elif grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
+            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
+            else
+                OCP_PIPELINES="$OCP_PIPELINES $pipeline"
             fi
             ALL_PIPELINES="$ALL_PIPELINES $pipeline"
             for NAME in $("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name'); do
@@ -345,7 +345,7 @@ if [ -d dci-openshift-agent ]; then
 fi
 
 if [ -d $PIPELINES_REPO ]; then
-    for pipeline in $OCP_PIPELINES; do
+    for pipeline in $ALL_PIPELINES; do
         sed -i -e "s@$PIPELINES_DIR@$PWD/$PIPELINES_REPO/$PIPELINES_PATH@" $pipeline
     done
 fi

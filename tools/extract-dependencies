@@ -55,19 +55,23 @@ while read line; do
       if [ -n "$pr" -a -n "$proj" ]; then
           echo "Extracting PR $pr from $proj"
 
-          if [ -n "$GITHUB_TOKEN" ]; then
-              curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
+          GITHUB_REPO_TOKEN=$($BASEDIR/get-config-entry "https://github.com/$proj" github_token "$GITHUB_TOKEN")
+          GITHUB_REPO_LOGIN=$($BASEDIR/get-config-entry "https://github.com/$proj" github_login "$GITHUB_LOGIN")
+          GITHUB_REPO_SSH_ID=$($BASEDIR/get-config-entry "https://github.com/$proj" github_ssh_id "$GITHUB_SSH_ID")
+          GIT_REPO_CLONE_OPTIONS=$($BASEDIR/get-config-entry "https://github.com/$proj" git_clone_options "$GIT_CLONE_OPTIONS")
+          if [ -n "$GITHUB_REPO_TOKEN" ]; then
+              curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $GITHUB_REPO_TOKEN" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
           else
               curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$proj/pulls/$pr > $dir-$pr.json
           fi
 
           if [ ! -d $dir ]; then
-              if [ -n "$GITHUB_SSH_ID" ]; then
-                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git clone ${GIT_CLONE_OPTIONS} git@github.com:$proj $dir"
-              elif [ -n "$GITHUB_LOGIN" ] && [ -n "$GITHUB_TOKEN" ]; then
-                  git clone ${GIT_CLONE_OPTIONS} "https://$GITHUB_LOGIN:$GITHUB_TOKEN@github.com/$proj" "$dir"
+              if [ -n "$GITHUB_REPO_SSH_ID" ]; then
+                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_REPO_SSH_ID; git clone ${GIT_REPO_CLONE_OPTIONS} git@github.com:$proj $dir"
+              elif [ -n "$GITHUB_LOGIN" ] && [ -n "$GITHUB_REPO_TOKEN" ]; then
+                  git clone ${GIT_REPO_CLONE_OPTIONS} "https://$GITHUB_REPO_LOGIN:$GITHUB_REPO_TOKEN@github.com/$proj" "$dir"
               else
-                  git clone ${GIT_CLONE_OPTIONS} "https://github.com/$proj" "$dir"
+                  git clone ${GIT_REPO_CLONE_OPTIONS} "https://github.com/$proj" "$dir"
               fi
           fi
 
@@ -77,8 +81,8 @@ while read line; do
           git checkout "$BRANCH"
           # remove old branch if it exists
           git branch -D pr$pr || :
-          if [ -n "$GITHUB_SSH_ID" ]; then
-              ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin pull/$pr/head:pr$pr"
+          if [ -n "$GITHUB_REPO_SSH_ID" ]; then
+              ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_REPO_SSH_ID; git fetch origin pull/$pr/head:pr$pr"
           else
               git fetch origin "pull/$pr/head:pr$pr"
           fi
@@ -87,8 +91,8 @@ while read line; do
               git checkout "$BRANCH"
           else
               git checkout pr$pr
-              if [ -n "$GITHUB_SSH_ID" ]; then
-                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_SSH_ID; git fetch origin $BRANCH"
+              if [ -n "$GITHUB_REPO_SSH_ID" ]; then
+                  ssh-agent bash -c "ssh-add $HOME/.ssh/$GITHUB_REPO_SSH_ID; git fetch origin $BRANCH"
               else
                   git fetch origin "$BRANCH"
               fi

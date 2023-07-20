@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2020-2022 Red Hat, Inc.
+# Copyright (C) 2020-2023 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -54,7 +54,9 @@ for json in $(ls $DIR/*.json); do
             gerrit review -j "$CHANGEID,$PATCHSET"
     # github
     else
-        if [ -z "$GITHUB_TOKEN" ]; then
+        GITHUB_PROJ=$(jq -r .head.repo.full_name $json)
+        GITHUB_REPO_TOKEN=$($BASEDIR/get-config-entry "https://github.com/$GITHUB_PROJ" github_token "$GITHUB_TOKEN")
+        if [ -z "$GITHUB_REPO_TOKEN" ]; then
             continue
         fi
         REPO_NAME=$(jq -r .head.repo.name $json)
@@ -63,7 +65,7 @@ for json in $(ls $DIR/*.json); do
             # doc in https://docs.github.com/en/rest/commits/statuses
             STATUSES_URL=$(jq -r .statuses_url $json)
             if [ -n "$STARTING" ]; then
-                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
             else
                 DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- *//' -e 's/ .*//')
                 DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
@@ -93,7 +95,7 @@ for json in $(ls $DIR/*.json); do
                     *)
                         GITHUB_STATUS=pending;;
                 esac
-                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
             fi
         # non voting, only commenting
         else
@@ -101,7 +103,7 @@ for json in $(ls $DIR/*.json); do
                 continue
             fi
             COMMENTS_URL=$(jq -r .comments_url $json)
-            curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
+            curl -s -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"body\": \"$BODY\"}" "$COMMENTS_URL"
         fi
     fi
 done
