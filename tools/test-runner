@@ -358,6 +358,7 @@ if [ -d dci-openshift-app-agent ]; then
     [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" fake-cnf-pipeline.yml
     [ -r preflight-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" preflight-green-pipeline.yml
     [ -r preflight-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" preflight-pipeline.yml
+    [ -r operator-sdk-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" operator-sdk-pipeline.yml
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
     [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
     # set the playbook on the cnf pipelines
@@ -419,6 +420,9 @@ for NAME in $CNF_NAMES; do
     fi
     if [ -d openshift-preflight ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=preflight_source_dir:$PWD/openshift-preflight"
+    fi
+    if [ -d operator-sdk ]; then
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=operator_sdk_source_dir:$PWD/operator-sdk"
     fi
 done
 
