@@ -401,6 +401,21 @@ for NAME in $CNF_NAMES; do
     fi
     if [ -d cnf-certification-test ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=test_network_function_repo:$PWD"
+        # inject dependencies from other github PR if needed
+        for d in $(sed -n -e 's@\s*github.com/[^/]*/\([^/ ]*\).*@\1@p' cnf-certification-test/go.mod); do
+            if [ -d "$d" ]; then
+                ORIGPKG=$(jq -r .base.repo.html_url $d-*.json|sed -e 's@https://@@')
+                if [ -n "$ORIGPKG" ]; then
+                    GOPKG=$(jq -r .head.repo.html_url $d-*.json|sed -e 's@.*//@@')
+                    BRANCH=$(jq -r .head.ref $d-*.json)
+                    # inject the replace statement at the top of the file
+                    sed -i -e  "s@^\(go .*\)\$@\1\n\nreplace $ORIGPKG => $GOPKG $BRANCH\n@" cnf-certification-test/go.mod
+                    head -15 cnf-certification-test/go.mod
+                    # inject a go mod tiny command into the Makefile to create the correct go.sum
+                    sed -i -e 's@go.mod)"$@go.mod)" \&\& go mod tidy@' cnf-certification-test/Makefile
+                fi
+            fi
+        done
     fi
     if [ -d openshift-preflight ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=preflight_source_dir:$PWD/openshift-preflight"
