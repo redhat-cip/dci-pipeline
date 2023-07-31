@@ -724,6 +724,9 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
         shutil.copy(ansible_cfg, os.path.join(private_data_dir, "ansible.cfg"))
     else:
         generate_ansible_cfg(dci_ansible_dir, private_data_dir)
+    # force the use of the ansible.cfg we just created
+    os.environ["ANSIBLE_CONFIG"] = os.path.join(private_data_dir, "ansible.cfg")
+    envvars["ANSIBLE_CONFIG"] = os.environ["ANSIBLE_CONFIG"]
     log.info(
         "running jobdef: %s%s private_data_dir=%s env=%s"
         % (
