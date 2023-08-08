@@ -422,6 +422,7 @@ description like this:
 
 ```Text
 Build-Depends: https://github.com/dci-labs/pipelines/pull/1
+Depends-On: https://softwarefactory-project.io/r/c/dci-jobs/+/29071
 ```
 
 See this example: <https://softwarefactory-project.io/r/c/dci-pipeline/+/26189>
