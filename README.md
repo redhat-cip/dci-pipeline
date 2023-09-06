@@ -72,6 +72,26 @@ pipeline example:
       - plugin=1.1.1
 ```
 
+### Schedule components by priority tags and age
+
+this feature allows to select more precisely the components based on their tags and their age. Here is an example:
+
+```YAML
+  - name: openshift-vanilla
+  components:
+    - type: ocp
+      priority_tags:
+        - build:ga
+        - build:rc
+        - build:dev
+        - build:nightly
+      max_age: 1
+```
+
+- `type` the component type as usual
+- `max_age` variable indicates the maximum age the component in term of days
+- `priority_tags` this is the list of tags ordered by priority
+
 ### Changing settings from the command line
 
 Any part in the pipeline files can be overridden on the command line

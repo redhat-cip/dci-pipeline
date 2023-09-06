@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
+import datetime
 import json
 import logging
 import os
@@ -388,6 +389,52 @@ def generate_query(c_type, fallback_tags):
     return query_clause
 
 
+def _get_created_after_from_today(days_before):
+    time_of_day = datetime.datetime.today()
+    created_after = time_of_day - datetime.timedelta(days=days_before)
+    return f"{created_after.year}-{created_after.month}-{created_after.day}T00:00:00.000000"
+
+
+def _get_components_by_kw(**kwargs):
+    resp = dci_topic.list_components(**kwargs)
+    if resp.status_code == 200:
+        log.info(
+            "Got components: %s"
+            % (
+                [
+                    f"{c['name']}={c['version']}[{c['type']}]"
+                    for c in resp.json()["components"]
+                ],
+            )
+        )
+        if not resp.json()["_meta"]["count"]:
+            return None
+        return resp.json()["components"]
+    else:
+        log.error("Unable to fetch component: %s" % resp.text)
+    return None
+
+
+def _get_components_by_age_and_tag(context, topic_id, cmp_type, max_age, tag):
+    where = f"type:{cmp_type}"
+    if tag:
+        where += f",tags:{tag}"
+    if max_age:
+        created_after = _get_created_after_from_today(max_age)
+        components = _get_components_by_kw(
+            context=context,
+            id=topic_id,
+            sort="-created_at",
+            where=where,
+            created_after=created_after,
+        )
+    else:
+        components = _get_components_by_kw(
+            context=context, id=topic_id, sort="-created_at", where=where
+        )
+    return components
+
+
 def get_components(context, jobdef, topic_id, fallback_tags):
     components = []
     if fallback_tags and type(fallback_tags) not in (list, AnsibleSequence):
@@ -395,8 +442,33 @@ def get_components(context, jobdef, topic_id, fallback_tags):
     if "components" not in jobdef:
         jobdef["components"] = []
     for c_type in jobdef["components"]:
-        query_clause = generate_query(c_type, fallback_tags)
-        comp = get_comp(context, topic_id, c_type, None, query=query_clause)
+        if isinstance(c_type, dict):
+            if "type" not in c_type:
+                log.error("missing 'type' key")
+                sys.exit(1)
+            cmp_type = c_type["type"]
+            priority_tags = c_type.get("priority_tags", [])
+            max_age = c_type.get("max_age", None)
+            log.info(
+                f"get_comp topic_id={topic_id} cmp_type={cmp_type} priority_tags={priority_tags} max_age={max_age}"
+            )
+            compts = None
+            if not priority_tags:
+                compts = _get_components_by_age_and_tag(
+                    context, topic_id, cmp_type, max_age, None
+                )
+            for tag in priority_tags:
+                compts = _get_components_by_age_and_tag(
+                    context, topic_id, cmp_type, max_age, tag
+                )
+                if compts:
+                    break
+            comp = None
+            if compts and len(compts) > 0:
+                comp = compts[0]
+        else:
+            query_clause = generate_query(c_type, fallback_tags)
+            comp = get_comp(context, topic_id, c_type, None, query=query_clause)
         if comp:
             components.append(comp)
     return components, jobdef
@@ -858,7 +930,11 @@ def overload_dicts(overload, target):
                 for elt in overload[key]:
                     eq_key = elt.replace("?", "=", 1).split("=", 1)[0]
                     for loop in range(len(target[key])):
-                        if (
+                        if isinstance(target[key][loop], dict):
+                            if eq_key == target[key][loop]["type"]:
+                                target[key][loop] = elt
+                                break
+                        elif (
                             target[key][loop].replace("?", "=", 1).split("=", 1)[0]
                             == eq_key
                         ):

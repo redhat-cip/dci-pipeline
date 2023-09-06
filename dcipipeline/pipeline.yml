@@ -21,9 +21,15 @@
     ocp_comp: ocp_component_id
   topic: OCP-4.8
   components:
-    - "ocp?version:4.8.0-0.nightly-20200701"
+    - type: ocp
+      priority_tags:
+        - build:ga
+        - build:rc
+        - build:dev
+        - build:nightly
+      max_age: 1
     - "ose-tests?tags:ocp-vanilla-4.8-ok,build:dev&version:20200628"
-    - cnf-tests
+    - "cnf-tests?version:20200728"
   comment: debugging comment
   success_tag: ocp-vanilla-4.8-simple-ok
   fallback_last_success: ocp-vanilla-4.8-simple-ok

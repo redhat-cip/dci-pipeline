@@ -329,7 +329,7 @@ def main():
 
     # Create OCP components
     ocp48_components = (
-        ("ocp", "4.8.0-0.nightly-20200701", "ocp-vanilla-4.8-ok", True),
+        ("ocp", "4.8.0-0.ga-20200801", "ocp-vanilla-4.8-ok", False),
         ("ose-tests", "20200628", "ocp-vanilla-4.8-ok", False),
         ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok", False),
     )

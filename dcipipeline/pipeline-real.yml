@@ -32,5 +32,4 @@
     - dci
   use_previous_topic: true
   success_tag: fake-cnf-ok
-
 ...
