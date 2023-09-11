@@ -355,10 +355,10 @@ if [ -d dci-openshift-app-agent ]; then
     if [ -z "$SUFFIX" ]; then
         sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-app-agent/plays/@" dci-openshift-app-agent/dci-openshift-app-agent.yml
     fi
-    [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" fake-cnf-pipeline.yml
-    [ -r preflight-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" preflight-green-pipeline.yml
-    [ -r preflight-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" preflight-pipeline.yml
-    [ -r operator-sdk-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/basic_example@" operator-sdk-pipeline.yml
+    [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" fake-cnf-pipeline.yml
+    [ -r preflight-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" preflight-green-pipeline.yml
+    [ -r preflight-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" preflight-pipeline.yml
+    [ -r operator-sdk-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" operator-sdk-pipeline.yml
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
     [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
     # set the playbook on the cnf pipelines
