@@ -16,7 +16,6 @@ RUN set -ex && \
         --exclude container-selinux && \
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf -y install python3-openshift python3-passlib && \
-    dnf clean all && \
     mkdir -p /usr/share/dci /usr/share/ansible/roles /etc/ansible/roles /usr/share/ansible/collections && \
     export ANSIBLE_ROLES_PATH=/usr/share/ansible/roles:/etc/ansible/roles && \
     export ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections && \
@@ -26,7 +25,8 @@ RUN set -ex && \
     chown -R dci-openshift-agent: /var/lib/dci-openshift-agent && \
     sed -i 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+NOPASSWD:\s\+ALL\)/\1/' /etc/sudoers && \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.* && \
-    rm -rf /usr/src/* ~/.cache
+    rm -rf /usr/src/* ~/.cache && \
+    dnf clean all
 
 ARG _REPO_URL="https://raw.githubusercontent.com/containers/podman/main/contrib/podmanimage/stable"
 ADD $_REPO_URL/containers.conf /etc/containers/containers.conf

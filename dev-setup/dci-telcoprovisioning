@@ -117,7 +117,7 @@ def get_teams():
 
 
 def create_team(name):
-    r = post("teams", {"name": name})
+    r = post("teams", {"name": name, "has_pre_release_access": True})
     return r.json()["team"]
 
 
@@ -143,10 +143,6 @@ def create_topic(name, component_types, product, next_topic=None):
         topic["next_topic_id"] = next_topic["id"]
     r = post("topics", topic)
     return r.json()["topic"]
-
-
-def associate_topic_to_team(topic_id, team_id):
-    post("topics/%s/teams" % topic_id, {"team_id": team_id})
 
 
 def associate_product_to_team(product_id, team_id):
@@ -318,14 +314,6 @@ def main():
         # the pipeline user must belongs to every teams
         associate_user_to_team(team_id, pipeline_user_id)
         associate_product_to_team(ocp_id, team_id)
-
-    teams = (rh_telco_ci_id, storage_plugin_telco_ci_id, network_plugin_telco_ci_id)
-    for team_id in teams:
-        associate_topic_to_team(topic["OCP-4.8"]["id"], team_id)
-        associate_topic_to_team(topic["OCP-4.9"]["id"], team_id)
-
-    associate_topic_to_team(topic["OCP-4.8"]["id"], cnf_telco_ci_id)
-    associate_topic_to_team(topic["OCP-4.9"]["id"], cnf_telco_ci_id)
 
     # Create OCP components
     ocp48_components = (
