@@ -298,10 +298,6 @@ else
     fi
 fi
 
-if [ -d baremetal-deploy ]; then
-    sed -i -e "s@\(:\{0,1\}\)[^:]*baremetal_deploy_repo/@\1$PWD/baremetal-deploy/@g" ansible.cfg
-fi
-
 for conf in $(ls -d *config 2> /dev/null); do
     sed -i -e "s@\(:\{0,1\}\)[^:]*$conf/@\1$PWD/$conf/@g" ansible.cfg
 done
@@ -321,7 +317,7 @@ if [ -z "$SUFFIX" ]; then
     done
 
     ANSIBLE_COLLECTIONS_PATHS=
-    for d in $(ls -d ansible-collection-* 2> /dev/null); do
+    for d in $(find . -maxdepth 1 -name 'ansible-collection-*' -type d -exec basename {} \; 2>/dev/null); do
         mkdir -p collections
         LOCAL_COLLECTIONS=$PWD/collections
         export ANSIBLE_COLLECTIONS_PATHS=$LOCAL_COLLECTIONS:/usr/share/ansible/collections
