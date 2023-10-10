@@ -15,6 +15,7 @@
 
 import datetime
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import shutil
@@ -861,24 +862,29 @@ def process_args(args):
         # Allow these syntaxes to overload jobdef settings:
         # <name>:<key>=<value> value can be a list separated by ','
         # <name>:<key>=<subkey>:<value> to return a dict
+        # <name>:<key>={"subkey1":"value1","subkey2":"value2",...},
+        #     a json object returned as a dict
         try:
             overload = {}
             name, rest = arg.split(":", 1)
             key, value = rest.split("=", 1)
-            if ":" in value and value[:7] != "http://" and value[:8] != "https://":
-                res = {}
-                k, v = value.split(":", 1)
-                if "," in v:
-                    res[k] = v.split(",")
-                    if res[k][-1] == "":
-                        res[k] = res[k][:-1]
-                else:
-                    res[k] = v
-                value = res
-            elif "," in value:
-                value = value.split(",")
-                if value[-1] == "":
-                    value = value[:-1]
+            try:
+                value = json.loads(value)
+            except JSONDecodeError:
+                if ":" in value and value[:7] != "http://" and value[:8] != "https://":
+                    res = {}
+                    k, v = value.split(":", 1)
+                    if "," in v:
+                        res[k] = v.split(",")
+                        if res[k][-1] == "":
+                            res[k] = res[k][:-1]
+                    else:
+                        res[k] = v
+                    value = res
+                elif "," in value:
+                    value = value.split(",")
+                    if value[-1] == "":
+                        value = value[:-1]
             dct = overload.get(name, {})
             dct[key] = value
             overload[name] = dct
