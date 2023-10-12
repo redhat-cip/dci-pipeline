@@ -336,8 +336,6 @@ if [ -d dci-openshift-agent ]; then
     for pipeline in $OCP_PIPELINES; do
         sed -i -e "s@ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml@ansible_playbook: $PWD/dci-openshift-agent/dci-openshift-agent.yml@" $pipeline
     done
-    # force to use the roles from the change
-    sed -i -e "s@\(^\s*roles_path\s*=\s*\)@\1$PWD/dci-openshift-agent/common-roles/:$PWD/dci-openshift-agent/roles/:@" ansible.cfg
 fi
 
 if [ -d $PIPELINES_REPO ]; then
