@@ -16,6 +16,21 @@
 
 set -ex
 
+function set_semver() {
+    # Extracted from dci-packaging
+    DATE=$(date --utc +%Y%m%d%H%M)
+    # Retrieve semantic version info for managed projects
+    if [[ -e VERSION ]]; then
+        SEMVER=$(cat VERSION | tr -d "[:space:]")
+    fi
+    # set version in version.py to be consistent with RPM
+    if [[ -v SEMVER ]]; then
+        find . -maxdepth 2 -type f \( -name "version.py" -o -name "setup.py" \) -exec \
+             sed -i "s/SEMVER/${SEMVER}.dev${DATE}/" {} \;
+    fi
+}
+
+
 if [ $# = 0 ]; then
     TAG=dci-pipeline
 else
@@ -32,6 +47,7 @@ fi
 for dir in . ../python-dciclient ../python-dciauth; do
     cd $dir
     rm -rf dist
+    set_semver
     python3 setup.py sdist
     cd -
 done
