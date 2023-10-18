@@ -36,6 +36,10 @@ for dir in . ../python-dciclient ../python-dciauth; do
     cd -
 done
 
+for repo in ansible-collection-redhatci-ocp ; do
+    git clone https://github.com/redhatci/${repo}.git ../${repo}
+done
+
 for dir in dci-ansible \
     dci-openshift-agent \
     dci-openshift-app-agent \
@@ -43,6 +47,7 @@ for dir in dci-ansible \
     ansible-collection-community-general \
     ansible-collection-community-libvirt \
     ansible-collection-containers-podman \
+    ansible-collection-redhatci-ocp \
     ansible-role-dci-podman \
     ansible-role-dci-sync-registry \
     ; do
