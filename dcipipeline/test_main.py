@@ -98,6 +98,11 @@ class TestMain(unittest.TestCase):
         self.assertEqual(args, [])
         self.assertEqual(result, [{"jobdef": {"key": "https://lwn.net/"}}])
 
+    def test_process_args_json(self):
+        args = ["dci-pipeline", 'jobdef:key={"subkey":"value"}']
+        result, args, _ = process_args(args)
+        self.assertEqual(result, [{"jobdef": {"key": {"subkey": "value"}}}])
+
     def test_process_args_pipeline_name(self):
         args = ["dci-pipeline", "@pipeline:name=my-pipeline"]
         _, _, opts = process_args(args)

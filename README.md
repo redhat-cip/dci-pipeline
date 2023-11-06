@@ -317,7 +317,46 @@ You can specify extra Ansible variable files using the
       - ocp
 ```
 
-### previous topic
+### Feeding variables from the command line
+
+You can feed variables from the command line to the dci-pipeline-schedule and dci-pipeline-check commands that we explain below.
+
+Variables set this way take the highest precedence and override those set in the pipeline definition files.
+
+Each variable is set with a string of the format:
+
+```<jobdef name>:<key>=<value>```
+
+Where:
+
+* **jobdef name:** is the name set in the pipeline stage defintion.
+
+* **key:** is the top name of the stage variable you are overriding. For instance: *topic* or *components*. 
+
+* **value:** is the value you want to set.
+
+On the other hand, several formats are accepted for the value that will be handled differently:
+
+* **<jobdef name>:<key>=<value>** just a literal text string. For instance, when defining the topic.
+
+* **<jobdef name>:<key>=<value1>,<value2>,...** a command-separated list of values with no blank spaces between items is parsed as a string. To define a one element list, the value must be followed by a comma, even if there's not second element. For instance, when defining more than one variables file.
+
+* **<jobdef name>:<key>=<subkey>:<value>** a value comprising two strings separated by a colon is parsed as a dictionary with a subkey and a value. If the subkey already exists in the pipeline manifest, it is overriden. If it does not exists, the subkey is added under the key, so any other subkey already existing is kept. For instance, when defining the components.
+
+* **<jobdef name>:<key>='{"json":"string"}'** a value formatted as a json text string is parsed as such resulting in a composite object. In this case, surrounding the json string or the entire parameter with single quotes is mandatory or the shell interpreter may try to apply [brace expansion](https://www.gnu.org/software/bash/manual/html_node/Brace-Expansion.html), thus breaking the json formatting.
+
+The following is a usage example:
+
+```ShellSession
+$ dci-pipeline-schedule ocp-vanilla workload \
+    ocp-vanilla:topic=OCP-4.12 \
+    workload:components=operator1,operator2 \
+    workload:ansible_extravars=dci_tags:example \
+    workload:ansible_extravars='{"user":"jdoe","password":"Pass123$"}'
+...
+```
+
+### Previous Topic
 
 In a multi-stage pipeline, you can inherit the `topic` from the
 previous stage by using `use_previous_topic` in the
