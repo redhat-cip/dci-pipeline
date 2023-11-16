@@ -15,13 +15,13 @@
 
 import datetime
 import json
-from json.decoder import JSONDecodeError
 import logging
 import os
 import shutil
 import signal
 import sys
 import tempfile
+from json.decoder import JSONDecodeError
 
 import ansible_runner
 import yaml
@@ -381,9 +381,9 @@ def generate_query(c_type, fallback_tags):
     else:
         if "=" in c_type:
             c_type, c_version = c_type.split("=", 1)
-            prefix = f"and(eq(type,{c_type}),eq(version,{c_version})"
+            prefix = f"and(eq(state,active),eq(type,{c_type}),eq(version,{c_version})"
         else:
-            prefix = f"and(eq(type,{c_type})"
+            prefix = f"and(eq(state,active),eq(type,{c_type})"
         query_clause = (
             prefix + generate_query_from_tags(fallback_tags, [], c_type) + ")"
         )

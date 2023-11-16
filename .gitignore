@@ -20,3 +20,5 @@ rh-telco-pipeline.sh
 rh-telco-pipeline_dci_credentials.yml
 storage-plugin-telco-ci.sh
 storage-plugin-telco-ci_dci_credentials.yml
+dcipipeline/pipeline-edge2.yml
+current

@@ -149,11 +149,18 @@ def associate_product_to_team(product_id, team_id):
     post("products/%s/teams" % product_id, {"team_id": team_id})
 
 
-def create_component(name, version, topic_id, tag=None, team_id=None, dev=True):
+def authorize_components_access_teams(team_id, components_team_id):
+    post("teams/%s/permissions/components" % team_id, {"teams_ids": [components_team_id]})
+
+
+def create_component(
+    name, version, topic_id, tag=None, team_id=None, dev=True, active=True
+):
     data = {
         "display_name": f"{name.upper()} {version}",
         "version": version,
         "type": name,
+        "state": "active" if active else "inactive",
         "topic_id": topic_id,
         "data": {
             "version": version,
@@ -315,14 +322,20 @@ def main():
         associate_user_to_team(team_id, pipeline_user_id)
         associate_product_to_team(ocp_id, team_id)
 
+    for team_id in teams[1:]:
+        authorize_components_access_teams(rh_telco_ci_id, team_id)
+
     # Create OCP components
     ocp48_components = (
-        ("ocp", "4.8.0-0.ga-20200801", "ocp-vanilla-4.8-ok", False),
-        ("ose-tests", "20200628", "ocp-vanilla-4.8-ok", False),
-        ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok", False),
+        ("ocp", "4.8.0-0.ga-20200601", "ocp-vanilla-4.8-ok", False, True),
+        ("ocp", "4.8.0-0.ga-20200630", "ocp-vanilla-4.8-ok", False, False),
+        ("ose-tests", "20200628", "ocp-vanilla-4.8-ok", False, True),
+        ("cnf-tests", "20200628", "ocp-vanilla-4.8-ok", False, True),
     )
-    for name, version, tag, dev in ocp48_components:
-        create_component(name, version, topic["OCP-4.8"]["id"], tag=tag, dev=dev)
+    for name, version, tag, dev, active in ocp48_components:
+        create_component(
+            name, version, topic["OCP-4.8"]["id"], tag=tag, dev=dev, active=active
+        )
 
     ocp48_components_2 = (
         ("ocp", "4.8.0-0.nightly-20200703", True),

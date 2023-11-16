@@ -301,13 +301,13 @@ class TestMain(unittest.TestCase):
     def test_generate_query(self):
         self.assertEqual(
             generate_query("ocp", []),
-            "and(eq(type,ocp))",
+            "and(eq(state,active),eq(type,ocp))",
         )
 
     def test_generate_query_fallback(self):
         self.assertEqual(
             generate_query("ocp", ["fallback"]),
-            "and(eq(type,ocp),contains(tags,fallback))",
+            "and(eq(state,active),eq(type,ocp),contains(tags,fallback))",
         )
 
 
