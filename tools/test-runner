@@ -45,7 +45,10 @@ finish() {
     fi
 
     if [ -z "$ERROR" ]; then
-        JOBIDS=($(sed -n -e 's/^.*\sScheduled DCI job //p' < output))
+        # Same regex as in dci-queue dci-job command
+        job_regex='^.*running jobdef: ([a-zA-Z-]+) with.*/([0-9a-f-]+) .*$'
+
+        JOBIDS=($(sed -n -r 's,'"${job_regex}"',\1:\2,p' < output))
         LENGTH=${#JOBIDS[@]}
 
         # Get the exit code of the last job
@@ -60,13 +63,16 @@ finish() {
             LAST_RESULT="FAILURE"
         fi
 
-        # Only the last job could have failed
         RESULT=
         if [ ${LENGTH} -ge 1 ]; then
-            for JOBID in ${JOBIDS[@]:0:$(( ${LENGTH} - 1 ))}; do
-                RESULT+="- SUCCESS https://www.distributed-ci.io/jobs/$JOBID/jobStates\n"
+            for JOBID in ${JOBIDS[@]}; do
+                job_result=$(sed -n -r 's/^.*Jobdef '"${JOBID%:*}"' status=(\w+)$/\1/p' < output )
+                # If the job does not have a status, use the last result
+                if [[ -z "${job_result}" ]]; then
+                    job_result=${LAST_RESULT}
+                fi
+                RESULT+="- ${job_result^^} https://www.distributed-ci.io/jobs/${JOBID##*:}/jobStates\n"
             done
-            RESULT+="- ${LAST_RESULT} https://www.distributed-ci.io/jobs/${JOBIDS[-1]}/jobStates\n"
         elif [ ${LENGTH} -eq 0 ]; then
             SAVEDIR="$(mktemp -d /tmp/test-runner-$(date --iso-8601=seconds).XXXXXXXXXX)"
             cp -a . "${SAVEDIR}"
