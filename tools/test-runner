@@ -192,7 +192,7 @@ fi
 set -x
 
 CHANGEID="$(basename $DIR)"
-CHANGEID=${CHANGEID%-*}
+CHANGEID=${CHANGEID%%-*}
 
 # extract github or gerrit from the path
 KIND="$(basename $(dirname $DIR))"
@@ -204,15 +204,13 @@ if [ "$KIND" = gerrit ]; then
     PROJECT="$(jq -r .project $CHANGEID.json)"
     NUMBER="$(jq -r ._number $CHANGEID.json)"
     TAGS="ansible_extravars=dci_tags:debug,gerrit:$PROJECT-$CHANGEID"
-    COMMENT="url=https://softwarefactory-project.io/r/#/c/$CHANGEID/"
     URL="https://softwarefactory-project.io/r/#/c/$CHANGEID/"
     PIPELINENAME=gr-$PROJECT-$NUMBER
 else
-    TAGS="ansible_extravars=dci_tags:debug,github:$CHANGEID"
-    REPO=$(jq -r .head.repo.full_name github.json)
+    REPO=$(jq -r .head.repo.name github.json)
     NUMBER=$(jq -r .number github.json)
+    TAGS="ansible_extravars=dci_tags:debug,github:$REPO-$NUMBER"
     URL=$(jq -r .html_url github.json)
-    COMMENT="url=$URL"
     PIPELINENAME=pr-$REPO-$NUMBER
 fi
 
@@ -421,7 +419,7 @@ for NAME in $CNF_NAMES; do
     fi
 done
 
-# set the tags, comment, configuration, change_dir and git repos on all the pipelines
+# set the tags, configuration, change_dir and git repos on all the pipelines
 ALL_TAGS=
 for NAME in $OCP_NAMES $CNF_NAMES; do
     QUEUE_OPT=
@@ -431,7 +429,7 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
     if [ -n "$CONF" ] && [ "$CONF" != null ]; then
         QUEUE_OPT="$NAME:configuration=$DCI_QUEUE"
     fi
-    ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$COMMENT $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
+    ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
     if [ -x "$PWD/.venv/bin/python3" ]; then
         ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars=ansible_playbook_python:$PWD/.venv/bin/python3"
     fi
