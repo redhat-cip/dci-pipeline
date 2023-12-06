@@ -24,7 +24,7 @@ readme = open(os.path.join(root_dir, "README.md")).read()
 
 setuptools.setup(
     name="dci-pipeline",
-    version="0.5.0",  # keep in sync with dci-pipeline.spec and Dockerfile
+    version="0.6.0",  # keep in sync with dci-pipeline.spec and Dockerfile
     packages=setuptools.find_packages(exclude=("tests")),
     author="Distributed CI team",
     author_email="distributed-ci@redhat.com",
@@ -38,12 +38,12 @@ setuptools.setup(
         "Intended Audience :: Information Technology",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
     ],
     entry_points={
         "console_scripts": [
             "dci-pipeline=dcipipeline.main:main",
+            "dci-auto-launch=dcipipeline.auto:main",
             "dci-rebuild-pipeline=dcipipeline.rebuild_pipeline:main",
             "dci-diff-pipeline=dcipipeline.diff_pipeline:main",
             "dci-queue=dciqueue.main:main",

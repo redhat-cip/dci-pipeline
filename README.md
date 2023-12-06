@@ -329,21 +329,21 @@ Each variable is set with a string of the format:
 
 Where:
 
-* **jobdef name:** is the name set in the pipeline stage defintion.
+- **jobdef name:** is the name set in the pipeline stage definition.
 
-* **key:** is the top name of the stage variable you are overriding. For instance: *topic* or *components*. 
+- **key:** is the top name of the stage variable you are overriding. For instance: *topic* or *components*.
 
-* **value:** is the value you want to set.
+- **value:** is the value you want to set.
 
 On the other hand, several formats are accepted for the value that will be handled differently:
 
-* **<jobdef name>:<key>=<value>** just a literal text string. For instance, when defining the topic.
+- **`<jobdef name>:<key>=<value>`** just a literal text string. For instance, when defining the topic.
 
-* **<jobdef name>:<key>=<value1>,<value2>,...** a command-separated list of values with no blank spaces between items is parsed as a string. To define a one element list, the value must be followed by a comma, even if there's not second element. For instance, when defining more than one variables file.
+- **`<jobdef name>:<key>=<value1>,<value2>,...`** a command-separated list of values with no blank spaces between items is parsed as a string. To define a one element list, the value must be followed by a comma, even if there's not second element. For instance, when defining more than one variables file.
 
-* **<jobdef name>:<key>=<subkey>:<value>** a value comprising two strings separated by a colon is parsed as a dictionary with a subkey and a value. If the subkey already exists in the pipeline manifest, it is overriden. If it does not exists, the subkey is added under the key, so any other subkey already existing is kept. For instance, when defining the components.
+- **`<jobdef name>:<key>=<subkey>:<value>`** a value comprising two strings separated by a colon is parsed as a dictionary with a subkey and a value. If the subkey already exists in the pipeline manifest, it is overridden. If it does not exists, the subkey is added under the key, so any other subkey already existing is kept. For instance, when defining the components.
 
-* **<jobdef name>:<key>='{"json":"string"}'** a value formatted as a json text string is parsed as such resulting in a composite object. In this case, surrounding the json string or the entire parameter with single quotes is mandatory or the shell interpreter may try to apply [brace expansion](https://www.gnu.org/software/bash/manual/html_node/Brace-Expansion.html), thus breaking the json formatting.
+- **`<jobdef name>:<key>='{"json":"string"}'`** a value formatted as a json text string is parsed as such resulting in a composite object. In this case, surrounding the json string or the entire parameter with single quotes is mandatory or the shell interpreter may try to apply [brace expansion](https://www.gnu.org/software/bash/manual/html_node/Brace-Expansion.html), thus breaking the json formatting.
 
 The following is a usage example:
 
@@ -476,7 +476,7 @@ application pipelines on the OCP cluster.
 
 Sometimes you also need multiple changes to be tested at the same
 time. To do so, add a `Build-Depends` or `Depends-On` field pointing
-to you Gihub PR or Gerrit review in your git commit or GitHub PR
+to you GitHub PR or Gerrit review in your git commit or GitHub PR
 description like this:
 
 ```Text
@@ -485,6 +485,36 @@ Depends-On: https://softwarefactory-project.io/r/c/dci-jobs/+/29071
 ```
 
 See this example: <https://softwarefactory-project.io/r/c/dci-pipeline/+/26189>
+
+### dci-auto-launch
+
+`dci-auto-launch` allows to automatically schedule pipelines based
+on strings in the description of the pull request or gerrit review. It
+is meant to be used on the stream of events from Github or Gerrit.
+
+It relies on the configuration file `~/.config/dci-pipeline/auto.conf` in the following format:
+
+```ini
+[Lab]
+cmd = dci-pipeline-check @URL -p pool
+
+[Workload]
+cmd = dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check @URL -p cluster /path/to/kubeconfig
+```
+
+And then you can use a string like that in the description of the change:
+
+```Text
+TestLab: ocp-vanilla
+TestWorkload: workload
+```
+
+That will schedule the pipelines `ocp-vanilla` and `workload` like this:
+
+```ShellSession
+$ dci-pipeline-check <change URL> -p pool ocp-vanilla
+$ dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check <change URL> -p cluster /path/to/kubeconfig workload
+```
 
 ## dci-agent-ctl
 

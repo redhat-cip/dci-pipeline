@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.5.0
+Version:        0.6.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -145,6 +145,7 @@ exit 0
 %{python3_sitelib}/*
 %endif
 %{_bindir}/dci-pipeline
+%{_bindir}/dci-auto-launch
 %{_bindir}/dci-pipeline-schedule
 %{_bindir}/dci-pipeline-check
 %{_bindir}/dci-agent-ctl
@@ -177,6 +178,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Wed Dec  6 2023 Frederic Lepied <flepied@redhat.com> 0.6.0-1
+- add dci-auto-launch
+
 * Thu Jul 20 2023 Frederic Lepied <flepied@redhat.com> 0.5.0-1
 - add the get-config-entry utility
 
