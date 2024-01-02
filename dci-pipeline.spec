@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.6.0
+Version:        0.6.1
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -178,6 +178,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Tue Jan  2 2024 Frederic Lepied <flepied@redhat.com> 0.6.1-1
+- send-feedback: support gerrit voting needed by dci-openshift-agent
+
 * Wed Dec  6 2023 Frederic Lepied <flepied@redhat.com> 0.6.0-1
 - add dci-auto-launch
 
