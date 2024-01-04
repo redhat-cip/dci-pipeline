@@ -435,7 +435,7 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
     if [ -n "$CONF" ] && [ "$CONF" != null ]; then
         QUEUE_OPT="$NAME:configuration=$DCI_QUEUE"
     fi
-    ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
+    ALL_TAGS="$ALL_TAGS $NAME:$TAGS $NAME:url=$URL $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
     if [ -x "$PWD/.venv/bin/python3" ]; then
         ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars=ansible_playbook_python:$PWD/.venv/bin/python3"
     fi
