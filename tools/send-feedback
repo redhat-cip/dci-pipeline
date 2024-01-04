@@ -37,6 +37,8 @@ fi
 
 . "$BASEDIR/common$SUFFIX"
 
+GITHUB_JOBNAME="DCI / DCI Job"
+
 for json in $(ls $DIR/*.json); do
     # gerrit
     if [ $(jq -r .url $json) = null ]; then
@@ -82,7 +84,7 @@ for json in $(ls $DIR/*.json); do
             # doc in https://docs.github.com/en/rest/commits/statuses
             STATUSES_URL=$(jq -r .statuses_url $json)
             if [ -n "$STARTING" ]; then
-                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"DCI Job\"}" "$STATUSES_URL"
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$STARTING\", \"description\": \"$BODY\",\"context\":\"$GITHUB_JOBNAME\"}" "$STATUSES_URL"
             else
                 DCI_STATUS=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/- \(.*-> \)\{0,1\}//' -e 's/ .*//'| tr a-z A-Z)
                 DCI_URL=$(echo -e "$BODY"|grep distributed-ci.io|tail -1|sed -e 's/.*https/https/' -e 's/ .*//')
@@ -112,7 +114,7 @@ for json in $(ls $DIR/*.json); do
                     *)
                         GITHUB_STATUS=pending;;
                 esac
-                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"DCI / DCI Job\"}" "$STATUSES_URL"
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"$GITHUB_JOBNAME\"}" "$STATUSES_URL"
             fi
         fi
     fi
