@@ -16,6 +16,12 @@
 
 set -x
 
+# Usage: send-feedback <dir> <body> <starting <vote>
+# <dir> is the directory containing the json files
+# <body> is the message to send
+# <starting> is the status to send to github
+# <vote> is the vote to send to gerrit
+
 DIR="$1"
 BODY="$2"
 STARTING="$3"
@@ -40,7 +46,7 @@ fi
 GITHUB_JOBNAME="DCI / DCI Job"
 
 for json in $(ls $DIR/*.json); do
-    # gerrit
+    # Gerrit
     if [ $(jq -r .url $json) = null ]; then
         if [ -n "$STARTING" ] || [ -z "$GERRIT_SSH_ID" ] || [ -z "$GERRIT_SSH_LOGIN" ]; then
             continue
@@ -62,7 +68,7 @@ for json in $(ls $DIR/*.json); do
           -p 29418 \
           "${GERRIT_SSH_LOGIN}@softwarefactory-project.io" \
             gerrit review -j "$CHANGEID,$PATCHSET"
-    # github
+    # Github PR or merge queue branch
     else
         GITHUB_PROJ=$(jq -r .head.repo.full_name $json)
         GITHUB_REPO_TOKEN=$($BASEDIR/get-config-entry "https://github.com/$GITHUB_PROJ" github_token "$GITHUB_TOKEN")
@@ -112,9 +118,18 @@ for json in $(ls $DIR/*.json); do
                     ERROR*|KILLED*)
                         GITHUB_STATUS=error;;
                     *)
-                        GITHUB_STATUS=pending;;
+                        # no dci job detected, rely on the VOTE variable
+                        case "$VOTE" in
+                            +1)
+                                GITHUB_STATUS=success;;
+                            -1)
+                                GITHUB_STATUS=error;;
+                            *)
+                                GITHUB_STATUS=pending;;
+                        esac
+                        DCI_STATUS="$BODY"
                 esac
-                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\", \"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"$GITHUB_JOBNAME\"}" "$STATUSES_URL"
+                curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_REPO_TOKEN" -X POST -d "{\"state\":\"$GITHUB_STATUS\",\"description\": \"$DCI_STATUS\",\"target_url\":\"$DCI_URL\",\"context\":\"$GITHUB_JOBNAME\"}" "$STATUSES_URL"
             fi
         fi
     fi
