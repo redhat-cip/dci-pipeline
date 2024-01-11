@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Red Hat, Inc.
+# Copyright (C) 2020-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -107,6 +107,11 @@ class TestMain(unittest.TestCase):
         args = ["dci-pipeline", "@pipeline:name=my-pipeline"]
         _, _, opts = process_args(args)
         self.assertEqual(opts["name"], "my-pipeline")
+
+    def test_process_args_pipeline_id(self):
+        args = ["dci-pipeline", "@pipeline:pipeline_id=my_id"]
+        _, _, opts = process_args(args)
+        self.assertEqual(opts["pipeline_id"], "my_id")
 
     @mock.patch("dcipipeline.main.usage")
     def test_process_args_pipeline_invalid_name(self, m):

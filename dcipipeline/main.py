@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2023 Red Hat, Inc
+# Copyright (C) 2020-2024 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -566,6 +566,7 @@ def schedule_job(
     previous_job_id=None,
     pipeline_id=None,
 ):
+    previous_job_id = previous_job_id or jobdef.get("previous_job_id")
     log.info(
         "scheduling job %s on topic %s%s previous_job_id=%s pipeline_id=%s"
         % (

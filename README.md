@@ -114,6 +114,18 @@ $ dci-pipeline @pipeline:name=mypipeline mypipeline.yml
 ...
 ```
 
+### Setting the id of the pipeline (advanced)
+
+To set the id of the pipeline, you can use the special setting
+`@pipeline:pipeline_id=<pipeline id>`. For example:
+
+```ShellSession
+$ dci-pipeline @pipeline:pipeline_id= mypipeline.yml
+...
+```
+
+It can be useful if you want to reconnect an existing pipeline. You should also set the `previous_job_id` of your first job to be connected at the right job in the previous pipeline.
+
 ### Directory
 
 `dci-pipeline` runs the jobs in their own workspace in

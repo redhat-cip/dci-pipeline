@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Red Hat, Inc.
+# Copyright (C) 2021-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -106,6 +106,52 @@ def test_dci_pipeline():
     )
     tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
     assert "pipeline-id" in tags
+
+
+def test_dci_pipeline_id():
+    jobs, count = get_jobs()
+    os.environ["DCI_QUEUE_JOBID"] = "13"
+    rc = main(
+        [
+            "dci-pipeline",
+            "@pipeline:name=first",
+            "openshift-vanilla:components=ocp=4.8.0-0.nightly-20200703",
+            p("pipeline.yml"),
+        ]
+    )
+    assert rc == 0
+    assert len(PIPELINE) == 2
+    jobs2, count2 = get_jobs()
+    assert count + 2 == count2
+    assert jobs2[0]["previous_job_id"] == jobs2[1]["id"]
+    assert jobs2[0]["name"] == "rh-cnf"
+    assert jobs2[1]["configuration"] == "myconf"
+    assert jobs2[1]["url"] == "https://lwn.net/"
+    assert jobs2[1]["name"] == "openshift-vanilla"
+    ocp_component = [comp for comp in jobs2[1]["components"] if comp["type"] == "ocp"]
+    assert (
+        len(ocp_component) == 1
+        and ocp_component[0]["version"] == "4.8.0-0.nightly-20200703"
+    )
+    tags = {d.split(":")[0]: d.split(":")[1] for d in jobs2[0]["tags"]}
+    assert "pipeline-id" in tags
+    rc = main(
+        [
+            "dci-pipeline",
+            "@pipeline:name=second",
+            f"@pipeline:pipeline_id={jobs2[1]['pipeline_id']}",
+            "openshift-vanilla:components=ocp=4.8.0-0.nightly-20200703",
+            f"openshift-vanilla:previous_job_id={jobs2[1]['id']}",
+            p("pipeline.yml"),
+        ]
+    )
+    assert rc == 0
+    assert len(PIPELINE) == 2
+    jobs3, count3 = get_jobs()
+    assert count2 + 2 == count3
+    assert jobs3[0]["pipeline_id"] == jobs2[1]["pipeline_id"]
+    assert jobs3[1]["pipeline_id"] == jobs2[1]["pipeline_id"]
+    assert jobs3[1]["previous_job_id"] == jobs2[1]["id"]
 
 
 def test_dci_pipeline_edge():
