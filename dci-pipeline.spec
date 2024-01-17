@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.6.1
+Version:        0.7.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -90,7 +90,7 @@ install -p -D -m 644 sysconfig/%{name} %{buildroot}%{_sysconfdir}/sysconfig/%{na
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/bash_completion.d
 install -d -m 755 %{buildroot}%{_datadir}/%{name}/
-for tool in alert extract-dependencies get-config-entry loop_until_failure loop_until_success send-feedback test-runner yaml2json; do
+for tool in alert extract-dependencies get-config-entry loop_until_failure loop_until_success send_status send_comment test-runner yaml2json; do
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool
     install -m 755 tools/$tool %{buildroot}%{_datadir}/%{name}/$tool-podman
 done
@@ -165,7 +165,8 @@ exit 0
 %{_datadir}/%{name}/get-config-entry
 %{_datadir}/%{name}/loop_until_failure
 %{_datadir}/%{name}/loop_until_success
-%{_datadir}/%{name}/send-feedback
+%{_datadir}/%{name}/send_status
+%{_datadir}/%{name}/send_comment
 %{_datadir}/%{name}/test-runner
 %{_datadir}/%{name}/yaml2json
 
@@ -178,6 +179,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Wed Jan 17 2024 Frederic Lepied <flepied@redhat.com> 0.7.0-1
+- replace send-feedback with send_status and send_comment
+
 * Tue Jan  2 2024 Frederic Lepied <flepied@redhat.com> 0.6.1-1
 - send-feedback: support gerrit voting needed by dci-openshift-agent
 

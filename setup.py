@@ -24,7 +24,7 @@ readme = open(os.path.join(root_dir, "README.md")).read()
 
 setuptools.setup(
     name="dci-pipeline",
-    version="0.6.1",  # keep in sync with dci-pipeline.spec and Dockerfile
+    version="0.7.0",  # keep in sync with dci-pipeline.spec and Dockerfile
     packages=setuptools.find_packages(exclude=("tests")),
     author="Distributed CI team",
     author_email="distributed-ci@redhat.com",

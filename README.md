@@ -436,6 +436,13 @@ the `GITHUB_SSH_ID` variable to download the pull request using `ssh` or the
 `GITHUB_LOGIN` variable to use `https`. The ssh key needs to be
 without password for the automation to work.
 
+For dci-pipeline-check to vote like a regular CI system on GitHub, set
+the variable `GITHUB_VOTING_REPOS` to a regexp matching the
+repositories you want to vote on in your configuratio file. Your GitHub
+token needs the rights to vote for this to work. If you don't want to
+have comments in Github, use the variable `GITHUB_NO_COMMENT_REPOS` as
+a regexp for the projects where you don't want to receive comments.
+
 If you use multiple Github accounts for different Github projects, you
 can use the `~/.config/dci-pipeline/config.yaml` or
 `/etc/dci-pipeline/config.yaml` files to define your specific
@@ -448,11 +455,6 @@ https://github.com/org/proj:
     github_ssh_id: myid
     git_clone_options: myoption
 ```
-
-For dci-pipeline-check to vote like a regular CI system on GitHub, set
-the variable `GITHUB_VOTING_REPOS` to a regexp matching the
-repositories you want to vote on. Your GitHub token needs the rights to
-vote for this to work.
 
 It also works for a Gerrit review from <https://softwarefactory-project.io/r> :
 

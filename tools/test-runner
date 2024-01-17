@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022-2023 Red Hat, Inc.
+# Copyright (C) 2022-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -25,8 +25,7 @@ declare -A NAME_TO_PIPELINE
 error() {
     ERROR="$1"
     RET=2
-    # make sure the error message is compatible with send-feedback
-    $BASEDIR/send-feedback $DIR "ERROR Unable to start a job on distributed-ci.io: $ERROR"
+    $BASEDIR/send_status "$DIR" error "ERROR Unable to start a job on distributed-ci.io: $ERROR"
     exit $RET
 }
 
@@ -54,13 +53,17 @@ finish() {
         # Get the exit code of the last job
         if [ $RET = 0 ]; then
             LAST_RESULT="SUCCESS"
+            STATUS=success
         elif [ $RET -gt 128 ]; then
             LAST_RESULT="KILLED"
+            STATUS=cancelled
             KILLED=1
         elif [ $RET = 2 ]; then
             LAST_RESULT="ERROR"
+            STATUS=error
         else
             LAST_RESULT="FAILURE"
+            STATUS=failure
         fi
 
         RESULT=
@@ -71,24 +74,26 @@ finish() {
                 if [[ -z "${job_result}" ]]; then
                     job_result=${LAST_RESULT}
                 fi
-                RESULT+="- ${job_result^^} https://www.distributed-ci.io/jobs/${JOBID##*:}/jobStates\n"
+                DCI_URL="https://www.distributed-ci.io/jobs/${JOBID##*:}/jobStates"
+                RESULT+="- ${job_result^^} $DCI_URL\n"
             done
         elif [ ${LENGTH} -eq 0 ]; then
             SAVEDIR="$(mktemp -d /tmp/test-runner-$(date --iso-8601=seconds).XXXXXXXXXX)"
             cp -a . "${SAVEDIR}"
+            DCI_URL=
             RESULT+="- ERROR no DCI job found"
         fi
 
-        if [ -z "$KILLED" ]; then
-            $BASEDIR/send-feedback $DIR "$RESULT from $URL"
+        $BASEDIR/send_status "$DIR" "$STATUS" "$LAST_RESULT" $DCI_URL
 
-            # Send alert for unsuccessful jobs in github repos
+        if [ -z "$KILLED" ]; then
+            # Send Google chat alert for unsuccessful jobs in github repos
             if [[ " ERROR FAILURE " =~ "${LAST_RESULT} " ]] &&
                [[ -n "${REPO}" ]]; then
                 $BASEDIR/alert "${REPO}" "${RESULT} from ${URL}"
             fi
-        else
-            $BASEDIR/send-feedback $DIR "ERROR JOB KILLED"
+            # Send comment
+            $BASEDIR/send_comment "$DIR" "from change $URL:\n$RESULT"
         fi
     fi
 
@@ -204,7 +209,7 @@ CHANGEID=${CHANGEID%%-*}
 KIND="$(basename $(dirname $DIR))"
 cd "$DIR" || exit 1
 
-$BASEDIR/send-feedback $DIR "IN PROGRESS" pending
+$BASEDIR/send_status "$DIR" pending "DCI pipeline started"
 
 if [ "$KIND" = gerrit ]; then
     PROJECT="$(jq -r .project $CHANGEID.json)"
