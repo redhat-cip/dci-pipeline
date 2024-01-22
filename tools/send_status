@@ -109,7 +109,7 @@ for json in $(ls $DIR/*.json); do
             gerrit review -j "$CHANGEID,$PATCHSET"
     # Github PR or merge queue branch
     else
-        REPO_NAME=$(jq -r .base.repo.name $json)
+        REPO_NAME=$(jq -r .head.repo.name $json)
 
         if ! [[ -n "$GITHUB_VOTING_REPOS" && "$REPO_NAME" =~ $GITHUB_VOTING_REPOS ]]; then
             continue
