@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022-2023 Red Hat, Inc.
+# Copyright (C) 2022-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -56,55 +56,23 @@ PATH=$BASEDIR:$PATH
 
 CMD=
 OPTS=
+
+# separate the dci-queue options from the dci-pipeline ones
 for arg in "$@"; do
     case "$arg" in
-        *:*=*)
-            CMD="$CMD $arg"
-            ;;
         -*)
             OPTS="$OPTS $arg"
             ;;
         *)
-            # Verify if the pipeline file exists
-            pipeline="${PIPELINES_DIR}/${arg}-pipeline.yml"
-            if [ ! -r "$pipeline" ]; then
-                echo "Unable to find $pipeline file" 1>&2
-                exit 1
-            fi
-            names=$(yaml2json "$pipeline"|jq -r '.[].name')
-            if [ -z "$names" ]; then
-                echo "Unable to extract a pipeline name from $pipeline" 1>&2
-                exit 1
-            fi
-            for name in $names; do
-                # Inject the inventory and configuration arguments
-                INV=$("$BASEDIR"/yaml2json "$pipeline" | \
-                    jq -r ".[]|select(.name==\"$name\")|.ansible_inventory" | \
-                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
-                CONF=$("$BASEDIR"/yaml2json "$pipeline" | \
-                    jq -r ".[]|select(.name==\"$name\")|.configuration" | \
-                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
-                if [ "$CONF" != null ]; then
-                    CONF="$name:configuration=$CONF"
-                else
-                    CONF=
-                fi
-                # for a pipeline definition split in multiple files
-                # there could be no inventory in the current file
-                if [ "$INV" != null ]; then
-                    CMD="$CMD $name:ansible_inventory=${INV} $CONF $pipeline"
-                else
-                    CMD="$CMD $CONF $pipeline"
-                fi
-            done
+            CMD="$CMD $arg"
             ;;
     esac
 done
 
 if [ -z "$DCI_QUEUE" ] || [ -n "$DCI_QUEUE_RESOURCE" ]; then
-    CMD="dci-pipeline$SUFFIX $CMD"
+    CMD="env DCI_QUEUE=$DCI_QUEUE RES=$RES $BASEDIR/dci-pipeline-helper$SUFFIX $CMD"
 else
-    CMD="dci-queue schedule $OPTS $DCI_QUEUE dci-pipeline$SUFFIX $CMD"
+    CMD="dci-queue schedule $OPTS $DCI_QUEUE env DCI_QUEUE=$DCI_QUEUE RES=$RES $BASEDIR/dci-pipeline-helper$SUFFIX $CMD"
 fi
 
 echo "+ $CMD" 1>&2

@@ -1,0 +1,148 @@
+#!/bin/bash
+#
+# Copyright (C) 2024 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+# Called from dci-pipeline-schedule with the information from
+# dci-queue to be able to expand the @RESOURCE and @QUEUE strings with
+# the right information and then call dci-pipeline with the right
+# arguments.
+
+echo "+ $0 $*" 1>&2
+
+set -x
+
+TOPDIR=$(cd $(dirname $0); pwd)
+
+if [[ $0 =~ .*-podman$ ]]; then
+    SUFFIX=-podman
+else
+    SUFFIX=
+fi
+
+if [ -r "$TOPDIR/common$SUFFIX" ]; then
+    BASEDIR="$TOPDIR"
+else
+    BASEDIR=/usr/share/dci-pipeline
+fi
+
+. "$BASEDIR/common$SUFFIX"
+
+# set PATH for yaml2json
+PATH=$BASEDIR:$PATH
+
+CMD=
+CNF_PIPELINES=
+OCP_PIPELINES=
+
+for arg in "$@"; do
+    case "$arg" in
+        *:*=*)
+            CMD="$CMD $arg"
+            ;;
+        *)
+            # Verify if the pipeline file exists
+            pipeline="${PIPELINES_DIR}/${arg}-pipeline.yml"
+            if [ ! -r "$pipeline" ]; then
+                echo "Unable to find $pipeline file" 1>&2
+                exit 1
+            fi
+            names=$(yaml2json "$pipeline"|jq -r '.[].name')
+            if [ -z "$names" ]; then
+                echo "Unable to extract a pipeline name from $pipeline" 1>&2
+                exit 1
+            fi
+
+            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
+                CNF_PIPELINES="$CNF_PIPELINES $pipeline"
+            else
+                OCP_PIPELINES="$OCP_PIPELINES $pipeline"
+            fi
+
+            for name in $names; do
+                # Inject the inventory and configuration arguments
+                INV=$("$BASEDIR"/yaml2json "$pipeline" | \
+                    jq -r ".[]|select(.name==\"$name\")|.ansible_inventory" | \
+                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
+                CONF=$("$BASEDIR"/yaml2json "$pipeline" | \
+                    jq -r ".[]|select(.name==\"$name\")|.configuration" | \
+                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
+                if [ "$CONF" != null ]; then
+                    CONF="$name:configuration=$CONF"
+                else
+                    CONF=
+                fi
+                # for a pipeline definition split in multiple files
+                # there could be no inventory in the current file
+                if [ "$INV" != null ]; then
+                    CMD="$CMD $name:ansible_inventory=${INV} $CONF $pipeline"
+                else
+                    CMD="$CMD $CONF $pipeline"
+                fi
+            done
+            ;;
+    esac
+done
+
+# If there is no OCP pipeline, set the topic from the running OCP
+# using KUBECONFIG or the configured kubeconfig_path in the pipeline
+# or inventory.
+if [ -z "$OCP_PIPELINES" ]; then
+    # if KUBECONFIG is not set or pointing to invalid file, lookup
+    # kubeconfig_path into the pipeline or inventory.
+    if ! [ -r "$KUBECONFIG" ]; then
+        for pipeline in $CNF_PIPELINES; do
+            # lookup kubeconfig_path in the pipeline
+            KUBECONFIG=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].extra_vars.kubeconfig_path')
+            # lookup kubeconfig_path in the inventory if not found in the pipeline
+            if [ -z "$KUBECONFIG" ] || [ "$KUBECONFIG" = null ]; then
+                inventory=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].ansible_inventory'|sed -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/")
+                # only support yaml inventories
+                KUBECONFIG=$("$BASEDIR"/yaml2json "$inventory"|jq -r '.all.vars.kubeconfig_path')
+            fi
+
+            if [ -n "$KUBECONFIG" ] && [ "$KUBECONFIG" != null ]; then
+                # expand ~ in the kubeconfig path
+                KUBECONFIG=$(eval echo $KUBECONFIG)
+                OCPVERS=$(KUBECONFIG=$KUBECONFIG oc version -o json|jq -r .openshiftVersion)
+                OCPVERS=${OCPVERS%%-*}
+                # extract the DCI topic
+                case $OCPVERS in
+                    *.*.*)
+                        OCP_TOPIC=OCP-${OCPVERS%.*}
+                        ;;
+                    *.*)
+                        OCP_TOPIC=OCP-$OCPVERS
+                        ;;
+                    *)
+                        error "Unsupported OCP version scheme: $OCPVERS"
+                        ;;
+                esac
+
+                names=$(yaml2json "$pipeline"|jq -r '.[].name')
+                for name in $names; do
+                    CMD="$CMD $name:topic=$OCP_TOPIC"
+                done
+            fi
+        done
+    fi
+fi
+
+CMD="dci-pipeline$SUFFIX $CMD"
+
+echo "+ $CMD" 1>&2
+
+exec $CMD
+
+# dci-pipeline-helper ends here

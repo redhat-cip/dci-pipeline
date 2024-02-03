@@ -159,15 +159,20 @@ case $CHANGEID in
 esac
 
 if [ -d "$DIR" ]; then
-    jobid="$(dci-queue searchdir $QUEUE $DIR)"
-    if [ -z "$jobid" ]; then
-        "$BASEDIR/send_status$SUFFIX" "$DIR" error "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
+    if  [ -n "$QUEUE" ]; then
+        jobid="$(dci-queue searchdir $QUEUE $DIR)"
+        if [ -z "$jobid" ]; then
+            "$BASEDIR/send_status$SUFFIX" "$DIR" error "ERROR A job is already scheduled or running in $DIR (unable to find job id). Aborting."
+            exit 1
+        fi
+        "dci-queue" unschedule "$QUEUE" "$jobid"
+        if [ -d "$DIR" ]; then
+            find "$DIR" -type d -not -perm -u=w -exec chmod u+w {} \;
+            rm -rf "$DIR"
+        fi
+    else
+        "$BASEDIR/send_status$SUFFIX" "$DIR" error "ERROR A job is already scheduled or running in $DIR. Aborting."
         exit 1
-    fi
-    "dci-queue" unschedule "$QUEUE" "$jobid"
-    if [ -d "$DIR" ]; then
-        find "$DIR" -type d -not -perm -u=w -exec chmod u+w {} \;
-        rm -rf "$DIR"
     fi
 fi
 
@@ -217,9 +222,9 @@ fi
 
 # do launch through dci-queue only when there is no KUBECONFIG passed
 if [ -z "$KBCFG" ]; then
-    # if the resource is set explicitly, do not launch through
-    # dci-queue
-    if [ -z "$DCI_QUEUE_RESOURCE" ]; then
+    # if the resource is set explicitly or if there is no queue
+    # defined, do not launch through dci-queue
+    if [ -z "$DCI_QUEUE_RESOURCE" ] && [ -n "$QUEUE" ]; then
         PREFIX="dci-queue schedule $QUEUE env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
         RES="@RESOURCE"
     else

@@ -38,11 +38,11 @@ Here is a pipeline example:
   - name: openshift-vanilla
     stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
-    ansible_inventory: /etc/dci-pipeline/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.11
+    ansible_inventory: ~/inventories/agent.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
-      - ocp?tags:build:ga&name:4.11.41
+      - ocp?tags:build:ga&name:4.14.1
       - plugin=1.1.1
 ```
 
@@ -56,11 +56,11 @@ Example:
   - name: openshift-vanilla
     stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
-    ansible_inventory: /etc/dci-pipeline/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.11
+    ansible_inventory: ~/inventories/agent.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
-      - ocp?tags%3abuild%3aga&name:4.11.41
+      - ocp?tags%3abuild%3aga&name:4.14.1
 ```
 
 and the next file could be like that to have same result as the first
@@ -144,9 +144,9 @@ For example, a first job will export a `kubeconfig` file:
   - name: openshift-vanilla
     stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
-    ansible_inventory: /etc/dci-pipeline/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    ansible_inventory: ~/inventories/agent.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
     outputs:
@@ -185,7 +185,7 @@ a corresponding `outputs` like this:
   prev_stages: [ocp]
   ansible_playbook: /usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml
   dci_credentials: /etc/dci-openshift-app-agent/dci_credentials.yml
-  topic: OCP-4.5
+  topic: OCP-4.14
   components: []
   inputs:
     kubecfg: kubeconfig_path
@@ -216,12 +216,12 @@ an example on how to use it:
   - name: openshift-vanilla
     stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
-    ansible_inventory: /etc/dci-pipeline/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    ansible_inventory: ~/inventories/agent.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
-    success_tag: ocp-vanilla-4.4-ok
+    success_tag: ocp-vanilla-4.14-ok
 ```
 
 If you want the job to restart on failure to the last known good
@@ -234,19 +234,19 @@ continue testing the next layers in the pipeline. Example:
   - name: openshift-vanilla
     stage: ocp
     ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
-    ansible_inventory: /etc/dci-pipeline/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    ansible_inventory: ~/inventories/agent.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
       - cnf
-    success_tag: ocp-vanilla-4.4-ok
+    success_tag: ocp-vanilla-4.14-ok
     fallback_last_success:
-      - ocp-vanilla-4.5-ok
+      - ocp-vanilla-4.14-ok
       - ocp?build:ga
 ```
 
-In this example, when a fallback happens, `dci-pipeline` looks up the `ocp-vanilla-4.5-ok` and `build:ga` tags for the `ocp` component and only the `ocp-vanilla-4.5-ok` tag for the `cnf` component.
+In this example, when a fallback happens, `dci-pipeline` looks up the `ocp-vanilla-4.14-ok` and `build:ga` tags for the `ocp` component and only the `ocp-vanilla-4.14-ok` tag for the `cnf` component.
 
 ### Passing environment variables
 
@@ -255,19 +255,19 @@ If you want to pass environment variables to the agent. Example:
 ```YAML
   - name: openshift-vanilla
     stage: ocp
-    ansible_playbook: agents/openshift-vanilla/agent.yml
-    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
+    ansible_inventory: ~/inventories/agent.yml
     ansible_extravars:
       answer: 42
     ansible_envvars:
       ENVVAR_42: 42
       ENVVAR_43: 43
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
-    success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.5-ok
+    success_tag: ocp-vanilla-4.14-ok
+    fallback_last_success: ocp-vanilla-4.14-ok
 ```
 
 ### Instrument the pipeline with temporary directories
@@ -278,20 +278,20 @@ by an actual path of a temporary directory. Example:
 ```YAML
   - name: openshift-vanilla
     stage: ocp
-    ansible_playbook: agents/openshift-vanilla/agent.yml
-    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
+    ansible_inventory: ~/inventories/agent.yml
     ansible_extravars:
       answer: 42
     ansible_envvars:
       ENVVAR_42: 42
       ENVVAR_43: 43
       MY_TMP_DIR: /@tmpdir
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
-    success_tag: ocp-vanilla-4.4-ok
-    fallback_last_success: ocp-vanilla-4.5-ok
+    success_tag: ocp-vanilla-4.14-ok
+    fallback_last_success: ocp-vanilla-4.14-ok
 ```
 
 This will create a new temporary directory before running the job, at the end of
@@ -319,19 +319,19 @@ You can specify extra Ansible variable files using the
 ```YAML
   - name: openshift-vanilla
     stage: ocp
-    ansible_playbook: agents/openshift-vanilla/agent.yml
-    ansible_inventory: agents/openshift-vanilla/inventory
+    ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
+    ansible_inventory: ~/inventories/cluster.yml
     ansible_extravars_files:
       - agents/openshift-vanilla/vars.yml
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
-    topic: OCP-4.5
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    topic: OCP-4.14
     components:
       - ocp
 ```
 
 ### Feeding variables from the command line
 
-You can feed variables from the command line to the dci-pipeline-schedule and dci-pipeline-check commands that we explain below.
+You can feed variables from the command line to the `dci-pipeline-schedule` and `dci-pipeline-check` commands that we explain below.
 
 Variables set this way take the highest precedence and override those set in the pipeline definition files.
 
@@ -361,7 +361,7 @@ The following is a usage example:
 
 ```ShellSession
 $ dci-pipeline-schedule ocp-vanilla workload \
-    ocp-vanilla:topic=OCP-4.12 \
+    ocp-vanilla:topic=OCP-4.14 \
     workload:components=operator1,operator2 \
     workload:ansible_extravars=dci_tags:example \
     workload:ansible_extravars='{"user":"jdoe","password":"Pass123$"}'
@@ -377,9 +377,9 @@ configuration of the job. Example:
 ```YAML
   - name: workload
     stage: app
-    ansible_playbook: agents/openshift-vanilla/app.yml
-    ansible_inventory: agents/openshift-vanilla/inventory
-    dci_credentials: /etc/dci-openshift-agent/dci_credentials.yml
+    ansible_playbook: /usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml
+    ansible_inventory: ~/inventories/app.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
     use_previous_topic: true
 ```
 
@@ -426,7 +426,7 @@ To test a Github PR, with specific a pipeline you can use
 `dci-pipeline-check` utility like that:
 
 ```ShellSession
-$ dci-pipeline-check https://github.com/dci-labs/pipelines/pull/6 -p my-pool ocp-4.10-vanilla workload
+$ dci-pipeline-check https://github.com/dci-labs/pipelines/pull/6 -p my-pool ocp-4.14-vanilla workload
 ```
 
 If you use private GitHub repositories, you need to set the
@@ -459,7 +459,7 @@ https://github.com/org/proj:
 It also works for a Gerrit review from <https://softwarefactory-project.io/r> :
 
 ```ShellSession
-$ dci-pipeline-check 19837 -p my-pool ocp-4.10-vanilla workload
+$ dci-pipeline-check 19837 -p my-pool ocp-4.14-vanilla workload
 ```
 
 To vote on Gerrit reviews, you need to set the `GERRIT_SSH_ID` to
@@ -529,6 +529,21 @@ That will schedule the pipelines `ocp-vanilla` and `workload` like this:
 $ dci-pipeline-check <change URL> -p pool ocp-vanilla
 $ dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check <change URL> -p cluster /path/to/kubeconfig workload
 ```
+
+## Link between dci-pipeline and dci-queue: @QUEUE and @RESOURCE
+
+`dci-pipeline-schedule` and `dci-pipeline-check` are the links between `dci-queue` and `dci-pipeline`. These utilities are substituting the strings `@QUEUE` and `@RESOURCE` coming from `dci-queue` in the inventory path and the configuration of the `dci-pipeline` job definitions. Example:
+
+```YAML
+  - name: workload
+    stage: app
+    ansible_playbook: /usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml
+    ansible_inventory: ~/inventories/@QUEUE/@RESOURCE.yml
+    configuration: "@QUEUE"
+    ...
+```
+
+`dci-pipeline-schedule` and `dci-pipeline-check` are also managing the `topic` of jobs if there are only `dci-openshift-app-agent` job definitions without any `dci-openshift-agent` job definitions in the pipeline. To do so they rely on the running cluster defined by the `KUBECONFIG` environment variable or the ansible variable `kubeconfig_path` defined either in the job definition or in the inventory (`all.vars.kubeconfig_path`). Then they deduce the topic of the job from the OpenShift version of the cluster.
 
 ## dci-agent-ctl
 
@@ -714,7 +729,7 @@ You will got:
 
 ```YAML
 components:
-  - ocp=ocp-4.4.0-0.nightly-20200701
+  - ocp=ocp-4.14.0-0.nightly-20230701
   - ose-tests=ose-tests-20200628
   - cnf-tests=cnf-tests-20200628
 ```
@@ -739,7 +754,7 @@ $ dci-diff-pipeline --job_id_1 610953f7-ad4a-442c-a934-cd5506127ec9 --job_id_2 f
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
 |              pipeline 1              |              pipeline 2              |       stage       |  component type  |          component 1           |          component 2           |
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
-| 94a4b04f-4aa5-413b-a86f-eb651b563e0b | ef493b57-a02e-4c74-9f60-e951b181f1d4 | openshift-vanilla |       ocp        |  ocp-4.4.0-0.nightly-20200703  |  ocp-4.4.0-0.nightly-20200701  |
+| 94a4b04f-4aa5-413b-a86f-eb651b563e0b | ef493b57-a02e-4c74-9f60-e951b181f1d4 | openshift-vanilla |       ocp        |  ocp-4.14.0-0.nightly-20230703  |  ocp-4.14.0-0.nightly-20230701  |
 | 610953f7-ad4a-442c-a934-cd5506127ec9 | f7677627-5780-46f8-b35f-c4bd1f781d90 |       rh-cnf      |      rh-cnf      |  rh-cnf-0.1.nightly-20200708   |  rh-cnf-0.1.nightly-20200703   |
 +--------------------------------------+--------------------------------------+-------------------+------------------+--------------------------------+--------------------------------+
 ```

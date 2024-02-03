@@ -400,6 +400,37 @@ cat ansible.cfg
 
 # inject certification variables and topic
 for NAME in $CNF_NAMES; do
+    # Lookup a topic for CNF jobs if there is no OCP job.
+    # If there is an OCP job we let the previous_topic feature do its magic.
+    if [ -z "$OCP_PIPELINES" ] && [ -z "$OCP_TOPIC" ]; then
+        # lookup kubeconfig_path in the pipeline
+        pipeline=${NAME_TO_PIPELINE[$NAME]}
+        KUBECONFIG=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].extra_vars.kubeconfig_path')
+        # lookup kubeconfig_path in the inventory if not found in the pipeline
+        if [ -z "$KUBECONFIG" ] || [ "$KUBECONFIG" = null ]; then
+            inventory=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].ansible_inventory'|sed -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/")
+            # only support yaml inventories
+            KUBECONFIG=$("$BASEDIR"/yaml2json "$inventory"|jq -r '.all.vars.kubeconfig_path')
+        fi
+        if [ -n "$KUBECONFIG" ] && [ "$KUBECONFIG" != null ]; then
+            # expand ~ in the kubeconfig path
+            KUBECONFIG=$(eval echo $KUBECONFIG)
+            OCPVERS=$(KUBECONFIG=$KUBECONFIG oc version -o json|jq -r .openshiftVersion)
+            OCPVERS=${OCPVERS%%-*}
+            # extract the DCI topic
+            case $OCPVERS in
+                *.*.*)
+                    OCP_TOPIC=OCP-${OCPVERS%.*}
+                    ;;
+                *.*)
+                    OCP_TOPIC=OCP-$OCPVERS
+                    ;;
+                *)
+                    error "Unsupported OCP version scheme: $OCPVERS"
+                    ;;
+            esac
+        fi
+    fi
     if [ -n "$OCP_TOPIC" ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
     fi
