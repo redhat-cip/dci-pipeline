@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.8.0
+Version:        0.8.1
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -59,11 +59,11 @@ Requires:       dci-queue = %{version}-%{release}
 CI pipeline management for DCI jobs (via podman)
 
 %package -n dci-queue
-Summary:        dci-pipeline podman flavour
-Requires:       podman
+Summary:        dci-queue utility
+Requires:       cronie
 
 %description -n dci-queue
-CI pipeline management for DCI jobs (via podman)
+Queue management for dci-pipeline
 
 %prep -a -v
 %autosetup -n %{name}-%{version}
@@ -180,6 +180,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Mon Feb  5 2024 Frederic Lepied <flepied@redhat.com> 0.8.1-1
+- fix dci-queue package: descriptions and dependencies
+
 * Sat Feb  3 2024 Frederic Lepied <flepied@redhat.com> 0.8.0-1
 - add dci-pipeline-helper
 
