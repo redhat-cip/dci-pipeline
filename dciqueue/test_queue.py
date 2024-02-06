@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2023 Red Hat, Inc
+# Copyright (C) 2020-2024 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -580,9 +580,15 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(
             main.main(["dci-queue", "add-crontab", "8nodes", crontab_file]), 0
         )
+        with open(crontab_file, "r") as f:
+            contab_content = f.read()
+            self.assertNotEqual(contab_content, "")
         self.assertEqual(
             main.main(["dci-queue", "remove-crontab", "8nodes", crontab_file]), 0
         )
+        with open(crontab_file, "r") as f:
+            contab_content = f.read()
+            self.assertEqual(contab_content, "\n")
 
     def test_clean(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)

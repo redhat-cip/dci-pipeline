@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.8.1
+Version:        0.8.2
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -180,6 +180,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Tue Feb  6 2024 Frederic Lepied <flepied@redhat.com> 0.8.2-1
+- fix dci-queue add-crontab for initial content
+
 * Mon Feb  5 2024 Frederic Lepied <flepied@redhat.com> 0.8.1-1
 - fix dci-queue package: descriptions and dependencies
 

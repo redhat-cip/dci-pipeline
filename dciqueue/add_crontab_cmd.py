@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Red Hat, Inc.
+# Copyright (C) 2021-2024 Red Hat, Inc.
 #
 # Author: Frederic Lepied <flepied@redhat.com>
 #
@@ -57,9 +57,9 @@ def execute_command(args):
                 line = line.strip("\n")
                 if line == LINE:
                     break
-                else:
-                    with open(args.file, "a") as f:
-                        f.write("%s\n" % LINE)
+            else:
+                with open(args.file, "a") as f:
+                    f.write("%s\n" % LINE)
     return 0
 
 
