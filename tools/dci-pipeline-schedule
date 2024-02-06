@@ -72,7 +72,7 @@ done
 if [ -z "$DCI_QUEUE" ] || [ -n "$DCI_QUEUE_RESOURCE" ]; then
     CMD="env DCI_QUEUE=$DCI_QUEUE RES=$RES $BASEDIR/dci-pipeline-helper$SUFFIX $CMD"
 else
-    CMD="dci-queue schedule $OPTS $DCI_QUEUE env DCI_QUEUE=$DCI_QUEUE RES=$RES $BASEDIR/dci-pipeline-helper$SUFFIX $CMD"
+    CMD="dci-queue schedule $OPTS $DCI_QUEUE env DCI_QUEUE=$DCI_QUEUE RES=$RES KUBECONFIG=$KUBECONFIG $BASEDIR/dci-pipeline-helper$SUFFIX $CMD"
 fi
 
 echo "+ $CMD" 1>&2

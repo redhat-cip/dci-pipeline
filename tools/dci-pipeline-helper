@@ -113,8 +113,8 @@ if [ -z "$OCP_PIPELINES" ]; then
             fi
 
             if [ -n "$KUBECONFIG" ] && [ "$KUBECONFIG" != null ]; then
-                # expand ~ in the kubeconfig path
-                KUBECONFIG=$(eval echo $KUBECONFIG)
+                # replace {{ lookup('env', 'HOME') }} by $HOME in KUBECONFIG
+                KUBECONFIG=$(sed -e "s@{{\s*lookup('env',\s*'HOME')\s*}}@$HOME@" <<< "$KUBECONFIG")
                 OCPVERS=$(KUBECONFIG=$KUBECONFIG oc version -o json|jq -r .openshiftVersion)
                 OCPVERS=${OCPVERS%%-*}
                 # extract the DCI topic
