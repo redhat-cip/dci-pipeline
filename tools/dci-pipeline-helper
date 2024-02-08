@@ -78,17 +78,29 @@ for arg in "$@"; do
                 CONF=$("$BASEDIR"/yaml2json "$pipeline" | \
                     jq -r ".[]|select(.name==\"$name\")|.configuration" | \
                     sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
+                EXTRA_VARS=($("$BASEDIR"/yaml2json "$pipeline" |
+                    jq -r '.[].ansible_extravars|to_entries[]|select((.value|type == "string") and (.value|test("@QUEUE|@RESOURCE")))|.key'))
                 if [ "$CONF" != null ]; then
                     CONF="$name:configuration=$CONF"
                 else
                     CONF=
                 fi
+                # Inject the extra vars used with @QUEUE/@RESOURCE
+                EXTRA=
+                if [ -n "${EXTRA_VARS}" ]; then
+                    for var in "${EXTRA_VARS[@]}"; do
+                        val=$("$BASEDIR"/yaml2json "$pipeline" |
+                            jq -r ".[]|select(.name==\"$name\")|.ansible_extravars.${var}" |
+                            sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
+                        EXTRA="$EXTRA ${name}:ansible_extravars=${var}:${val}"
+                    done
+                fi
                 # for a pipeline definition split in multiple files
                 # there could be no inventory in the current file
                 if [ "$INV" != null ]; then
-                    CMD="$CMD $name:ansible_inventory=${INV} $CONF $pipeline"
+                    CMD="$CMD $name:ansible_inventory=${INV} $CONF $EXTRA $pipeline"
                 else
-                    CMD="$CMD $CONF $pipeline"
+                    CMD="$CMD $CONF $EXTRA $pipeline"
                 fi
             done
             ;;
