@@ -532,7 +532,7 @@ $ dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check <chan
 
 ## Link between dci-pipeline and dci-queue: @QUEUE and @RESOURCE
 
-`dci-pipeline-schedule` and `dci-pipeline-check` are the links between `dci-queue` and `dci-pipeline`. These utilities are substituting the strings `@QUEUE` and `@RESOURCE` coming from `dci-queue` in the inventory path and the configuration of the `dci-pipeline` job definitions. Example:
+`dci-pipeline-schedule` and `dci-pipeline-check` are the links between `dci-queue` and `dci-pipeline`. These utilities are substituting the strings `@QUEUE` and `@RESOURCE` coming from `dci-queue` in the inventory path, the configuration, and the ansible_extravars of the `dci-pipeline` job definitions. Example:
 
 ```YAML
   - name: workload
@@ -540,6 +540,8 @@ $ dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check <chan
     ansible_playbook: /usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml
     ansible_inventory: ~/inventories/@QUEUE/@RESOURCE.yml
     configuration: "@QUEUE"
+    ansible_extravars:
+      custom_config: /path/to/config/for/@QUEUE/@RESOURCE-config.yml
     ...
 ```
 
@@ -696,10 +698,10 @@ $ dci-queue remove-pool 8nodes
 When `dci-pipeline-check` and `dci-pipeline-schedule` are used in
 conjunction with `dci-queue`, they automatically schedule the commands
 to run through `dci-queue`. They also perform the substitution of the
-`@QUEUE` and `@RESOURCE` strings in the `ansible_inventory` and
-`configuration` settings of the jobs allowing to have flexible job
-definitions regarding inventories and configurations without having to
-change the command lines.
+`@QUEUE` and `@RESOURCE` strings in the `ansible_inventory`, the
+`configuration` and the `ansible_extravars` settings of the jobs allowing
+to have flexible job definitions regarding inventories and configurations
+without having to change the command lines.
 
 ## How to rebuild a pipeline
 
