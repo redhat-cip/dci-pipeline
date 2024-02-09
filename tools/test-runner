@@ -255,7 +255,7 @@ for arg in "$@"; do
             # components and launch fallback jobs
             sed -e '/success_tag/d' -e 's/fallback_last_success/allback_last_success/' < $pipeline > $PWD/$(basename $pipeline)
             pipeline="$PWD/$(basename $pipeline)"
-            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
+            if grep -q -E "^\s*-?\s*ansible_playbook\s*:\s*[\"']?/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml[\"']?" $pipeline; then
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             else
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"

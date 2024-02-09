@@ -64,7 +64,7 @@ for arg in "$@"; do
                 exit 1
             fi
 
-            if grep -q -E '^\s*-?\s*ansible_playbook\s*:\s*/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml' $pipeline; then
+            if grep -q -E "^\s*-?\s*ansible_playbook\s*:\s*[\"']?/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml[\"']?" $pipeline; then
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             else
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"
