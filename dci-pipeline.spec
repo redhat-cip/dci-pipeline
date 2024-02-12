@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.8.3
+Version:        0.8.4
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -180,6 +180,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Mon Feb 12 2024 Frederic Lepied <flepied@redhat.com> 0.8.4-1
+- fix ~ expansion in yaml2json
+
 * Fri Feb  9 2024 Frederic Lepied <flepied@redhat.com> 0.8.3-1
 - fix detection of dci-openshift-app-agent in schedule and test-runner
 

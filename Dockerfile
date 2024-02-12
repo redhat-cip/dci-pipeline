@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi9/ubi
 
 LABEL name="dci-pipeline"
 # keep in sync with setup.py and dci-pipeline.spec
-LABEL version="0.8.3"
+LABEL version="0.8.4"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 ENV LANG en_US.UTF-8
