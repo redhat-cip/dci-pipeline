@@ -45,6 +45,7 @@ PATH=$BASEDIR:$PATH
 CMD=
 CNF_PIPELINES=
 OCP_PIPELINES=
+OCPVERS=
 
 for arg in "$@"; do
     case "$arg" in
@@ -111,10 +112,14 @@ done
 # using KUBECONFIG or the configured kubeconfig_path in the pipeline
 # or inventory.
 if [ -z "$OCP_PIPELINES" ]; then
-    # if KUBECONFIG is not set or pointing to invalid file, lookup
-    # kubeconfig_path into the pipeline or inventory.
-    if ! [ -r "$KUBECONFIG" ]; then
-        for pipeline in $CNF_PIPELINES; do
+    for pipeline in $CNF_PIPELINES; do
+        # If KUBECONFIG was set from the environment we are launching dci-pipeline,
+        # let's directly retrieve the OCP version.
+        if [ -r "$KUBECONFIG" ]; then
+            OCPVERS=$(KUBECONFIG=$KUBECONFIG oc version -o json|jq -r .openshiftVersion)
+        # if KUBECONFIG is not set or pointing to invalid file, lookup
+        # kubeconfig_path into the pipeline or inventory.
+        else
             # lookup kubeconfig_path in the pipeline
             KUBECONFIG=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[0].extra_vars.kubeconfig_path')
             # lookup kubeconfig_path in the inventory if not found in the pipeline
@@ -128,27 +133,35 @@ if [ -z "$OCP_PIPELINES" ]; then
                 # replace {{ lookup('env', 'HOME') }} by $HOME in KUBECONFIG
                 KUBECONFIG=$(sed -e "s@{{\s*lookup('env',\s*'HOME')\s*}}@$HOME@" <<< "$KUBECONFIG")
                 OCPVERS=$(KUBECONFIG=$KUBECONFIG oc version -o json|jq -r .openshiftVersion)
-                OCPVERS=${OCPVERS%%-*}
-                # extract the DCI topic
-                case $OCPVERS in
-                    *.*.*)
-                        OCP_TOPIC=OCP-${OCPVERS%.*}
-                        ;;
-                    *.*)
-                        OCP_TOPIC=OCP-$OCPVERS
-                        ;;
-                    *)
-                        error "Unsupported OCP version scheme: $OCPVERS"
-                        ;;
-                esac
-
-                names=$(yaml2json "$pipeline"|jq -r '.[].name')
-                for name in $names; do
-                    CMD="$CMD $name:topic=$OCP_TOPIC"
-                done
+                # Since we have reached this point because KUBECONFIG was not set in the
+                # environment execution, let's reset this variable to avoid issues with
+                # next iterations.
+                KUBECONFIG=
             fi
-        done
-    fi
+        fi
+
+        # If OCPVERS was retrieved correctly, then set up topic variable.
+        if [ -n "$OCPVERS" ]; then
+            OCPVERS=${OCPVERS%%-*}
+            # extract the DCI topic
+            case $OCPVERS in
+                *.*.*)
+                    OCP_TOPIC=OCP-${OCPVERS%.*}
+                    ;;
+                *.*)
+                    OCP_TOPIC=OCP-$OCPVERS
+                    ;;
+                *)
+                    error "Unsupported OCP version scheme: $OCPVERS"
+                    ;;
+            esac
+
+            names=$(yaml2json "$pipeline"|jq -r '.[].name')
+            for name in $names; do
+                CMD="$CMD $name:topic=$OCP_TOPIC"
+            done
+        fi
+    done
 fi
 
 CMD="dci-pipeline$SUFFIX $CMD"
