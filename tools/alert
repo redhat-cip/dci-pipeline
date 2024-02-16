@@ -30,17 +30,17 @@ else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. "$BASEDIR/common$SUFFIX"
-
+source "$BASEDIR/common$SUFFIX"
 REPO=${1/*\/}
 shift
 
-if [[ -z "${GCHAT_URL}" ]]; then
+# Only send alerts for monitored repos
+if [[ ! "${MONITORED_REPOS[*]} " =~ "${REPO} " ]]; then
     exit 0
 fi
 
-# Only send alerts for monitored repos
-if [[ "${MONITORED_REPOS[*]} " =~ " ${REPO} " ]]; then
+# Send alerts to GCHAT
+if [[ -n "${GCHAT_URL}" ]]; then
     # Create a thread key to generate a URL link and send it to the thread
     thread_key=$(tr -dc a-zA-Z0-9 </dev/urandom |
         tr -d '\\/' |
@@ -67,4 +67,12 @@ if [[ "${MONITORED_REPOS[*]} " =~ " ${REPO} " ]]; then
     "${GCHAT_URL}&threadKey=${thread_key}&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
 fi
 
+# Send alerts to Slack
+if [[ -n "${SLACK_ALERT_WEBHOOK}" ]]; then
+    data='{"blocks": [{"type": "section","text": {"text": "'"${*}"'", "type": "mrkdwn"}}]}'
+    curl -sL \
+    -H "Content-Type: application/json; charset=UTF-8" \
+    --data "${data}" \
+    "${SLACK_ALERT_WEBHOOK}"
+fi
 # alert ends here
