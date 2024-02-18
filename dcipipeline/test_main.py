@@ -286,6 +286,14 @@ class TestMain(unittest.TestCase):
     def test_generate_and_query_clause_none(self):
         self.assertEqual(generate_and_query_clause([]), "")
 
+    def test_generate_and_query_clause_ilike(self):
+        self.assertEqual(generate_and_query_clause(["name:ocp*"]), ",ilike(name,ocp%)")
+
+        self.assertEqual(
+            generate_and_query_clause(["status:failure", "name:ocp*"]),
+            ",eq(status,failure),ilike(name,ocp%)",
+        )
+
     def test_generate_query_from_tags_empty(self):
         self.assertEqual(generate_query_from_tags([], [], "ocp"), "")
 
