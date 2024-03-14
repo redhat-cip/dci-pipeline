@@ -355,11 +355,18 @@ def generate_query_from_tags(fallback_tags, build_tags, c_type):
 
 def generate_and_query_clause(fields):
     if len(fields) > 0:
-        eqs = ["eq(" + ",".join(f.split(":", 1)) + ")" for f in fields]
+        qc = []
+        for f in fields:
+            k, v = f.split(":", 1)
+            op = "eq"
+            if v.endswith("*"):
+                v = v.replace("*", "%")
+                op = "ilike"
+            qc.append(op + "(" + k + "," + v + ")")
         if len(fields) > 1:
-            return "," + ",".join(eqs)
+            return "," + ",".join(qc)
         else:
-            return "," + eqs[0]
+            return "," + qc[0]
     else:
         return ""
 

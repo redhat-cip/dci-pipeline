@@ -72,6 +72,16 @@ pipeline example:
       - plugin=1.1.1
 ```
 
+### Select components with wildcards
+
+This feature allows to select a component from one of its fields using wildcards. For example, to select using a prefix:
+
+```YAML
+  - name: openshift-vanilla
+  components:
+    - "repo?name:Microshift 4.14*"
+```
+
 ### Schedule components by priority tags and age
 
 this feature allows to select more precisely the components based on their tags and their age. Here is an example:
