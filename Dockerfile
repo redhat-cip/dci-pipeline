@@ -28,7 +28,7 @@ RUN set -ex && \
     rm -rf /usr/src/* ~/.cache && \
     dnf clean all
 
-ARG _REPO_URL="https://raw.githubusercontent.com/containers/image_build/main/podman/stable"
+ARG _REPO_URL="https://raw.githubusercontent.com/containers/image_build/main/podman"
 ADD $_REPO_URL/containers.conf /etc/containers/containers.conf
 
 RUN sed -i -e 's|^#mount_program|mount_program|g' \
