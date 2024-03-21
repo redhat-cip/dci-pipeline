@@ -130,11 +130,31 @@ To set the id of the pipeline, you can use the special setting
 `@pipeline:pipeline_id=<pipeline id>`. For example:
 
 ```ShellSession
-$ dci-pipeline @pipeline:pipeline_id= mypipeline.yml
+$ dci-pipeline @pipeline:pipeline_id=$PIPELINE_ID mypipeline.yml
 ...
 ```
 
 It can be useful if you want to reconnect an existing pipeline. You should also set the `previous_job_id` of your first job to be connected at the right job in the previous pipeline.
+
+### Dynamic inventory (advanced)
+
+If you need to create the inventory dynamically, you can use the `inventory_playbook` to generate the inventory. For example:
+
+```YAML
+  - name: openshift-vanilla
+    stage: ocp
+    ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml
+    inventory_playbook: ~/config/inventory.yml
+    dci_credentials: ~/.config/dci-pipeline/dci_credentials.yml
+    ansible_inventory: ~/inventories/agent.yml
+    extra_vars:
+      my_var: my_value
+    topic: OCP-4.14
+    components:
+      - ocp
+```
+
+The `inventory_playbook` is called before the `ansible_playbook` without inventory so it can only be used to create the inventory file from the localhost. The `inventory_playbook` is called with the `extra_vars`, the `ansible_inventory` variable and, the DCI job information. Its output is visible in the DCI job output.
 
 ### Directory
 

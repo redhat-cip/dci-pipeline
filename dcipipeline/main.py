@@ -819,6 +819,25 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
     )
     envvars.update(dci_credentials)
     envvars["DCI_JOB_ID"] = job_info["job"]["id"]
+
+    if "inventory_playbook" in jobdef:
+        log.info("Running inventory playbook %s" % jobdef["inventory_playbook"])
+        run = ansible_runner.run(
+            private_data_dir=private_data_dir,
+            playbook=os.path.join(data_dir, jobdef["inventory_playbook"]),
+            verbosity=VERBOSE_LEVEL,
+            envvars=envvars,
+            # Variables are passed on the cmdline to allow vault encrypted
+            # vars to work
+            cmdline=build_cmdline(jobdef),
+            extravars={"job_info": job_info, "ansible_inventory": inventory},
+            quiet=False,
+            cancel_callback=cancel_cb,
+        )
+        if run.rc != 0 or cancel_cb():
+            log.error("Inventory playbook failed: %s or canceled" % run.rc)
+            return False
+
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=os.path.join(data_dir, jobdef["ansible_playbook"]),
