@@ -28,7 +28,7 @@ if [ -w /usr/share ]; then
     for f in "$TOPDIR"/*dci-[pa]*/requirements.txt "$TOPDIR"/*dci[ac]*/requirements.txt; do
         cd $(dirname $f)
         # remove python libraries provided as local source directories
-        sed -i -e '/dciclient/d'  -e '/dciauth.*/d' requirements.txt
+        sed -i -e '/dciclient/d' -e '/dciauth.*/d' requirements.txt
         if [ -r setup.py ]; then
             pip3 install -r requirements.txt .
         else
@@ -42,7 +42,8 @@ for d in "$TOPDIR"/ansible-collection-*; do
     cd "$d"
     rm -f ./*.tar.gz
     ansible-galaxy collection build
-    ansible-galaxy collection install ./*.tar.gz
+    # We want to make sure we install the collection we just built
+    ansible-galaxy collection install --force ./*.tar.gz
 done
 
 ## ansible roles source dirs
@@ -56,12 +57,23 @@ for d in "$TOPDIR"/ansible-role-*; do
 done
 
 ## ansible collection deps
+# unpin collections provided as local source directories, the previous
+# collection install should satisfy the dependency now
+for c in $TOPDIR/ansible-collection-c*; do
+    # normalize ansible-collection-namespace-name-version -> namespace.name
+    name="$(basename $c | sed -e 's/ansible-collection-//' | cut -d '-' -f 1,2 | sed -e 's/-/./')"
+    for r in $TOPDIR/dci-openshift-a*/requirements.yml; do
+        # get the version string and trim whitespace around it
+        cversion="$(grep -A 1 $name $r | tail -1 | xargs)"
+        # if there is a version constraint for this collection remove it
+        if [[ $cversion = "version:"* ]]; then
+            sed -i -e "/$cversion/d" $r
+        fi
+    done
+done
 
-# remove collections provided as local source directories
-sed -i -e '/community.kubernetes/d' -e '/community.libvirt/d' -e '/containers.podman/d' -e '/version: 1.2.1/d' "$TOPDIR"/dci-openshift-*/requirements.yml
-
-# skip the app-agent as the requirements.yml is invalid after the edit
-for req in "$TOPDIR"/dci-openshift-agent*/requirements.yml; do
+# install whatever other collections are needed
+for req in "$TOPDIR"/dci-openshift-*/requirements.yml; do
     cat "$req"
     ansible-galaxy collection install -r "$req"
 done
