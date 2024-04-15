@@ -235,7 +235,8 @@ else
     # use the pipelines from the change if present
     PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
     if [ -d "$PIPELINES_REPO" ]; then
-        PIPELINES_DIR="$PWD/$PIPELINES_REPO"
+        PIPELINES_PATH=$(cd "$PIPELINES_DIR" && git rev-parse --show-prefix)
+        PIPELINES_DIR="$PWD/$PIPELINES_REPO/$PIPELINES_PATH"
     fi
     # lookup the first pipeline file
     first_pipeline=
