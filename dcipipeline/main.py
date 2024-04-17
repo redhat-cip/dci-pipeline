@@ -702,7 +702,7 @@ def build_cmdline(jobdef):
 
     if "ansible_extravars" in jobdef:
         cmd += " -e '%s'" % json.dumps(
-            jobdef["ansible_extravars"], cls=AnsibleJSONEncoder
+            jobdef["ansible_extravars"], cls=AnsibleJSONEncoder, separators=(",", ":")
         )
 
     if "ansible_extravars_files" in jobdef:
@@ -819,7 +819,13 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
     )
     envvars.update(dci_credentials)
     envvars["DCI_JOB_ID"] = job_info["job"]["id"]
-
+    # Export the default vault id to be able to decrypt vault
+    # encrypted vars in sub-processes
+    envvars["ANSIBLE_VAULT_IDENTITY_LIST"] = get_vault_client()
+    # export DCI_PLAYBOOK_ARGS to be able to call sub ansible-playbook
+    # cmd with the same arguments
+    cmdline = build_cmdline(jobdef)
+    envvars["DCI_PLAYBOOK_ARGS"] = cmdline
     if "inventory_playbook" in jobdef:
         log.info("Running inventory playbook %s" % jobdef["inventory_playbook"])
         run = ansible_runner.run(
@@ -829,7 +835,7 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
             envvars=envvars,
             # Variables are passed on the cmdline to allow vault encrypted
             # vars to work
-            cmdline=build_cmdline(jobdef),
+            cmdline=cmdline,
             extravars={"job_info": job_info, "ansible_inventory": inventory},
             quiet=False,
             cancel_callback=cancel_cb,

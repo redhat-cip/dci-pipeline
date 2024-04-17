@@ -156,6 +156,18 @@ If you need to create the inventory dynamically, you can use the `inventory_play
 
 The `inventory_playbook` is called before the `ansible_playbook` without inventory so it can only be used to create the inventory file from the localhost. The `inventory_playbook` is called with the `extra_vars`, the `ansible_inventory` variable and, the DCI job information. Its output is visible in the DCI job output.
 
+### Calling ansible-playbook sub commands (advanced)
+
+If you need to call the `ansible-playbook` command in your own playbook, the tasks will be captured automatically by the DCI callback mechanism. If you need to get the `extra_vars` defined in the job definition or passed on the command line of `dci-pipeline`, you can use the `DCI_PLAYBOOK_ARGS` environment variable. Example:
+
+```YAML
+    - name: "Start VM and generate inventory"
+      ansible.builtin.shell: |
+        set -eux -o pipefail
+        ansible-playbook $DCI_PLAYBOOK_ARGS {{ samples_dir }}/ocp_on_libvirt/libvirt_up.yml -i {{ inventory_dir }}
+        ...
+```
+
 ### Directory
 
 `dci-pipeline` runs the jobs in their own workspace in
