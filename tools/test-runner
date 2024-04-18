@@ -343,7 +343,7 @@ if [ -d dci-openshift-agent ]; then
         sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-agent/plays/@" $PWD/dci-openshift-agent/dci-openshift-agent.yml
     fi
     for pipeline in $OCP_PIPELINES; do
-        sed -i -e "s@ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml@ansible_playbook: $PWD/dci-openshift-agent/dci-openshift-agent.yml@" $pipeline
+        sed -i -e "s@/var/lib/dci-openshift-agent@$PWD/dci-openshift-agent@g" -e "s@ansible_playbook: /usr/share/dci-openshift-agent/dci-openshift-agent.yml@ansible_playbook: $PWD/dci-openshift-agent/dci-openshift-agent.yml@" $pipeline
     done
 fi
 
@@ -506,6 +506,11 @@ chmod -R a-w $DIR
 # Example CNF hooks are writing into example-cnf-config/testpmd/hooks
 if [ -d example-cnf-config/testpmd/hooks ]; then
     chmod ug+w example-cnf-config/testpmd/hooks
+fi
+
+# dci-openshift-agent exception
+if [ -d dci-openshift-agent ]; then
+    chmod -R ug+w dci-openshift-agent/samples
 fi
 
 tail -f output &
