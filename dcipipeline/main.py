@@ -21,6 +21,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import time
 from json.decoder import JSONDecodeError
 
 import ansible_runner
@@ -65,6 +66,10 @@ TOPDIR = os.getenv(
 
 _JOB_FINAL_STATUSES = {"error", "success", "failure", "killed"}
 _JOB_PRODUCT_STATUSES = {"running"}
+
+
+class DciError(Exception):
+    pass
 
 
 class SignalHandler:
@@ -124,7 +129,8 @@ def upload_junit_files_from_dir(context, jobdef, dir):
         _abs_file_path = os.path.join(dir, f)
         if os.path.isfile(_abs_file_path) and f.endswith(".xml"):
             log.info("Uploading junit file: %s" % _abs_file_path)
-            dci_file.create(
+            dci(
+                dci_file.create,
                 context,
                 f[:-4],  # remove .xml at the end
                 file_path=_abs_file_path,
@@ -404,7 +410,7 @@ def _get_created_after_from_today(days_before):
 
 
 def _get_components_by_kw(**kwargs):
-    resp = dci_topic.list_components(**kwargs)
+    resp = dci(dci_topic.list_components, **kwargs)
     if resp.status_code == 200:
         log.info(
             "Got components: %s"
@@ -487,7 +493,8 @@ def get_comp(context, topic_id, c_type, where_clause, error=True, query=None):
     log.info(
         f"get_comp topic_id={topic_id} c_type={c_type} where_clause={where_clause} query={query}"
     )
-    resp = dci_topic.list_components(
+    resp = dci(
+        dci_topic.list_components,
         context,
         topic_id,
         limit=1,
@@ -521,7 +528,7 @@ def get_comp(context, topic_id, c_type, where_clause, error=True, query=None):
 
 
 def get_topic_id(context, jobdef):
-    topic_res = dci_topic.list(context, where="name:" + jobdef["topic"])
+    topic_res = dci(dci_topic.list, context, where="name:" + jobdef["topic"])
     if topic_res.status_code == 200:
         topics = topic_res.json()["topics"]
         log.debug("topics: %s" % topics)
@@ -623,7 +630,8 @@ def schedule_job(
     ):
         del pipeline_data["ansible_extravars"]["job_info"]
 
-    schedule = dci_job.create(
+    schedule = dci(
+        dci_job.create,
         remoteci_context,
         topic_id=topic_id,
         comment=jobdef.get("comment"),
@@ -637,13 +645,20 @@ def schedule_job(
     )
     if schedule.status_code == 201:
         scheduled_job_id = schedule.json()["job"]["id"]
-        scheduled_job = dci_job.get(
-            remoteci_context, scheduled_job_id, embed="topic,remoteci,components"
+        scheduled_job = dci(
+            dci_job.get,
+            remoteci_context,
+            scheduled_job_id,
+            embed="topic,remoteci,components",
         )
         if scheduled_job.status_code == 200:
             job_id = scheduled_job.json()["job"]["id"]
-            dci_jobstate.create(
-                remoteci_context, status="new", comment="job scheduled", job_id=job_id
+            dci(
+                dci_jobstate.create,
+                remoteci_context,
+                status="new",
+                comment="job scheduled",
+                job_id=job_id,
             )
             for c in scheduled_job.json()["job"]["components"]:
                 if c["id"] not in [c["id"] for c in components]:
@@ -668,14 +683,14 @@ def schedule_job(
 def add_tags_to_job(job_id, tags, context):
     for tag in tags:
         log.info("Setting tag %s on job %s" % (tag, job_id))
-        dci_job.add_tag(context, job_id, tag)
+        dci(dci_job.add_tag, context, job_id, tag)
 
 
 def add_tag_to_component(component, tag, context):
     log.info(
         f"Setting tag {tag} on component {component['id']} {component['type']}={component['version']}"
     )
-    dci_component.add_tag(context, component["id"], tag)
+    dci(dci_component.add_tag, context, component["id"], tag)
 
 
 def get_list(jobdef, key):
@@ -775,7 +790,8 @@ def upload_ansible_log(context, ansible_log_dir, jobdef):
     ansible_log = os.path.join(ansible_log_dir, "ansible.log")
     if os.path.exists(ansible_log):
         log.info("Uploading ansible.log from %s" % ansible_log)
-        dci_file.create(
+        dci(
+            dci_file.create,
             context,
             "ansible.log",
             file_path=ansible_log,
@@ -786,9 +802,10 @@ def upload_ansible_log(context, ansible_log_dir, jobdef):
 
 
 def update_job_info(context, jobdef):
-    resp = dci_job.get(context, jobdef["job_info"]["job"]["id"])
+    resp = dci(dci_job.get, context, jobdef["job_info"]["job"]["id"])
     if resp.status_code != 200:
-        log.error("Unable to get job info: %s" % resp.text())
+        log.error("Unable to get job info: %s" % resp)
+        raise DciError("Unable to get job info: %s" % resp)
     else:
         jobdef["job_info"].update(resp.json())
 
@@ -1111,12 +1128,12 @@ def compute_tags(jobdef, prev_jobdefs):
 
 
 def set_job_to_final_state(context, job_id, killed_func):
-    j = dci_job.get(context, job_id)
+    j = dci(dci_job.get, context, job_id)
     if j.status_code != 200:
         log.error("Unable to get job %s, error: %s" % (job_id, j.text))
         return
     if j.json()["job"]["status"] not in _JOB_FINAL_STATUSES:
-        j_states = dci_job.list_jobstates(context, job_id)
+        j_states = dci(dci_job.list_jobstates, context, job_id)
         if j_states.status_code != 200:
             log.error(
                 "Unable to list jobstates of job %s, error: %s"
@@ -1124,11 +1141,17 @@ def set_job_to_final_state(context, job_id, killed_func):
             )
             return
         if killed_func() and j_states.json()["jobstates"][0]["status"] != "killed":
-            dci_jobstate.create(context, "killed", job_id=job_id, comment="killed")
+            dci(dci_jobstate.create, context, "killed", job_id=job_id, comment="killed")
         elif j_states.json()["jobstates"][0]["status"] in _JOB_PRODUCT_STATUSES:
-            dci_jobstate.create(context, "failure", job_id=job_id, comment="failure")
+            dci(
+                dci_jobstate.create,
+                context,
+                "failure",
+                job_id=job_id,
+                comment="failure",
+            )
         else:
-            dci_jobstate.create(context, "error", job_id=job_id, comment="error")
+            dci(dci_jobstate.create, context, "error", job_id=job_id, comment="error")
 
 
 def run_jobdefs(
@@ -1162,7 +1185,7 @@ def run_jobdefs(
                 else dci_remoteci_context
             )
             team_id = dci_identity.my_team_id(context)
-            res = dci_pipeline.create(context, options["name"], team_id)
+            res = dci(dci_pipeline.create, context, options["name"], team_id)
             if res.status_code == 201:
                 options["pipeline_id"] = res.json()["pipeline"]["id"]
 
@@ -1321,6 +1344,29 @@ def main(args=sys.argv):
             previous_topic = jobdefs[0]["job_info"]["job"]["topic"]["name"]
     log.info("Successful end of pipeline")
     return 0
+
+
+_DEFAULT_WAIT = 30
+
+_duration = _DEFAULT_WAIT
+
+
+def dci(func, *args, **kwargs):
+    "retry the DCI API call while there is an error 5xx"
+
+    global _duration
+
+    resp = func(*args, **kwargs)
+    while resp.status_code // 100 == 5:
+        log.error("DCI API error %s, retrying in %d seconds" % (resp, _duration))
+        time.sleep(_duration)
+        resp = func(*args, **kwargs)
+        _duration *= 2
+        # max duration at 10mn
+        if _duration > 600:
+            _duration = 600
+    _duration = _DEFAULT_WAIT
+    return resp
 
 
 if __name__ == "__main__":
