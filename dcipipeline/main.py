@@ -233,7 +233,7 @@ def get_jobdef_stage(jobdef):
     return jobdef.get("stage", jobdef.get("type"))
 
 
-def get_names_of_jobdefs(pipeline):
+def get_stages_of_jobdefs(pipeline):
     names = []
     for jobdef in pipeline:
         name = get_jobdef_stage(jobdef)
@@ -242,21 +242,21 @@ def get_names_of_jobdefs(pipeline):
     return names
 
 
-def get_jobdefs(names, pipeline):
+def get_jobdefs_by_stage_or_name(lookup, pipeline):
     jobdefs = []
-    if names:
+    if lookup:
         # manage cases where a single entry is provided
-        if not is_list(names):
-            names = [names]
+        if not is_list(lookup):
+            lookup = [lookup]
         for jobdef in pipeline:
-            for name in names:
+            for name in lookup:
                 if jobdef["name"] == name or get_jobdef_stage(jobdef) == name:
                     jobdefs.append(jobdef)
     return jobdefs
 
 
 def get_prev_jobdefs(jobdef, pipeline):
-    jobdefs = get_jobdefs(jobdef.get("prev_stages"), pipeline)
+    jobdefs = get_jobdefs_by_stage_or_name(jobdef.get("prev_stages"), pipeline)
     try:
         idx = jobdefs.index(jobdef)
         jobdefs = jobdefs[:idx]
@@ -861,9 +861,11 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
             log.error("Inventory playbook failed: %s or canceled" % run.rc)
             return False
 
+    playbook_path = os.path.join(data_dir, jobdef["ansible_playbook"])
+    log.info("Launching playbook %s in %s" % (playbook_path, private_data_dir))
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
-        playbook=os.path.join(data_dir, jobdef["ansible_playbook"]),
+        playbook=playbook_path,
         verbosity=VERBOSE_LEVEL,
         envvars=envvars,
         # Variables are passed on the cmdline to allow vault encrypted
@@ -880,6 +882,7 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
     upload_ansible_log(context, private_data_dir, jobdef)
     post_process_jobdef(context, jobdef, jobdef_metas)
     update_job_info(context, jobdef)
+    log.info("Result rc=%d stats=%s " % (run.rc, run.stats))
     return run.rc == 0 and run.stats and check_stats(run.stats) and not cancel_cb()
 
 
@@ -1040,7 +1043,7 @@ def get_config(args):
     # Process global options from @pipeline
     for overload in lst:
         for name in overload:
-            jobdef = get_jobdefs(name, pipeline)
+            jobdef = get_jobdefs_by_stage_or_name(name, pipeline)
             if not jobdef:
                 log.error("No such jobdef %s" % name)
                 sys.exit(3)
@@ -1154,20 +1157,34 @@ def set_job_to_final_state(context, job_id, killed_func):
             dci(dci_jobstate.create, context, "error", job_id=job_id, comment="error")
 
 
-def run_jobdefs(
-    jobdef_type,
+def run_stage(
+    stage,
     pipeline,
     config_dir,
-    previous_job_id,
-    previous_topic,
     cancel_cb,
     options,
 ):
-    jobdefs = get_jobdefs(jobdef_type, pipeline)
+    jobdefs = get_jobdefs_by_stage_or_name(stage, pipeline)
     errors = 0
     for jobdef in jobdefs:
         dci_credentials = load_credentials(jobdef, config_dir)
         dci_remoteci_context = build_remoteci_context(dci_credentials)
+
+        prev_job_defs = get_jobdefs_by_stage_or_name(
+            jobdef.get("prev_stages"), pipeline
+        )
+        prev_job_defs = [j for j in prev_job_defs if "job_info" in j]
+        if len(prev_job_defs) > 0:
+            previous_job_id = prev_job_defs[0]["job_info"]["job"]["id"]
+            previous_topic = prev_job_defs[0]["job_info"]["job"]["topic"]["name"]
+            log.info(
+                "Setting previous job to % and previous topic to %s from job %s"
+                % (previous_job_id, previous_topic, prev_job_defs[0]["name"])
+            )
+        else:
+            log.info("No previous job for %s" % jobdef["name"])
+            previous_job_id = None
+            previous_topic = None
 
         dci_pipeline_user_context = None
         if "pipeline_user" in jobdef:
@@ -1243,7 +1260,7 @@ def run_jobdefs(
                     dci_pipeline_user_context,
                     jobdef["fallback_last_success"],
                     jobdef["job_info"]["job"]["components"],
-                    previous_job_id=previous_job_id,
+                    previous_job_id=_job_id,
                     pipeline_id=options["pipeline_id"],
                 )
 
@@ -1292,26 +1309,26 @@ def main(args=sys.argv):
     config_dir, pipeline, options = get_config(args)
     PIPELINE += pipeline
 
-    previous_job_id = None
-    previous_topic = None
-    for jobdef_type in get_names_of_jobdefs(pipeline):
-        job_in_errors, jobdefs = run_jobdefs(
-            jobdef_type,
+    for stage in get_stages_of_jobdefs(pipeline):
+        job_in_errors, jobdefs = run_stage(
+            stage,
             pipeline,
             config_dir,
-            previous_job_id,
-            previous_topic,
             signal_handler.called,
             options,
         )
         if job_in_errors != 0:
             log.error(
-                "%d job%s in error at jobdef %s"
-                % (job_in_errors, "s" if job_in_errors > 1 else "", jobdef_type)
+                "%d job%s in error at stage %s"
+                % (job_in_errors, "s" if job_in_errors > 1 else "", stage)
             )
             if signal_handler.called():
+                log.error(
+                    "Signal %d received, stopping the pipeline" % signal_handler.signum
+                )
                 return 128 + signal_handler.signum
             else:
+                log.info("Looking up last jobstates from %d jobdefs" % len(jobdefs))
                 for jobdef in jobdefs:
                     if "job_info" in jobdef and jobdef["job_info"] is not None:
                         job_info = jobdef["job_info"]
@@ -1339,9 +1356,6 @@ def main(args=sys.argv):
                             "No job.jobstate found for jobdef %s" % jobdef["name"]
                         )
                 return 1
-        if len(jobdefs) > 0:
-            previous_job_id = jobdefs[0]["job_info"]["job"]["id"]
-            previous_topic = jobdefs[0]["job_info"]["job"]["topic"]["name"]
     log.info("Successful end of pipeline")
     return 0
 
