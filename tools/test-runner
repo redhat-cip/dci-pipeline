@@ -358,19 +358,30 @@ if [ -d dci-openshift-app-agent ]; then
     if [ -z "$SUFFIX" ]; then
         sed -i -e "s@include_tasks:\s*plays/@include_tasks: $PWD/dci-openshift-app-agent/plays/@" dci-openshift-app-agent/dci-openshift-app-agent.yml
     fi
-    [ -r fake-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" fake-cnf-pipeline.yml
+    [ -r control-plane-example-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" control-plane-example-pipeline.yml
+    [ -r control-plane-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" control-plane-pipeline.yml
     [ -r preflight-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" preflight-green-pipeline.yml
     [ -r preflight-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" preflight-pipeline.yml
     [ -r operator-sdk-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/control_plane_example@" operator-sdk-pipeline.yml
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
     [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
+    [ -r tnf-test-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-pipeline.yml
     # set the playbook on the cnf pipelines
     OCP_APP_OPT=
     for NAME in $CNF_NAMES; do
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
-elif [ -d example-cnf-config/testpmd ] && [ -r example-cnf-pipeline.yml ]; then
-    sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-pipeline.yml
+elif [ -d example-cnf-config ]; then
+    # testpmd hook
+    [ -r example-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-pipeline.yml
+    [ -r example-cnf-continuous-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-continuous-pipeline.yml
+    [ -r example-cnf-blue-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-blue-pipeline.yml
+    # upgrade_validation hook
+    [ -r example-cnf-validation-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/upgrade_validation@" example-cnf-validation-pipeline.yml
+    # launch_trex_job hook
+    [ -r example-cnf-extra-trex-job-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/launch_trex_job@" example-cnf-extra-trex-job-pipeline.yml
+    # draining_validation hook
+    [ -r example-cnf-draining-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/draining_validation@" example-cnf-draining-pipeline.yml
 else
     # use the default from the pipeline
     OCP_APP_OPT=
@@ -503,9 +514,12 @@ PID=$!
 # the system
 chmod -R a-w $DIR
 
-# Example CNF hooks are writing into example-cnf-config/testpmd/hooks
-if [ -d example-cnf-config/testpmd/hooks ]; then
+# Give permissions to all example CNF hooks
+if [ -d example-cnf-config ]; then
     chmod ug+w example-cnf-config/testpmd/hooks
+    chmod ug+w example-cnf-config/upgrade_validation/hooks
+    chmod ug+w example-cnf-config/launch_trex_job/hooks
+    chmod ug+w example-cnf-config/draining_validation/hooks
 fi
 
 # dci-openshift-agent exception
