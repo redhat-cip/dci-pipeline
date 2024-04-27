@@ -19,8 +19,28 @@ PID2=
 RET=0
 KILLED=
 ERROR=
+FORCE_CHECK=
+NO_CHECK=
 declare -A ALL_DIRS
 declare -A NAME_TO_PIPELINE
+
+PROJECTS=(
+    ansible-collection-ansible-posix
+    ansible-collection-community-general
+    ansible-collection-community-kubernetes
+    ansible-collection-community-libvirt
+    ansible-collection-containers-podman
+    ansible-collection-redhatci-ocp
+    ansible-role-dci-podman
+    ansible-role-dci-sync-registry
+    dci-ansible
+    dci-openshift-agent
+    dci-openshift-app-agent
+    python-dciauth
+    python-dciclient
+)
+PROJECTS_REGEX=$(printf '%s|' "${PROJECTS[@]}")
+PROJECTS_REGEX=${PROJECTS_REGEX%|}
 
 error() {
     ERROR="$1"
@@ -43,7 +63,7 @@ finish() {
         kill $PID2
     fi
 
-    if [ -z "$ERROR" ]; then
+    if [ -z "$NO_CHECK" ] && [ -z "$ERROR" ]; then
         # Same regex as in dci-queue dci-job command
         job_regex='^.*running jobdef: ([0-9a-z-]+) with.*/([0-9a-f-]+) .*$'
 
@@ -217,12 +237,63 @@ if [ "$KIND" = gerrit ]; then
     TAGS="ansible_extravars=dci_tags:debug,gerrit:$PROJECT-$CHANGEID"
     URL="https://softwarefactory-project.io/r/#/c/$CHANGEID/"
     PIPELINENAME=gr-$PROJECT-$NUMBER
+    BODY="$(cd $PROJECT || exit 1; git log -1)"
 else
     REPO=$(jq -r .head.repo.name github.json)
     NUMBER=$(jq -r .number github.json)
     TAGS="ansible_extravars=dci_tags:debug,github:$REPO-$NUMBER"
     URL=$(jq -r .html_url github.json)
     PIPELINENAME=pr-$REPO-$NUMBER
+    BODY="$(jq -r .body github.json)"
+fi
+
+# check Test-Hints: force-check string in the description of the change
+if grep -iq '^\s*Test-Hints?:\s*force-check' $BODY; then
+    FORCE_CHECK=1
+fi
+
+# check Test-Hints: no-check string in the description of the change
+if grep -iq '^\s*Test-Hints?:\s*no-check' $BODY; then
+    NO_CHECK=1
+fi
+
+# make sure the change is only on dci-openshift-(app-)?agent or it was passed Test-Hins: no-check
+if [ -n "$NO_CHECK" ] ||
+       { [ -d dci-openshift-agent -o \
+           -d dci-openshift-app-agent ] &&
+         [ $(ls|grep -E "${PROJECTS_REGEX}"|wc -l) -eq 1 ];
+       } ||
+       { [ -d dci-openshift-agent -a \
+           -d dci-openshift-app-agent ] &&
+         [ $(ls|grep -E "${PROJECTS_REGEX}"|wc -l) -eq 2 ];
+       }; then
+    if [ -n "$NO_CHECK" ]; then
+        NUMBER_CODE_FILES=0
+    elif [ -z "$FORCE_CHECK" ]; then
+        CODE_FILES=(
+            'ansible.cfg'
+            'group_vars/all'
+            'plays/scripts'
+            '\.(yml|j2|py)'
+        )
+        CODE_FILES_REGEX=$(printf '%s|' "${CODE_FILES[@]}")
+        NUMBER_CODE_FILES=$(
+        (for d in dci-openshift-*agent; do
+             cd $d
+             git diff-tree --no-commit-id --name-only -r HEAD
+             cd ..
+         done
+        ) |
+        grep -E "(${CODE_FILES_REGEX%|})" |
+        grep -Ev 'requirements.yml|.github' |
+        wc -l
+        )
+    fi
+    if [ "$NUMBER_CODE_FILES" -eq 0 ]; then
+        $BASEDIR/send_status "$DIR" "success" "SUCCESS"
+        $BASEDIR/send_comment "$DIR" "from change $URL:\n- no check (not a code change)"
+        exit 0
+    fi
 fi
 
 # compute the command line arguments according to the extracted

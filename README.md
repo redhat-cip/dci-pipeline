@@ -572,6 +572,14 @@ $ dci-pipeline-check <change URL> -p pool ocp-vanilla
 $ dci-queue schedule wrkld -- env QUEUE_TOKEN=@RESOURCE dci-pipeline-check <change URL> -p cluster /path/to/kubeconfig workload
 ```
 
+### no-check and force-check
+
+You can also specify a `Test-Hint:` field in the description of your
+change. This will direct `dci-pipeline-check` to test in a specific way:
+
+- `Test-Hint: no-check` do not run a check (useful in CI mode).
+- `Test-Hint: force-check` run a check even if there is no code change (useful in CI mode).
+
 ## Link between dci-pipeline and dci-queue: @QUEUE and @RESOURCE
 
 `dci-pipeline-schedule` and `dci-pipeline-check` are the links between `dci-queue` and `dci-pipeline`. These utilities are substituting the strings `@QUEUE` and `@RESOURCE` coming from `dci-queue` in the inventory path, the configuration, and the ansible_extravars of the `dci-pipeline` job definitions. Example:
