@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Red Hat, Inc.
+# Copyright (C) 2023-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,28 +13,29 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Parse stdin for strings like:
+"""
+%(prog)s - Parse stdin for strings like:
 
 Test<name>: <dci-pipeline args>
 
-according to the configuration in the file
-~/.config/dci-pipeline/auto.conf which is an ini file with sections
-like:
+According to the configuration in the file ~/.config/dci-pipeline/auto.conf
+which is an ini file with sections like:
 
 [<name>]
 cmd = dci-pipeline-check @URL -p <dci-queue>
 
 The command takes the URL of the change (GitHub PR or Gerrit change) as argument.
 
-For example:
+Example:
 
-$ dci-pipeline-auto https://softwarefactory-project.io/r/c/dci-openshift-agent/+/30337 < <description of the change>
+$ dci-pipeline-auto https://example.com/r/c/dci-openshift-agent/+/30337 <<< <description of the change>
 
 will launch:
 
-dci-pipeline-check https://softwarefactory-project.io/r/c/dci-openshift-agent/+/30337 -p <dci-queue> <dci-pipeline args>
+dci-pipeline-check https://example.com/r/c/dci-openshift-agent/+/30337 -p <dci-queue> <dci-pipeline args>
 """
 
+import argparse
 import configparser
 import os.path
 import re
@@ -69,17 +70,30 @@ def parse_description(description):
 
 def main(argv=sys.argv):
     """main"""
-
-    if len(argv) != 2:
-        print(f"Usage: {argv[0]} <change url>")
-        return 1
+    parser = argparse.ArgumentParser(
+        prog=os.path.basename(argv[0]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument("url", help="URL of the change")
+    parser.add_argument(
+        "infile",
+        nargs="?",
+        type=argparse.FileType("r"),
+        default=sys.stdin,
+        help="STDIN",
+    )
+    args = parser.parse_args(argv[1:])
 
     config = load_config("~/.config/dci-pipeline/auto.conf")
-    pipelines = parse_description(sys.stdin.read())
+    pipelines = parse_description(args.infile.read())
     nb = 0
-    for name, args in pipelines.items():
+    for name, pipeline_args in pipelines.items():
         if name in config and "cmd" in config[name]:
-            cmd = shlex.split(config[name]["cmd"].replace("@URL", argv[1])) + args
+            cmd = (
+                shlex.split(config[name]["cmd"].replace("@URL", args.url))
+                + pipeline_args
+            )
             print(
                 f"+ {' '.join(cmd)}",
                 file=sys.stderr,
