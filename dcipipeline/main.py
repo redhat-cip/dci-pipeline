@@ -1175,11 +1175,13 @@ def run_stage(
         )
         prev_job_defs = [j for j in prev_job_defs if "job_info" in j]
         if len(prev_job_defs) > 0:
-            previous_job_id = prev_job_defs[0]["job_info"]["job"]["id"]
-            previous_topic = prev_job_defs[0]["job_info"]["job"]["topic"]["name"]
+            # Get the last jobdef that has been run
+            previous_job_def = prev_job_defs[-1]
+            previous_job_id = previous_job_def["job_info"]["job"]["id"]
+            previous_topic = previous_job_def["job_info"]["job"]["topic"]["name"]
             log.info(
                 "Setting previous job to % and previous topic to %s from job %s"
-                % (previous_job_id, previous_topic, prev_job_defs[0]["name"])
+                % (previous_job_id, previous_topic, prev_job_defs[-1]["name"])
             )
         else:
             log.info("No previous job for %s" % jobdef["name"])
