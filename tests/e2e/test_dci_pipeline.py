@@ -19,7 +19,6 @@ import subprocess
 import sys
 import time
 
-import pytest
 import requests
 
 from dcipipeline.main import PIPELINE
@@ -209,9 +208,6 @@ def test_dci_pipeline_edge2():
     assert rc == 0
 
 
-@pytest.mark.skip(
-    reason="No way to make it work. Failing to load community.general.nmcli."
-)
 def test_dci_pipeline_real():
     rc = main(
         [
