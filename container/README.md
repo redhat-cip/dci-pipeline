@@ -7,6 +7,7 @@ agents inside a single container.
 
 Extract all these git repositories in the same directory:
 
+* ansible-collection-community-crypto
 * ansible-collection-community-kubernetes
 * ansible-collection-community-general
 * ansible-collection-community-libvirt

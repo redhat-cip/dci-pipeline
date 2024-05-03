@@ -16,6 +16,7 @@
       - dci-openshift-agent
       - dci-openshift-app-agent
       - dci-packaging
+      - ansible-collection-community-crypto
       - ansible-collection-community-kubernetes
       - ansible-collection-community-general
       - ansible-collection-community-libvirt
@@ -49,6 +50,7 @@
       - dci-openshift-app-agent
       - dci-packaging
       - dci-pipeline
+      - ansible-collection-community-crypto
       - ansible-collection-community-kubernetes
       - ansible-collection-community-general
       - ansible-collection-community-libvirt
@@ -76,6 +78,7 @@
       - dci-openshift-app-agent
       - dci-packaging
       - dci-pipeline
+      - ansible-collection-community-crypto
       - ansible-collection-community-kubernetes
       - ansible-collection-community-general
       - ansible-collection-community-libvirt
