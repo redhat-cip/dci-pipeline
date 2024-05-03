@@ -515,7 +515,7 @@ class TestQueue(unittest.TestCase):
         with open(os.path.join(self.queue_dir, res), "w") as f:
             f.write("dcipipeline.main - Scheduled DCI job %s\n" % job_id)
             f.write(
-                "dcipipeline.main - INFO - running jobdef: %s with inventory"
+                "2024-02-28 12:34:58 - dcipipeline.main - INFO - running jobdef: %s with inventory"
                 "/var/lib/dci/inventories/clusterX"
                 "private_data_dir=/var/lib/dci-pipeline/%s/%s "
                 "env={'ANSIBLE_CALLBACK_PLUGINS': '/usr/share/dci/callback',"
