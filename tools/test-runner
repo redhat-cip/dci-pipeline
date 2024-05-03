@@ -248,12 +248,12 @@ else
 fi
 
 # check Test-Hints: force-check string in the description of the change
-if grep -iq '^\s*Test-Hints?:\s*force-check' $BODY; then
+if grep -iqP '^\s*Test-Hints?:\s*force-check' <<< "${BODY}"; then
     FORCE_CHECK=1
 fi
 
 # check Test-Hints: no-check string in the description of the change
-if grep -iq '^\s*Test-Hints?:\s*no-check' $BODY; then
+if grep -iqP '^\s*Test-Hints?:\s*no-check' <<< "${BODY}"; then
     NO_CHECK=1
 fi
 
