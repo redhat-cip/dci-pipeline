@@ -17,6 +17,21 @@ EOF
 # dnf install -y dci-pipeline
 ```
 
+### Folders and files location
+
+Once `dci-pipeline` package is installed, the files and resources you can find in this repository will be placed in the following locations:
+
+- `/etc/dci-pipeline` only contains an empty `pipeline.yml` file.
+- `/etc/sysconfig` folder contains the content of `sysconfig` folder, which is `dci-pipeline` file.
+- `/etc/bash_completion.d` contains a `dci-queue` file related to this tool, which comes from `dciqueue/dci-queue.bash_completion` file.
+- `/usr/share/dci-pipeline` contains the following scripts from `tools` folder in this repo: `alert`, `common`, `dci-pipeline-helper`, `extract-dependencies`, `get-config-entry`, `loop_until_failure`, `loop_until_success`, `send_status`, `send_comment`, `test-runner` and `yaml2json`. If `podman` flavour is selected, then `<script>-podman` scripts are placed here too.
+- `/usr/bin` folder holds scripts such as `dci-pipeline`, `dci-auto-launch`, `dci-pipeline-schedule`, `dci-pipeline-check`, `dci-queue`, `dci-agent-ctl`, `dci-rebuild-pipeline`, `dci-settings2pipeline` and `dci-diff-pipeline`. If `podman` flavour is selected, then `<script>-podman` scripts are placed here too. Note that some of these scripts come from `tools` folder, and others are generated from folders like `dciagent`, `dcipipeline` or `dciqueue`, and their podman flavours are located in `container` folder.
+
+Also, have in mind that:
+
+- `dci-pipeline` user (with sudo permissions) and group are created. There's also a group for `dci-queue`.
+- Files under `systemd` folder in this repo will be used to create the corresponding system service for `dci-pipeline`.
+
 ## dci-pipeline command
 
 The `dci-pipeline` command allows to execute multiple DCI jobs using
