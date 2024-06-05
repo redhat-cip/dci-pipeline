@@ -12,14 +12,14 @@ ADD dist/* /usr/src/
 RUN set -ex && \
     dnf -y update && \
     dnf -y install git gcc gettext python3-devel python3-pip python3-setuptools python3-cryptography \
-        make sudo policycoreutils libvirt-libs fuse-overlayfs wget podman jq \
+        make sudo policycoreutils fuse-overlayfs wget podman jq \
         --exclude container-selinux && \
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf -y install python3-openshift python3-passlib && \
     mkdir -p /usr/share/dci /usr/share/ansible/roles /etc/ansible/roles /usr/share/ansible/collections && \
     export ANSIBLE_ROLES_PATH=/usr/share/ansible/roles:/etc/ansible/roles && \
     export ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections && \
-    ANSIBLE_DIR="/usr/share/dci/" /usr/src/dci-pipeline-*/container/install-from-source.sh && \
+    LANG=C ANSIBLE_DIR="/usr/share/dci/" /usr/src/dci-pipeline-*/container/install-from-source.sh && \
     cd /usr/src/dci-ansible* && cp -r modules module_utils callback action_plugins filter_plugins /usr/share/dci/ && \
     adduser --home /var/lib/dci-openshift-agent dci-openshift-agent && \
     chown -R dci-openshift-agent: /var/lib/dci-openshift-agent && \

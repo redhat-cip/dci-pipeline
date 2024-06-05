@@ -178,6 +178,7 @@ def test_dci_pipeline_edge():
             p("pipeline-edge.yml"),
             "rh-cnf:ansible_inventory=" + inventory,
             "openshift-edge:ansible_extravars=answer:42",
+            "rh-cnf:ansible_extravars=answer:42",
         ]
     )
     assert rc == 0

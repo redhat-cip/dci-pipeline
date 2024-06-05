@@ -119,9 +119,11 @@ def display_cmd(args, filename, ext=None):
                 " %s%s%s: %s (wd: %s)%s"
                 % (
                     filename[: -len(ext)] if ext else filename,
-                    "(p%d)" % data["priority"]
-                    if "priority" in data and data["priority"] > 0
-                    else "",
+                    (
+                        "(p%d)" % data["priority"]
+                        if "priority" in data and data["priority"] > 0
+                        else ""
+                    ),
                     " [%s]" % data["resource"] if "resource" in data else "",
                     " ".join(cmd),
                     data["wd"],

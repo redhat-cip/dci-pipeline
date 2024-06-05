@@ -83,21 +83,27 @@ def process_settings(settings_filename, pipelines, current_stage, prev_stage):
     if "type" not in settings:
         settings["type"] = settings["dci_agent"]
     pipeline = {
-        "name": settings["dci_name"]
-        if "dci_name" in settings
-        else settings["dci_agent"],
-        "type": settings["type"],
-        "ansible_playbook": fix_path(settings["ansible_playbook"], base_dir)
-        if "ansible_playbook" in settings
-        else "/usr/share/dci-{}-agent/dci-{}-agent.yml".format(
-            settings["dci_agent"], settings["dci_agent"]
+        "name": (
+            settings["dci_name"] if "dci_name" in settings else settings["dci_agent"]
         ),
-        "dci_credentials": fix_path(settings["dci_credentials"], base_dir)
-        if "dci_credentials" in settings
-        else os.path.join(os.path.dirname(settings_filename), "dci_credentials.yml"),
-        "ansible_inventory": fix_path(settings["ansible_inventory"], base_dir)
-        if "ansible_inventory" in settings
-        else os.path.join(os.path.dirname(settings_filename), "hosts"),
+        "type": settings["type"],
+        "ansible_playbook": (
+            fix_path(settings["ansible_playbook"], base_dir)
+            if "ansible_playbook" in settings
+            else "/usr/share/dci-{}-agent/dci-{}-agent.yml".format(
+                settings["dci_agent"], settings["dci_agent"]
+            )
+        ),
+        "dci_credentials": (
+            fix_path(settings["dci_credentials"], base_dir)
+            if "dci_credentials" in settings
+            else os.path.join(os.path.dirname(settings_filename), "dci_credentials.yml")
+        ),
+        "ansible_inventory": (
+            fix_path(settings["ansible_inventory"], base_dir)
+            if "ansible_inventory" in settings
+            else os.path.join(os.path.dirname(settings_filename), "hosts")
+        ),
     }
     # copy optional keys
     for key in OPT_KEYS:

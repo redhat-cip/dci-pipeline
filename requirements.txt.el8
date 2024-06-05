@@ -1,5 +1,5 @@
-ansible-core
-ansible-runner
+ansible<2.10
+ansible-runner<2.3.2
 dciauth
 dciclient
 junit-xml

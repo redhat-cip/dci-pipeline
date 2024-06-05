@@ -20,9 +20,27 @@
         regexp: '^DCI_GIT_REPO_DIR='
         line: DCI_GIT_REPO_DIR=..
 
+    - name: Update centos8 repositories
+      ansible.builtin.shell: |
+        set -ex
+        sudo sed -i \
+          -e 's,^mirror,#mirror,' \
+          -e 's,^#\(baseurl=.*\)mirror.centos.org\(.*\),\1archive.kernel.org/centos-vault\2,' \
+          /etc/yum.repos.d/CentOS-Stream*.repo
+      when: ansible_distribution_major_version | int == 8
+
+    - name: Remove the ansible packages
+      ansible.builtin.package:
+        name:
+          - ansible
+          - ansible-core
+        state: absent
+      become: true
+
     - name: Build and launch the control server container images from dci-dev-env
       shell: |
         set -ex
+        sudo modprobe iptable-nat
         podman-compose build db api
         podman-compose up -d db api
       args:
@@ -46,6 +64,14 @@
       args:
         chdir: "{{ dcipipeline_path }}"
 
+    - name: Force requirements for centos8
+      ansible.builtin.copy:
+        src: "{{ dcipipeline_path }}/requirements.txt.el8"
+        dest: "{{ dcipipeline_path }}/requirements.txt"
+        mode: "0644"
+        remote_src: true
+      when: ansible_distribution_major_version | int == 8
+
     - name: Force to use dciclient from the local copy
       ansible.builtin.replace:
         path: "{{ dcipipeline_path }}/requirements.txt"
@@ -67,6 +93,7 @@
       shell: |
         set -ex
         . .tox/functional/bin/activate
+        [ $(type -p ansible-playbook) != /usr/bin/ansible-playbook ]
         ./container/install-from-source.sh
       environment:
         ANSIBLE_ROLES_PATH: "~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles"

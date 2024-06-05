@@ -63,7 +63,7 @@
     - name: validate extravars
       assert:
         that:
-          - "{{ answer }} == 42"
+          - answer | int == 42
 
 - name: Running cnf
   hosts: localhost

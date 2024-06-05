@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022-2023 Red Hat, Inc.
+# Copyright (C) 2022-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -37,7 +37,9 @@ for dir in . ../python-dciclient ../python-dciauth; do
 done
 
 for repo in ansible-collection-redhatci-ocp ; do
-    git clone https://github.com/redhatci/${repo}.git ../${repo}
+    if [ ! -d ../$repo ]; then
+        git clone https://github.com/redhatci/${repo}.git ../${repo}
+    fi
 done
 
 for dir in dci-ansible \

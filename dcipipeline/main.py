@@ -863,6 +863,8 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
 
     playbook_path = os.path.join(data_dir, jobdef["ansible_playbook"])
     log.info("Launching playbook %s in %s" % (playbook_path, private_data_dir))
+    log.info("envvars=%s" % envvars)
+    log.info("PATH=%s" % os.getenv("PATH"))
     run = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=playbook_path,
@@ -879,6 +881,13 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
     jobdef["job_info"]["stats"] = run.stats
     jobdef["job_info"]["rc"] = run.rc
     log.info("stats=%s" % run.stats)
+    # if nothing has been executed, dump the ansible.log to ease debugging
+    if run.stats is None:
+        ansible_log = os.path.join(private_data_dir, "ansible.log")
+        if os.path.exists(ansible_log):
+            log.error(open(ansible_log).read())
+        else:
+            log.error("No ansible.log found")
     upload_ansible_log(context, private_data_dir, jobdef)
     post_process_jobdef(context, jobdef, jobdef_metas)
     update_job_info(context, jobdef)
@@ -1180,7 +1189,7 @@ def run_stage(
             previous_job_id = previous_job_def["job_info"]["job"]["id"]
             previous_topic = previous_job_def["job_info"]["job"]["topic"]["name"]
             log.info(
-                "Setting previous job to % and previous topic to %s from job %s"
+                "Setting previous job to %s and previous topic to %s from job %s"
                 % (previous_job_id, previous_topic, prev_job_defs[-1]["name"])
             )
         else:
