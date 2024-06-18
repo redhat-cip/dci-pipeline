@@ -125,8 +125,7 @@
         - dci-pipeline-tests-py3-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8
-        - dci-rpm-build-el9:
-            voting: false
+        - dci-rpm-build-el9
 
     gate:
       jobs:
@@ -134,16 +133,14 @@
         - dci-pipeline-tests-py3-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8
-        - dci-rpm-build-el9:
-            voting: false
+        - dci-rpm-build-el9
 
     dci-post:
       jobs:
         - dci-build-and-push-dci-pipeline-container-job
         - dci-rpm-build-el8
         - dci-rpm-build-doc-el8
-        - dci-rpm-build-el9:
-            voting: false
+        - dci-rpm-build-el9
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-el8
