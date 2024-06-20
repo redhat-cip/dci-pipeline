@@ -41,7 +41,6 @@ Requires:       python3-libselinux
 BuildRequires:  systemd
 %{?systemd_requires}
 Requires(pre):  shadow-utils
-Requires:       ansible
 Requires:       dci-ansible >= 0.8.0
 Requires:       /usr/bin/sudo
 
@@ -178,6 +177,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Fri Jan 24 2025 Tony Garcia <tonyg@redhat.com> 0.9.0-1
+- Satisfy ansible or ansible-core through dci-ansible
+
 * Fri Jul 19 2024 Frederic Lepied <flepied@redhat.com> 0.9.0-1
 - require dci-ansible >= 0.8.0 to get the dcijunit plugin
 
