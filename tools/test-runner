@@ -437,6 +437,9 @@ if [ -d dci-openshift-app-agent ]; then
     [ -r tnf-test-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-green-pipeline.yml
     [ -r tnf-test-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-cnf-pipeline.yml
     [ -r tnf-test-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/tnf_test_example@" tnf-test-pipeline.yml
+    [ -r ztp-attach-spoke-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/day_2_cluster_operations/attach_spoke_cluster@" ztp-attach-spoke-pipeline.yml
+    [ -r ztp-detach-spoke-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/dci-openshift-app-agent/samples/day_2_cluster_operations/detach_ztp_spoke_cluster@" ztp-detach-spoke-pipeline.yml
+
     # set the playbook on the cnf pipelines
     OCP_APP_OPT=
     for NAME in $CNF_NAMES; do
