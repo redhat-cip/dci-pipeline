@@ -284,9 +284,19 @@ else
     CMD="$PREFIX $BASEDIR/test-runner$SUFFIX $DIR $RES $KBCFG"
 fi
 
-# create a python virtualenv if there is any project with a
-# requirements.txt into the changes
-REQS=$(ls */requirements.txt 2> /dev/null || :)
+# Use a suffix for el8 hosts
+REQ_SUFFIX=""
+source /etc/os-release
+if [[ ${VERSION_ID%.*} -eq 8 ]]; then
+    REQ_SUFFIX=".el8"
+fi
+
+# Create a python virtualenv if there is any project with a
+# requirements.txt into the changes, giving priority to requirements
+# with a suffix
+set +e
+REQS=($(ls -1 */requirements.txt{${REQ_SUFFIX},} 2> /dev/null | tail -1))
+set -e
 
 if [ -n "$REQS" ]; then
     rm -rf .venv

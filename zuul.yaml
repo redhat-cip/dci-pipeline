@@ -1,8 +1,7 @@
 ---
-
 - job:
-    name: dci-pipeline-tests-py3
-    description: job to run the example pipeline in python 3
+    name: dci-pipeline-tests-py3-el8
+    description: job to run the example pipeline in python 3 for el8
     run: zuul.d/run3.yaml
     required-projects:
       - dci-dev-env
@@ -26,7 +25,7 @@
     nodeset:
       nodes:
         - name: testrunner
-          label: dci-centos-8
+          label: cloud-rhel-8-10
 
 - job:
     name: dci-pipeline-tests-py3-el9
@@ -121,7 +120,7 @@
     check:
       jobs:
         - dci-build-and-push-dci-pipeline-dev-container-job
-        - dci-pipeline-tests-py3
+        - dci-pipeline-tests-py3-el8
         - dci-pipeline-tests-py3-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8
@@ -129,7 +128,7 @@
 
     gate:
       jobs:
-        - dci-pipeline-tests-py3
+        - dci-pipeline-tests-py3-el8
         - dci-pipeline-tests-py3-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8

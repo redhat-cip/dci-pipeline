@@ -20,15 +20,6 @@
         regexp: '^DCI_GIT_REPO_DIR='
         line: DCI_GIT_REPO_DIR=..
 
-    - name: Update centos8 repositories
-      ansible.builtin.shell: |
-        set -ex
-        sudo sed -i \
-          -e 's,^mirror,#mirror,' \
-          -e 's,^#\(baseurl=.*\)mirror.centos.org\(.*\),\1archive.kernel.org/centos-vault\2,' \
-          /etc/yum.repos.d/CentOS-Stream*.repo
-      when: ansible_distribution_major_version | int == 8
-
     - name: Remove the ansible packages
       ansible.builtin.package:
         name:
@@ -36,6 +27,23 @@
           - ansible-core
         state: absent
       become: true
+
+    - name: Packages for el8
+      become: true
+      when:
+        - ansible_distribution_major_version | int == 8
+      block:
+        - name: Install EPEL
+          ansible.builtin.shell: |
+            subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
+            dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm -y
+
+        - name: Install required packages
+          ansible.builtin.package:
+            name:
+              - make
+              - podman-compose
+              - python3-tox
 
     - name: Build and launch the control server container images from dci-dev-env
       shell: |
@@ -64,7 +72,7 @@
       args:
         chdir: "{{ dcipipeline_path }}"
 
-    - name: Force requirements for centos8
+    - name: Force requirements for el8 
       ansible.builtin.copy:
         src: "{{ dcipipeline_path }}/requirements.txt.el8"
         dest: "{{ dcipipeline_path }}/requirements.txt"
