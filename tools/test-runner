@@ -521,7 +521,7 @@ for NAME in $CNF_NAMES; do
     fi
     if [ -d cnf-certification-test ]; then
         # export directory where cnf-certification-test code from PR is located as variable to be used in the dci-openshift-app-agent
-        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=test_network_function_src_dir:$PWD/cnf-certification-test"
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=kbpc_code_src_dir:$PWD/cnf-certification-test"
         # inject dependencies from other github PR if needed
         for d in $(sed -n -e 's@\s*github.com/[^/]*/\([^/ ]*\).*@\1@p' cnf-certification-test/go.mod); do
             if [ -d "$d" ]; then
