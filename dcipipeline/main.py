@@ -94,6 +94,8 @@ def pre_process_jobdef(jobdef):
     # create sane default env variables
     if "JUNIT_TEST_CASE_PREFIX" not in jobdef["ansible_envvars"]:
         jobdef["ansible_envvars"]["JUNIT_TEST_CASE_PREFIX"] = "test_"
+    if "JUNIT_TEST_CASE_REGEX" not in jobdef["ansible_envvars"]:
+        jobdef["ansible_envvars"]["JUNIT_TEST_CASE_REGEX"] = "(test|validate)_ "
     if "JUNIT_TASK_CLASS" not in jobdef["ansible_envvars"]:
         jobdef["ansible_envvars"]["JUNIT_TASK_CLASS"] = "yes"
     if "JUNIT_OUTPUT_DIR" not in jobdef["ansible_envvars"]:

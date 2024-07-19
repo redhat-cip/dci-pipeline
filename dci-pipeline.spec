@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.8.4
+Version:        0.9.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -26,7 +26,6 @@ Requires:       PyYAML
 Requires:       python2-dciclient >= 3.1.0
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
-Requires:       python2-junit_xml
 Requires:       python2-libselinux
 %endif
 
@@ -36,7 +35,6 @@ BuildRequires:  python3-setuptools
 Requires:       python3-PyYAML
 Requires:       python3-dciclient >= 3.1.0
 Requires:       python3-ansible-runner
-Requires:       python3-junit_xml
 Requires:       python3-libselinux
 %endif
 
@@ -44,7 +42,7 @@ BuildRequires:  systemd
 %{?systemd_requires}
 Requires(pre):  shadow-utils
 Requires:       ansible
-Requires:       dci-ansible >= 0.3.1
+Requires:       dci-ansible >= 0.8.0
 Requires:       /usr/bin/sudo
 
 %description
@@ -180,6 +178,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Fri Jul 19 2024 Frederic Lepied <flepied@redhat.com> 0.9.0-1
+- require dci-ansible >= 0.8.0 to get the dcijunit plugin
+
 * Mon Feb 12 2024 Frederic Lepied <flepied@redhat.com> 0.8.4-1
 - fix ~ expansion in yaml2json
 
