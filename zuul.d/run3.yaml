@@ -44,6 +44,7 @@
               - make
               - podman-compose
               - python3-tox
+              - git
 
     - name: Build and launch the control server container images from dci-dev-env
       shell: |
@@ -72,7 +73,7 @@
       args:
         chdir: "{{ dcipipeline_path }}"
 
-    - name: Force requirements for el8 
+    - name: Force requirements for el8
       ansible.builtin.copy:
         src: "{{ dcipipeline_path }}/requirements.txt.el8"
         dest: "{{ dcipipeline_path }}/requirements.txt"
