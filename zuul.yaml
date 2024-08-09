@@ -1,59 +1,4 @@
 ---
-- job:
-    name: dci-pipeline-tests-py3-el8
-    description: job to run the example pipeline in python 3 for el8
-    run: zuul.d/run3.yaml
-    required-projects:
-      - dci-dev-env
-      - dci-control-server
-      - python-dciclient
-      - python-dciauth
-      - dci-ui
-      - dci-doc
-      - dci-ansible
-      - dci-analytics
-      - dci-openshift-agent
-      - dci-openshift-app-agent
-      - dci-packaging
-      - ansible-collection-community-crypto
-      - ansible-collection-community-kubernetes
-      - ansible-collection-community-general
-      - ansible-collection-community-libvirt
-      - ansible-collection-containers-podman
-      - ansible-role-dci-podman
-      - ansible-role-dci-sync-registry
-    nodeset:
-      nodes:
-        - name: testrunner
-          label: cloud-rhel-8-10
-
-- job:
-    name: dci-pipeline-tests-py3-el9
-    description: job to run the example pipeline in python 3 on EL9
-    run: zuul.d/run3.yaml
-    required-projects:
-      - dci-dev-env
-      - dci-control-server
-      - python-dciclient
-      - python-dciauth
-      - dci-ui
-      - dci-doc
-      - dci-ansible
-      - dci-analytics
-      - dci-openshift-agent
-      - dci-openshift-app-agent
-      - dci-packaging
-      - ansible-collection-community-crypto
-      - ansible-collection-community-kubernetes
-      - ansible-collection-community-general
-      - ansible-collection-community-libvirt
-      - ansible-collection-containers-podman
-      - ansible-role-dci-podman
-      - ansible-role-dci-sync-registry
-    nodeset:
-      nodes:
-        - name: testrunner
-          label: dci-centos-9
 
 - job:
     name: dci-build-and-push-dci-pipeline-dev-container-job
@@ -120,16 +65,16 @@
     check:
       jobs:
         - dci-build-and-push-dci-pipeline-dev-container-job
-        - dci-pipeline-tests-py3-el8
-        - dci-pipeline-tests-py3-el9
+        - dci-pipeline-tests-el8
+        - dci-pipeline-tests-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8
         - dci-rpm-build-el9
 
     gate:
       jobs:
-        - dci-pipeline-tests-py3-el8
-        - dci-pipeline-tests-py3-el9
+        - dci-pipeline-tests-el8
+        - dci-pipeline-tests-el9
         - dci-rpm-build-doc-el8
         - dci-rpm-build-el8
         - dci-rpm-build-el9
