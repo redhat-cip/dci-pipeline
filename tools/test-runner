@@ -519,21 +519,21 @@ for NAME in $CNF_NAMES; do
     if [ -n "$OCP_TOPIC" ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:topic=$OCP_TOPIC"
     fi
-    if [ -d cnf-certification-test ]; then
-        # export directory where cnf-certification-test code from PR is located as variable to be used in the dci-openshift-app-agent
-        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=kbpc_code_src_dir:$PWD/cnf-certification-test"
+    if [ -d certsuite ]; then
+        # export directory where certsuite code from PR is located as variable to be used in the dci-openshift-app-agent
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=kbpc_code_src_dir:$PWD/certsuite"
         # inject dependencies from other github PR if needed
-        for d in $(sed -n -e 's@\s*github.com/[^/]*/\([^/ ]*\).*@\1@p' cnf-certification-test/go.mod); do
+        for d in $(sed -n -e 's@\s*github.com/[^/]*/\([^/ ]*\).*@\1@p' certsuite/go.mod); do
             if [ -d "$d" ]; then
                 ORIGPKG=$(jq -r .base.repo.html_url $d-*.json|sed -e 's@https://@@')
                 if [ -n "$ORIGPKG" ]; then
                     GOPKG=$(jq -r .head.repo.html_url $d-*.json|sed -e 's@.*//@@')
                     BRANCH=$(jq -r .head.ref $d-*.json)
                     # inject the replace statement at the top of the file
-                    sed -i -e  "s@^\(go .*\)\$@\1\n\nreplace $ORIGPKG => $GOPKG $BRANCH\n@" cnf-certification-test/go.mod
-                    head -15 cnf-certification-test/go.mod
+                    sed -i -e  "s@^\(go .*\)\$@\1\n\nreplace $ORIGPKG => $GOPKG $BRANCH\n@" certsuite/go.mod
+                    head -15 certsuite/go.mod
                     # inject a go mod tiny command into the Makefile to create the correct go.sum
-                    sed -i -e 's@go.mod)"$@go.mod)" \&\& go mod tidy@' cnf-certification-test/Makefile
+                    sed -i -e 's@go.mod)"$@go.mod)" \&\& go mod tidy@' certsuite/Makefile
                 fi
             fi
         done
