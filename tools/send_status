@@ -77,6 +77,11 @@ fi
 for json in $(ls $DIR/*.json); do
     # Gerrit
     if [ $(jq -r .url $json) = null ]; then
+        if [ -z $GERRIT_SSH_LOGIN ] || [ -z $GERRIT_SSH_ID ]; then
+          echo "GERRIT_SSH_LOGIN or GERRIT_SSH_ID are not defined, the review is not updated"
+          continue
+        fi
+
         CHANGEID=$(jq -r ._number $json)
         CURREV=$(jq -r .current_revision $json)
         PATCHSET=$(jq -r ".revisions[\"$CURREV\"]._number" $json)
