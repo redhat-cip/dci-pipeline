@@ -65,7 +65,7 @@ finish() {
 
     if [ -z "$NO_CHECK" ] && [ -z "$ERROR" ]; then
         # Same regex as in dci-queue dci-job command
-        job_regex='^.*running jobdef: ([0-9a-z-]+) with.*/([0-9a-f-]+) .*$'
+        job_regex='^.*running jobdef: ([0-9a-z.-]+) with.*/([0-9a-f-]+) .*$'
 
         JOBIDS=($(sed -n -r 's,'"${job_regex}"',\1:\2,ip' < output))
         LENGTH=${#JOBIDS[@]}

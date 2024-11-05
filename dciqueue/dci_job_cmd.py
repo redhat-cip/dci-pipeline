@@ -51,7 +51,7 @@ def execute_command(args):
         return 1
 
     dci_pipeline_job_id_regex = re.compile(
-        r"^\d{4}-.*\s+running jobdef: ([\w-]+) with.*/([0-9a-f-]+) .*$"
+        r"^\d{4}-.*\s+running jobdef: ([\w.-]+) with.*/([0-9a-f-]+) .*$"
     )
     dci_check_change_job_id_regex = re.compile(
         r'^changed: \[[\w-]+\] => (\{"changed": true, "job":.+\})$'
