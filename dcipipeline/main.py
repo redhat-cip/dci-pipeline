@@ -1255,6 +1255,12 @@ def run_stage(
             dci_remoteci_context, jobdef, dci_credentials, config_dir, cancel_cb
         ):
             set_success_tag(jobdef, jobdef["job_info"], dci_remoteci_context)
+            job_info = jobdef["job_info"]
+            job_states = sorted(
+                job_info["job"]["jobstates"],
+                key=lambda x: x["created_at"],
+            )
+            log.info("Jobdef %s status=%s" % (jobdef["name"], job_states[-1]["status"]))
         else:
             log.error(
                 "Unable to run successfully job %s (%s)"
@@ -1298,6 +1304,15 @@ def run_stage(
                     ):
                         set_success_tag(
                             jobdef, jobdef["job_info"], dci_remoteci_context
+                        )
+                        job_info = jobdef["job_info"]
+                        job_states = sorted(
+                            job_info["job"]["jobstates"],
+                            key=lambda x: x["created_at"],
+                        )
+                        log.info(
+                            "Jobdef %s status=%s"
+                            % (jobdef["name"], job_states[-1]["status"])
                         )
                     else:
                         log.error(
