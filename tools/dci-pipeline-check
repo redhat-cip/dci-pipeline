@@ -261,7 +261,9 @@ else
     fi
     PREFIX="env DCI_QUEUE=$QUEUE DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
     # find the name of the resource from the oc command
-    cluster_names=( $(oc --kubeconfig "$KBCFG" config view -o json | jq -r '.clusters[].name') )
+    # omit cluster names that are automatically generated when running `oc project <project_name>`,
+    # with the format "api-<cluster_name>-<domain>:<port>"
+    cluster_names=( $(oc --kubeconfig "$KBCFG" config view -o json | jq -r '.clusters[].name' | grep -v "api-.*:.*") )
     for cluster_name in "${cluster_names[@]}"; do
         INV=$("$BASEDIR/yaml2json$SUFFIX" "$first_pipeline" | jq -r '.[0].ansible_inventory' | \
             sed -e "s/@QUEUE/$QUEUE/" -e "s/@RESOURCE/${cluster_name}/" -e "s@^~/@${HOME}/@")
