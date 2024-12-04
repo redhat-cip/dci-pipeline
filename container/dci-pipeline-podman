@@ -14,18 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-mounts=''
-for userfile in $(ls -A $HOME); do
-  echo $userfile | grep -Eq '.cache|.local' && continue
-  echo $userfile | grep -Eq '.ssh|.netrc' && \
-    mounts="$mounts -v ${HOME}/${userfile}:/root/${userfile}:rw" || \
-    mounts="$mounts -v ${HOME}/${userfile}:${HOME}/${userfile}:rw"
-done
 
+mounts=" -v ${HOME}:${HOME}:rw"
 # Consever logs
 mounts="$mounts -v /var/consoles/:/var/consoles/:rw"
 
-podman run --rm --security-opt label=disable --privileged --user=root --pull=newer --workdir=${HOME} $mounts \
+podman run --rm --security-opt label=disable -e LC_ALL=C.UTF-8 --userns=keep-id --group-add=wheel --workdir=${HOME} --pull=newer $mounts \
        "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
        dci-pipeline "$@"
 
