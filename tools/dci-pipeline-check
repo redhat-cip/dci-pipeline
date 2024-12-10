@@ -30,8 +30,8 @@ else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. "$BASEDIR/common$SUFFIX"
-QUEUE="$DEFAULT_QUEUE"
+source "$BASEDIR/common$SUFFIX"
+QUEUE="${DCI_QUEUE:-$DEFAULT_QUEUE}"
 
 if [ $# = 0 -o "$1" = -h ]; then
     cat 1>&2 <<EOF
@@ -305,7 +305,7 @@ if [ -n "$REQS" ]; then
     # use --system-site-packages to get libselinux-python from the
     # system (not possible via pip)
     virtualenv --system-site-packages .venv
-    . .venv/bin/activate
+    source .venv/bin/activate
 
     # substitute dependencies from the changes into requirements.txt
     for req in $REQS; do

@@ -30,6 +30,7 @@ PROJECTS=(
     ansible-collection-community-kubernetes
     ansible-collection-community-libvirt
     ansible-collection-containers-podman
+    ansible-collection-kubernetes-core
     ansible-collection-redhatci-ocp
     ansible-role-dci-podman
     ansible-role-dci-sync-registry
@@ -38,6 +39,7 @@ PROJECTS=(
     dci-openshift-app-agent
     python-dciauth
     python-dciclient
+    python-kubernetes
 )
 PROJECTS_REGEX=$(printf '%s|' "${PROJECTS[@]}")
 PROJECTS_REGEX=${PROJECTS_REGEX%|}
@@ -169,7 +171,7 @@ else
     BASEDIR=/usr/share/dci-pipeline
 fi
 
-. "$BASEDIR/common$SUFFIX"
+source "$BASEDIR/common$SUFFIX"
 
 PIPELINES_REPO=$(cd "$PIPELINES_DIR" && basename $(git config --local remote.origin.url) .git)
 
@@ -565,7 +567,7 @@ done
 if [ -z "$SUFFIX" ]; then
     # activate the virtualenv created by the dci-pipeline-check command if present
     if [ -x "$PWD/.venv/bin/python3" ]; then
-        . "$PWD/.venv/bin/activate"
+        source "$PWD/.venv/bin/activate"
         sed -i -e '/interpreter_python/d' ansible.cfg
     fi
 
