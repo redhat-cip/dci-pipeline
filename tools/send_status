@@ -104,14 +104,18 @@ for json in $(ls $DIR/*.json); do
         esac
 
         GERRIT_JSON=$( echo ${GERRIT_JSON} | jq '. += {"labels": {"verified": "'${VOTE}'"}}' )
+        GERRIT_CHANGE_STATUS=$(jq -r .submit_records[0].status $json)
 
-        # Use json to allow message to be formatted
-        echo "$GERRIT_JSON" |
-          ssh \
-          -i ~/.ssh/"$GERRIT_SSH_ID" \
-          -p 29418 \
-          "${GERRIT_SSH_LOGIN}@softwarefactory-project.io" \
-            gerrit review -j "$CHANGEID,$PATCHSET"
+        # Only update changes that are not closed
+        if [ "${GERRIT_CHANGE_STATUS}" != "CLOSED" ]; then
+            # Use json to allow message to be formatted
+            echo "$GERRIT_JSON" |
+              ssh \
+              -i ~/.ssh/"$GERRIT_SSH_ID" \
+              -p 29418 \
+              "${GERRIT_SSH_LOGIN}@softwarefactory-project.io" \
+                gerrit review -j "$CHANGEID,$PATCHSET"
+        fi
     # Github PR or merge queue branch
     else
         REPO_NAME=$(jq -r .head.repo.name $json)
