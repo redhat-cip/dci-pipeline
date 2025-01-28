@@ -223,14 +223,16 @@ def generate_remoteci_rc_files():
             f.write(
                 """DCI_CLIENT_ID='remoteci/{remoteci_id}'
 DCI_API_SECRET='{api_secret}'
-DCI_CS_URL='http://127.0.0.1:5000'
+DCI_CS_URL='{dci_cs_url}'
 DCI_UI_URL='http://127.0.0.1:8000'
 export DCI_CLIENT_ID
 export DCI_API_SECRET
 export DCI_CS_URL
 export DCI_UI_URL
 """.format(
-                    remoteci_id=remoteci["id"], api_secret=remoteci["api_secret"]
+                    remoteci_id=remoteci["id"],
+                    api_secret=remoteci["api_secret"],
+                    dci_cs_url=DCI_CS_URL,
                 )
             )
 
@@ -243,10 +245,12 @@ def generate_remoteci_yml_files():
                 """---
 DCI_CLIENT_ID: remoteci/{remoteci_id}
 DCI_API_SECRET: {api_secret}
-DCI_CS_URL: http://127.0.0.1:5000
+DCI_CS_URL: {dci_cs_url}
 DCI_UI_URL: http://127.0.0.1:8000
 """.format(
-                    remoteci_id=remoteci["id"], api_secret=remoteci["api_secret"]
+                    remoteci_id=remoteci["id"],
+                    api_secret=remoteci["api_secret"],
+                    dci_cs_url=DCI_CS_URL,
                 )
             )
 
@@ -257,8 +261,10 @@ def generate_pipeline_user_files():
             """---
 DCI_PIPELINE_USERNAME: pipeline-user
 DCI_PIPELINE_PASSWORD: pipeline-user
-DCI_CS_URL: http://127.0.0.1:5000
-DCI_UI_URL: http://127.0.0.1:8000"""
+DCI_CS_URL: {dci_cs_url}
+DCI_UI_URL: http://127.0.0.1:8000""".format(
+                dci_cs_url=DCI_CS_URL
+            )
         )
 
     with open("./pipeline_user_dci_credentials.sh", "w") as f:
@@ -266,12 +272,14 @@ DCI_UI_URL: http://127.0.0.1:8000"""
             """
 DCI_PIPELINE_USERNAME='pipeline-user'
 DCI_PIPELINE_PASSWORD='pipeline-user'
-DCI_CS_URL='http://127.0.0.1:5000'
+DCI_CS_URL='{dci_cs_url}'
 DCI_UI_URL='http://127.0.0.1:8000'
 export DCI_PIPELINE_USERNAME
 export DCI_PIPELINE_PASSWORD
 export DCI_CS_URL
-export DCI_UI_URL"""
+export DCI_UI_URL""".format(
+                dci_cs_url=DCI_CS_URL
+            )
         )
 
 

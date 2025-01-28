@@ -7,6 +7,7 @@ LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 ENV LANG en_US.UTF-8
 
+# hadolint ignore=DL3020
 ADD dist/* /usr/src/
 
 RUN set -ex && \
@@ -28,6 +29,7 @@ RUN set -ex && \
     dnf clean all
 
 ARG _REPO_URL="https://raw.githubusercontent.com/containers/image_build/main/podman"
+# hadolint ignore=DL3020
 ADD $_REPO_URL/containers.conf /etc/containers/containers.conf
 
 RUN sed -i -e 's|^#mount_program|mount_program|g' \
