@@ -41,8 +41,8 @@ import yaml
 def main(args):
     "Entry point"
     for config in (
-        os.path.expanduser("~/.config/dci-pipeline/config.yaml"),
         "/etc/dci-pipeline/config.yaml",
+        os.path.expanduser("~/.config/dci-pipeline/config.yaml"),
     ):
         try:
             with open(config) as in_stream:

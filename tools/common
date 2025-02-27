@@ -5,9 +5,9 @@ GITHUB_CHECK_NAME="DCI / DCI Job"
 PIPELINES_DIR="$HOME/pipelines"
 MONITORED_REPOS=()
 
-for p in "$HOME/.config/dci-pipeline" /etc/dci-pipeline; do
+for p in /etc/dci-pipeline "$HOME/.config/dci-pipeline"; do
     if [ -r "$p/config" ]; then
-        . "$p/config"
+        source "$p/config"
         break
     fi
 done
