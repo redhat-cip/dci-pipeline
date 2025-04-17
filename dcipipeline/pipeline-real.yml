@@ -13,6 +13,7 @@
     dci_config_dirs: [../dci-openshift-agent]
     dci_tags: [debug]
     cluster: "my-cluster"
+    dci_hide_secrets: false
   topic: OCP-4.9
   components:
     - ocp
@@ -27,6 +28,7 @@
   ansible_extravars:
     dci_tags: [debug]
     kubeconfig_path: "/tmp/kubeconfig"
+    dci_hide_secrets: false
   dci_credentials: ../cnf-telco-ci_dci_credentials.yml
   ansible_tags:
     - dci
