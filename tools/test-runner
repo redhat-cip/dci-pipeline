@@ -448,10 +448,10 @@ if [ -d dci-openshift-app-agent ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_playbook=$PWD/dci-openshift-app-agent/dci-openshift-app-agent.yml"
     done
 elif [ -d example-cnf-config ]; then
-    # testpmd hook
-    [ -r example-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-pipeline.yml
-    [ -r example-cnf-continuous-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-continuous-pipeline.yml
-    [ -r example-cnf-blue-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/testpmd@" example-cnf-blue-pipeline.yml
+    # cnfapp hook
+    [ -r example-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-pipeline.yml
+    [ -r example-cnf-continuous-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-continuous-pipeline.yml
+    [ -r example-cnf-blue-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-blue-pipeline.yml
     # upgrade_validation hook
     [ -r example-cnf-validation-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/upgrade_validation@" example-cnf-validation-pipeline.yml
     # launch_trex_job hook
@@ -603,7 +603,7 @@ chmod -R a-w $DIR
 
 # Give permissions to all example CNF hooks
 if [ -d example-cnf-config ]; then
-    chmod ug+w example-cnf-config/testpmd/hooks
+    chmod ug+w example-cnf-config/cnfapp/hooks
     chmod ug+w example-cnf-config/upgrade_validation/hooks
     chmod ug+w example-cnf-config/launch_trex_job/hooks
     chmod ug+w example-cnf-config/draining_validation/hooks
