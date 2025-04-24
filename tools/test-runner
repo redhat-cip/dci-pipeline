@@ -450,6 +450,7 @@ if [ -d dci-openshift-app-agent ]; then
 elif [ -d example-cnf-config ]; then
     # cnfapp hook
     [ -r example-cnf-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-pipeline.yml
+    [ -r example-cnf-green-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-green-pipeline.yml
     [ -r example-cnf-continuous-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-continuous-pipeline.yml
     [ -r example-cnf-blue-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/cnfapp@" example-cnf-blue-pipeline.yml
     # upgrade_validation hook
