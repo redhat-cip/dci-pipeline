@@ -161,8 +161,10 @@ TOPDIR=$(cd $(dirname $0); pwd)
 
 if [[ $0 =~ .*-podman$ ]]; then
     SUFFIX=-podman
+    PODMAN_TAG=container
 else
     SUFFIX=
+    PODMAN_TAG=
 fi
 
 if [ -r "$TOPDIR/common$SUFFIX" ]; then
@@ -570,7 +572,7 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
         fi
     done
 
-    ALL_TAGS="$ALL_TAGS $NAME:$EXTENDED_TAGS $NAME:url=$URL $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
+    ALL_TAGS="$ALL_TAGS $NAME:$EXTENDED_TAGS,$PODMAN_TAG $NAME $NAME:url=$URL $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
     if [ -x "$PWD/.venv/bin/python3" ]; then
         ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars=ansible_playbook_python:$PWD/.venv/bin/python3"
     fi
