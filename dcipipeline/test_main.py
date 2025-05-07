@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Red Hat, Inc.
+# Copyright (C) 2020-2025 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -169,6 +169,31 @@ class TestMain(unittest.TestCase):
             overload_dicts(overload, jobdef),
             {"ansible_extravars": {"answer": 42, "dci_comment": "universal answer"}},
         )
+
+    def test_overload_dicts_deep_merge(self):
+        target = {
+            "ansible_extravars": {
+                "dci_gitops_policies_repo": {"url": "https://orig", "branch": "master"},
+                "existing": "value",
+            }
+        }
+        overload = {
+            "ansible_extravars": {
+                "dci_gitops_policies_repo": {"branch": "my-branch"},
+                "dci_gitops_sites_repo": {"branch": "my-branch"},
+            }
+        }
+        expected = {
+            "ansible_extravars": {
+                "dci_gitops_policies_repo": {
+                    "url": "https://orig",
+                    "branch": "my-branch",
+                },
+                "existing": "value",
+                "dci_gitops_sites_repo": {"branch": "my-branch"},
+            }
+        }
+        self.assertEqual(overload_dicts(overload, target), expected)
 
     def test_jobdef_without_component(self):
         jobdef = {}

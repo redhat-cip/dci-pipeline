@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2024 Red Hat, Inc
+# Copyright (C) 2020-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -1014,7 +1014,8 @@ def overload_dicts(overload, target):
                         to_add.append(elt)
                 target[key] = target[key] + to_add
             elif is_dict(overload[key]) and is_dict(target[key]):
-                target[key].update(overload[key])
+                # recursively merge nested dicts instead of replacing them
+                target[key] = overload_dicts(overload[key], target[key])
             else:
                 target[key] = overload[key]
     return target
