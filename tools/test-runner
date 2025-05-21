@@ -161,7 +161,7 @@ TOPDIR=$(cd $(dirname $0); pwd)
 
 if [[ $0 =~ .*-podman$ ]]; then
     SUFFIX=-podman
-    PODMAN_TAG=container
+    PODMAN_TAG=use-dci-container
 else
     SUFFIX=
     PODMAN_TAG=
