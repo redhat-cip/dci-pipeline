@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2024 Red Hat, Inc.
+# Copyright (C) 2021-2025 Red Hat, Inc.
 #
 # Author: Frederic Lepied <flepied@redhat.com>
 #
@@ -35,7 +35,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     CRONLINES = [

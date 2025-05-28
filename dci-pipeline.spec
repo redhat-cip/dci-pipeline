@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.10.0
+Version:        0.11.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -27,6 +27,7 @@ Requires:       python2-dciclient >= 3.1.0
 Requires:       python2-ansible-runner
 Requires:       python-prettytable
 Requires:       python2-libselinux
+Requires:       python2-virtualenv
 %endif
 
 %if 0%{?with_python3}
@@ -36,6 +37,7 @@ Requires:       python3-PyYAML
 Requires:       python3-dciclient >= 3.1.0
 Requires:       python3-ansible-runner
 Requires:       python3-libselinux
+Requires:       python3-virtualenv
 %endif
 
 BuildRequires:  systemd
@@ -177,6 +179,9 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Mon Jun 02 2025 Frederic Lepied <flepied@redhat.com> 0.11.1-1
+- add support for multi-pool in dci-queue commands
+
 * Thu May 28 2025 Pierre Blanc <pblanc@redhat.com> 0.10.0-1
 - Remove doa and doaa deprecated ctl
 - Add custom mount option for dci in podman

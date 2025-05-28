@@ -23,6 +23,7 @@ FORCE_CHECK=
 NO_CHECK=
 declare -A ALL_DIRS
 declare -A NAME_TO_PIPELINE
+declare -A NAME_TO_QUEUE
 
 PROJECTS=(
     ansible-collection-ansible-posix
@@ -315,8 +316,13 @@ CNF_PIPELINES=
 ZTP_NAMES=
 ALL_PIPELINES=
 ARGS=("@pipeline:name=$PIPELINENAME")
+num=1
 for arg in "$@"; do
     case "$arg" in
+        -p*)
+            # support multiple queues and resources by passing -p<num>
+            num=${arg#-p}
+            ;;
         *:*=*)
             ARGS+=("$arg")
             ;;
@@ -343,6 +349,7 @@ for arg in "$@"; do
             ALL_PIPELINES="$ALL_PIPELINES $pipeline"
             for NAME in $("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name'); do
                 NAME_TO_PIPELINE[$NAME]="$pipeline"
+                NAME_TO_QUEUE[$NAME]="$num"
             done
             ;;
     esac
@@ -487,6 +494,11 @@ for pipeline in $ALL_PIPELINES; do
             sed -i -e "s@${local_path}@$PWD/${local_dir%/}@g" $pipeline
         fi
     done
+    # replace RES by DCI_QUEUE_RES<num> and DCI_QUEUE by DCI_QUEUE<num>
+    name=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name')
+    num=${NAME_TO_QUEUE[$name]}
+    RES=$(eval echo \$DCI_QUEUE_RES$num)
+    DCI_QUEUE=$(eval echo \$DCI_QUEUE$num)
     # force to use the copy of ansible.cfg and substitute @RESOURCE and @QUEUE
     sed -i -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
 done

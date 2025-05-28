@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2024 Red Hat, Inc
+# Copyright (C) 2020-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -351,6 +351,55 @@ class TestQueue(unittest.TestCase):
         self.file_exists("available", "8nodes", "cluster4")
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         self.doesnt_exist("queue", "8nodes", "3")
+
+    def test_run_multiple(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "hub"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "hub", "hub1"]), 0)
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "-e",
+                    "spoke",
+                    "hub",
+                    "echo",
+                    "@RESOURCE",
+                ]
+            ),
+            1,
+        )
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "spoke"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "spoke", "spoke1"]), 0)
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "-e",
+                    "spoke",
+                    "hub",
+                    "--",
+                    "bash",
+                    "-c",
+                    "[ '@RESOURCE' = 'hub1' "
+                    "-a \"$DCI_QUEUE\" = 'hub' "
+                    "-a \"$DCI_QUEUE1\" = 'hub' "
+                    "-a \"$DCI_QUEUE2\" = 'spoke' "
+                    "-a \"$DCI_QUEUE_RES\" = 'hub1' "
+                    "-a \"$DCI_QUEUE_RES1\" = 'hub1' "
+                    "-a \"$DCI_QUEUE_RES2\" = 'spoke1' ] "
+                    "&& touch ${DCI_QUEUE_DIR}/test_run_multiple",
+                ]
+            ),
+            0,
+        )
+        self.file_exists("queue", "hub", "1")
+        self.assertEqual(main.main(["dci-queue", "run", "hub"]), 0)
+        self.doesnt_exist("queue", "hub", "1")
+        self.file_exists("available", "hub", "hub1")
+        self.file_exists("available", "spoke", "spoke1")
+        self.file_exists(".", ".", "test_run_multiple")
 
     def test_env_vars(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)

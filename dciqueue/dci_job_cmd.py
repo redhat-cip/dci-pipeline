@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022-2023 Red Hat, Inc
+# Copyright (C) 2022-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,11 +14,11 @@
 # License for the specific language governing permissions and limitations
 
 """ """
+import json
+import logging
 import os
 import re
 import sys
-import json
-import logging
 
 from dciqueue import lib
 
@@ -38,7 +38,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     logfile = os.path.join(args.top_dir, "log", args.pool, args.id)

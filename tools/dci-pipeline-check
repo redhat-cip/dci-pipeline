@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022-2024 Red Hat, Inc.
+# Copyright (C) 2022-2025 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -37,7 +37,7 @@ if [ $# = 0 -o "$1" = -h ]; then
     cat 1>&2 <<EOF
 Usage: $(basename $0) [-F] [-S] [-Fr] [-Sr] [-f] [-n] (<GitHub PR URL>|<Gerrit review id>)
              [-p <pool name>] [-r <resource name>]
-             [[<kubeconfig path>] <pipeline name> [(<pipeline name2>|<pipeline var>)*]]
+             [[<kubeconfig path>] <pipeline name> [(-p <pool name>|<pipeline name2>|<pipeline var>)*]]
 
     -F   Run in a loop until there's a failure
     -S   Run in a loop until succeeds
@@ -54,6 +54,7 @@ fi
 
 LAUNCHER=
 DCI_PIPELINE_TAG=
+QUEUES=
 
 set -x
 
@@ -225,7 +226,26 @@ if [ -z "$KBCFG" ]; then
     # if the resource is set explicitly or if there is no queue
     # defined, do not launch through dci-queue
     if [ -z "$DCI_QUEUE_RESOURCE" ] && [ -n "$QUEUE" ]; then
-        PREFIX="dci-queue schedule $QUEUE env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
+        # transform -p <pool name> args into -e <pool name> and save
+        # it in the QUEUES variable for dci-queue and then replace them
+        # with -p2, -p3, p4, etc.
+        OPT=()
+        NUM=2
+        while [ -n "$1" ]; do
+            case "$1" in
+                -p)
+                    QUEUES="$QUEUES -e $2"
+                    shift 2
+                    OPT+=("-p$NUM")
+                    NUM=$((NUM + 1))
+                    ;;
+                *)
+                    OPT+=("$1")
+                    shift
+                    ;;
+            esac
+        done
+        PREFIX="dci-queue schedule $QUEUES $QUEUE -- env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
         RES="@RESOURCE"
     else
         PREFIX="env DCI_PIPELINE_TAG=$DCI_PIPELINE_TAG"
@@ -240,7 +260,7 @@ else
     fi
     # lookup the first pipeline file
     first_pipeline=
-    for arg in "$@"; do
+    for arg in "$OPT[@]"; do
         case "$arg" in
             *:*|-*)
                 ;;

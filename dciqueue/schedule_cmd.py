@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2020-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -64,13 +64,15 @@ def register_command(subparsers):
         type=int,
         default=0,
     )
+    # add -e <pool> option to store multiple pools in the same command
+    parser.add_argument("-e", "--extra-pool", action="append", default=[])
     parser.add_argument("pool", help="Name of the pool")
     parser.add_argument("cmd", nargs="*")
     return COMMAND
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     for c in args.cmd:
@@ -107,6 +109,12 @@ def execute_command(args):
     else:
         queuefile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
         cwd = os.getcwd()
+        # validate extra pools exist
+        for pool in args.extra_pool:
+            if not lib.check_pool(args.top_dir, pool):
+                log.error("Pool %s does not exist" % pool)
+                seq_obj.unlock()
+                return 1
         with open(queuefile, "w") as f:
             json.dump(
                 {
@@ -114,6 +122,7 @@ def execute_command(args):
                     "wd": cwd,
                     "remove": args.remove_resource,
                     "priority": args.priority,
+                    "extra_pools": args.extra_pool,
                 },
                 f,
             )

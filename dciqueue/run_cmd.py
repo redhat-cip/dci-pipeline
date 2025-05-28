@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2020-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -47,37 +47,55 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     commands = []
+    booked = []
 
     while True:
-        res = book_resource(args)
+        res = book_resource(args.top_dir, args.pool)
 
         if res is None:
             log.debug("No available resource anymore in pool %s" % args.pool)
             break
+        log.debug("Booked resource %s in pool %s" % (res, args.pool))
+        booked.append((res, args.pool))
 
         to_exec, idx = get_command(args)
 
         if not to_exec:
-            log.debug("No command to run in pool %s" % args.pool)
-            free_resource(res, args)
+            log.debug(
+                "No command to run in pool %s (%s) in %s"
+                % (args.pool, booked, args.top_dir)
+            )
+            booked = free_resources(booked, args.top_dir)
             break
         else:
             with open(to_exec) as f:
                 data = json.load(f)
 
-                data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
-                data["resource"] = res
-                data["jobid"] = idx
+            log.debug("Executing command %s" % data)
 
-                if "remove" in data and data["remove"]:
-                    log.info("Removing resource %s" % res)
-                    path = os.path.join(args.top_dir, "pool", args.pool, res)
-                    if os.path.exists(path):
-                        os.unlink(path)
+            # book extra resources if needed
+            for pool in data["extra_pools"]:
+                extra_res = book_resource(args.top_dir, pool)
+                if extra_res is None:
+                    log.debug("No available resource anymore in pool %s" % pool)
+                    booked = free_resources(booked, args.top_dir)
+                    break
+                booked.append((extra_res, pool))
+
+            data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
+            data["resource"] = res
+            data["jobid"] = idx
+            data["booked"] = booked
+
+            if "remove" in data and data["remove"]:
+                log.info("Removing resource %s" % res)
+                path = os.path.join(args.top_dir, "pool", args.pool, res)
+                if os.path.exists(path):
+                    os.unlink(path)
 
             with open(to_exec, "w") as f:
                 json.dump(data, f)
@@ -86,8 +104,14 @@ def execute_command(args):
                 log.info("Running command %s (wd: %s)" % (data["cmd"], data["wd"]))
                 os.chdir(data["wd"])
                 os.environ["DCI_QUEUE"] = args.pool
+                os.environ["DCI_QUEUE_RES"] = res
                 os.environ["DCI_QUEUE_ID"] = str(idx)
                 os.environ["DCI_QUEUE_JOBID"] = "%s.%d" % (args.pool, idx)
+                num = 1
+                for r, p in booked:
+                    os.environ[f"DCI_QUEUE{num}"] = p
+                    os.environ[f"DCI_QUEUE_RES{num}"] = r
+                    num += 1
                 if not args.command_output:
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
@@ -108,7 +132,7 @@ def execute_command(args):
                     json.dump(data, f)
             except Exception:
                 log.exception("Unable to execute command")
-                free_resource(res, args)
+                booked = free_resources(booked, args.top_dir)
                 log.debug("Removing %s" % to_exec)
                 os.remove(to_exec)
 
@@ -137,13 +161,12 @@ def execute_command(args):
                 except FileNotFoundError:
                     pass
             if res and args:
-                free_resource(res, args)
-
+                booked = free_resources(booked, args.top_dir)
     return 0
 
 
-def book_resource(args):
-    available_dir = os.path.join(args.top_dir, "available", args.pool)
+def book_resource(top_dir, pool):
+    available_dir = os.path.join(top_dir, "available", pool)
     resources = [
         f
         for f in os.listdir(available_dir)
@@ -152,20 +175,29 @@ def book_resource(args):
 
     for res in resources:
         try:
-            os.remove(os.path.join(available_dir, res))
+            filename = os.path.join(available_dir, res)
+            os.remove(filename)
+            log.debug("Removed symlink %s" % filename)
             return res
         except FileNotFoundError:
             continue
     return None
 
 
-def free_resource(res, args):
-    path = os.path.join(args.top_dir, "pool", args.pool, res)
+def free_resource(res, top_dir, pool):
+    path = os.path.join(top_dir, "pool", pool, res)
     # do not symlink if the resource has been removed during run
     if os.path.exists(path):
-        symlink = os.path.join(args.top_dir, "available", args.pool, res)
-        log.debug("Creating symlink %s" % symlink)
+        symlink = os.path.join(top_dir, "available", pool, res)
+        log.debug("Creating symlink %s from pid %s" % (symlink, os.getpid()))
         os.symlink(path, symlink)
+
+
+def free_resources(resources, top_dir):
+    log.debug("Freeing resources: %s" % resources)
+    for r, pool in resources:
+        free_resource(r, top_dir, pool)
+    return []
 
 
 def get_command(args):

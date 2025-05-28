@@ -1,7 +1,5 @@
 #
-# Copyright (C) 2021 Red Hat, Inc.
-#
-# Author: Frederic Lepied <flepied@redhat.com>
+# Copyright (C) 2021-2025 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -34,7 +32,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     cmd = "env EDITOR='dci-queue remove-crontab %s' crontab -e" % args.pool

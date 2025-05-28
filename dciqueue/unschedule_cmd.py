@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 Red Hat, Inc
+# Copyright (C) 2020-2025 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -42,7 +42,7 @@ def register_command(subparsers):
 
 
 def execute_command(args):
-    if not lib.check_pool(args):
+    if not lib.check_pool(args.top_dir, args.pool):
         return 1
 
     queuefile = os.path.join(args.top_dir, "queue", args.pool, str(args.id))
