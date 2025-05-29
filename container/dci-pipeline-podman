@@ -14,13 +14,24 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+source ~/.config/dci-pipeline/config
 
-mounts=" -v ${HOME}:${HOME}:rw"
-# Consever logs
-mounts="$mounts -v /var/consoles/:/var/consoles/:rw"
 
-podman run --rm --security-opt label=disable -e LC_ALL=C.UTF-8 --userns=keep-id --group-add=wheel --workdir=${HOME} --pull=newer $mounts \
+MOUNTED_PATHS=(
+  "/var/consoles"
+  "${HOME}"
+)
+
+mounts=
+
+for elt in "${MOUNTED_PATHS[@]}" "${CONTAINER_MOUNTED_PATHS[@]}"; do
+  if [[ -e "${elt}" ]]; then
+    mounts="$mounts -v $elt:$elt"
+  fi
+done
+
+podman run --rm --security-opt label=disable -e USER -e LC_ALL=C.UTF-8 --userns=keep-id --group-add=wheel --pull=newer $mounts \
        "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
-       dci-pipeline "$@"
+      dci-pipeline "$@"
 
 # dci-pipeline-podman ends here

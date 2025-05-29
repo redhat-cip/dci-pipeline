@@ -30,12 +30,23 @@ $ ./container/build.sh
 
 ## How to use the container
 
-To run `dci-pipeline` or `dci-openshift-agent-ctl` from the container,
+To run `dci-pipeline` from the container,
 use the `-podman` wrappers like:
 
 ```ShellSession
 $ ./container/dci-pipeline-podman <dci-pipeline args>
-...
-$ ./container/dci-openshift-agent-ctl-podman <dci-openshift-agent-ctl args>
-...
+```
+
+## Mount extra directories
+
+By default, only $HOME is mounted in the comtainer, you can define 
+the variable CONTAINER_MOUNTED_PATHS in the ~/.config/dci-pipeline/config 
+configuration file to mount more directories.
+
+Example:
+```ShellSession
+CONTAINER_MOUNTED_PATHS=(
+    "/var/lib/dci"
+    "/opt/cache"
+)
 ```

@@ -4,8 +4,6 @@ include container/build.sh
 include container/dci-create-component-podman
 include container/dci-diff-pipeline-podman
 include container/dci-find-latest-component-podman
-include container/dci-openshift-agent-ctl-podman
-include container/dci-openshift-app-agent-ctl-podman
 include container/dci-pipeline-podman
 include container/dci-queue-podman
 include container/dci-rebuild-pipeline-podman

@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi9/ubi
 
 LABEL name="dci-pipeline"
 # keep in sync with setup.py and dci-pipeline.spec
-LABEL version="0.9.0"
+LABEL version="0.10.0"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 ENV LANG en_US.UTF-8
@@ -13,7 +13,7 @@ ADD dist/* /usr/src/
 RUN set -ex && \
     dnf -y update && \
     dnf -y install git gcc gettext python3-devel python3-pip python3-setuptools python3-cryptography \
-        python3-netaddr make sudo policycoreutils fuse-overlayfs wget podman jq && \
+        python3-netaddr python3-dns python3-firewall make sudo policycoreutils fuse-overlayfs wget podman jq && \
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf -y install python3-openshift python3-passlib && \
     mkdir -p /usr/share/dci /usr/share/ansible/roles /etc/ansible/roles /usr/share/ansible/collections && \

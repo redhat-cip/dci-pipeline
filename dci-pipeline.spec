@@ -8,7 +8,7 @@
 
 Name:           dci-pipeline
 # to keep in sync with setup.py and Dockerfile
-Version:        0.9.0
+Version:        0.10.0
 Release:        1.VERS%{?dist}
 Summary:        CI pipeline management for DCI jobs
 License:        ASL 2.0
@@ -102,7 +102,7 @@ install -d -m 700 %{buildroot}/var/lib/%{name}
 install -d -m 700 %{buildroot}/var/lib/dci-queue
 install -p -D -m 440 %{name}.sudo %{buildroot}%{_sysconfdir}/sudoers.d/%{name}
 
-for cmd in dci-create-component dci-diff-pipeline dci-find-latest-component dci-openshift-agent-ctl dci-openshift-app-agent-ctl dci-pipeline dci-queue dci-rebuild-pipeline dci-rhel-latest-kernel-version dci-vault-client dci-vault dcictl; do
+for cmd in dci-create-component dci-diff-pipeline dci-find-latest-component dci-pipeline dci-queue dci-rebuild-pipeline dci-rhel-latest-kernel-version dci-vault-client dci-vault dcictl; do
     install -v -m 755 container/$cmd-podman %{buildroot}%{_bindir}/
 done
 
@@ -177,6 +177,10 @@ exit 0
 %attr(2770, dci-queue, dci-queue) /var/lib/dci-queue
 
 %changelog
+* Thu May 28 2025 Pierre Blanc <pblanc@redhat.com> 0.10.0-1
+- Remove doa and doaa deprecated ctl
+- Add custom mount option for dci in podman
+
 * Fri Jan 24 2025 Tony Garcia <tonyg@redhat.com> 0.9.0-1
 - Satisfy ansible or ansible-core through dci-ansible
 
