@@ -260,7 +260,7 @@ else
     fi
     # lookup the first pipeline file
     first_pipeline=
-    for arg in "$OPT[@]"; do
+    for arg in "$@"; do
         case "$arg" in
             *:*|-*)
                 ;;

@@ -497,8 +497,14 @@ for pipeline in $ALL_PIPELINES; do
     # replace RES by DCI_QUEUE_RES<num> and DCI_QUEUE by DCI_QUEUE<num>
     name=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name')
     num=${NAME_TO_QUEUE[$name]}
-    RES=$(eval echo \$DCI_QUEUE_RES$num)
-    DCI_QUEUE=$(eval echo \$DCI_QUEUE$num)
+    NEW_RES=$(eval echo \$DCI_QUEUE_RES$num)
+    if [ -n "$NEW_RES" ]; then
+        RES="$NEW_RES"
+    fi
+    NEW_DCI_QUEUE=$(eval echo \$DCI_QUEUE$num)
+    if [ -n "$NEW_DCI_QUEUE" ]; then
+        DCI_QUEUE="$NEW_DCI_QUEUE"
+    fi
     # force to use the copy of ansible.cfg and substitute @RESOURCE and @QUEUE
     sed -i -e "s/@RESOURCE/$RES/" -e "s/@QUEUE/$DCI_QUEUE/" -e "s@\(^\s*ansible_cfg:\s*\).*@\1$PWD/ansible.cfg@" $pipeline
 done
