@@ -54,13 +54,14 @@ def execute_command(args):
     booked = []
 
     while True:
+        booked_resources = []
         res = book_resource(args.top_dir, args.pool)
 
         if res is None:
             log.debug("No available resource anymore in pool %s" % args.pool)
             break
         log.debug("Booked resource %s in pool %s" % (res, args.pool))
-        booked.append((res, args.pool))
+        booked_resources.append((res, args.pool))
 
         to_exec, idx = get_command(args)
 
@@ -69,7 +70,7 @@ def execute_command(args):
                 "No command to run in pool %s (%s) in %s"
                 % (args.pool, booked, args.top_dir)
             )
-            booked = free_resources(booked, args.top_dir)
+            free_resources(booked_resources, args.top_dir)
             break
         else:
             with open(to_exec) as f:
@@ -82,14 +83,14 @@ def execute_command(args):
                 extra_res = book_resource(args.top_dir, pool)
                 if extra_res is None:
                     log.debug("No available resource anymore in pool %s" % pool)
-                    booked = free_resources(booked, args.top_dir)
+                    free_resources(booked_resources, args.top_dir)
                     break
-                booked.append((extra_res, pool))
+                booked_resources.append((extra_res, pool))
 
             data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
             data["resource"] = res
             data["jobid"] = idx
-            data["booked"] = booked
+            data["booked"] = booked_resources
 
             if "remove" in data and data["remove"]:
                 log.info("Removing resource %s" % res)
@@ -108,7 +109,7 @@ def execute_command(args):
                 os.environ["DCI_QUEUE_ID"] = str(idx)
                 os.environ["DCI_QUEUE_JOBID"] = "%s.%d" % (args.pool, idx)
                 num = 1
-                for r, p in booked:
+                for r, p in booked_resources:
                     os.environ[f"DCI_QUEUE{num}"] = p
                     os.environ[f"DCI_QUEUE_RES{num}"] = r
                     num += 1
@@ -128,11 +129,12 @@ def execute_command(args):
                 if proc:
                     data["pid"] = proc.pid
                     commands.append([res, proc, out_fd, data["real_cmd"], idx, to_exec])
+                    booked.extend(booked_resources)
                 with open(to_exec, "w") as f:
                     json.dump(data, f)
             except Exception:
                 log.exception("Unable to execute command")
-                booked = free_resources(booked, args.top_dir)
+                free_resources(booked_resources, args.top_dir)
                 log.debug("Removing %s" % to_exec)
                 os.remove(to_exec)
 
@@ -166,6 +168,10 @@ def execute_command(args):
 
 
 def book_resource(top_dir, pool):
+    """Book a resource from the pool.
+
+    Removing the first symlink from the available directory.
+    """
     available_dir = os.path.join(top_dir, "available", pool)
     resources = [
         f
@@ -201,13 +207,14 @@ def free_resources(resources, top_dir):
 
 
 def get_command(args):
+    """Get the next command to execute from the queue."""
     seq = lib.Seq(args)
 
     seq.lock()
     first, next = seq.get()
 
     to_exec = None
-    indice = None
+    index = None
     pri = -1
     # first pass to find the highest priority job
     for idx in range(first, next):
@@ -219,19 +226,19 @@ def get_command(args):
                 priority = data["priority"] if "priority" in data else 0
                 if priority > pri:
                     log.debug("top priority so far %s => %d" % (cmdfile, priority))
-                    indice = idx
+                    index = idx
                     pri = priority
-    if indice:
-        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(indice))
+    if index is not None:
+        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(index))
         movedfile = cmdfile + EXT
         os.rename(cmdfile, movedfile)
         to_exec = movedfile
-        if indice == first:
-            seq.set(indice + 1, next)
+        if index == first:
+            seq.set(index + 1, next)
 
     seq.unlock()
-    log.debug("get_command %s %s" % (to_exec, indice))
-    return to_exec, indice
+    log.debug("get_command %s %s" % (to_exec, index))
+    return to_exec, index
 
 
 # run_cmd.py ends here

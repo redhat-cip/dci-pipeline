@@ -352,6 +352,34 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         self.doesnt_exist("queue", "8nodes", "3")
 
+    def test_run_available(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster5"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    "[ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available; sleep 30",
+                ]
+            ),
+            0,
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        self.doesnt_exist(".", ".", "cluster4-available")
+
     def test_run_multiple(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "hub"]), 0)
         self.assertEqual(main.main(["dci-queue", "add-resource", "hub", "hub1"]), 0)
@@ -513,6 +541,9 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
         self.assertEqual(
             main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster5"]), 0
         )
         self.assertEqual(
             main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
