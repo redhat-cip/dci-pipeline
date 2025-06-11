@@ -473,6 +473,9 @@ elif [ -d example-cnf-config ]; then
     [ -r example-cnf-extra-trex-job-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/launch_trex_job@" example-cnf-extra-trex-job-pipeline.yml
     # draining_validation hook
     [ -r example-cnf-draining-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/example-cnf-config/draining_validation@" example-cnf-draining-pipeline.yml
+elif [ -d grout-config ]; then
+    # grout-config hook
+    [ -r grout-test-pipeline.yml ] && sed -i "s@dci_config_dir: .*@dci_config_dir: $PWD/grout-config@" grout-test-pipeline.yml
 else
     # use the default from the pipeline
     OCP_APP_OPT=
@@ -565,6 +568,10 @@ for NAME in $CNF_NAMES; do
                 fi
             fi
         done
+    fi
+    if [ -d grout ]; then
+        # export directory where grout code from PR is located as variable to be used in the dci-openshift-app-agent
+        OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=grout_code_src_dir:$PWD/grout"
     fi
     if [ -d openshift-preflight ]; then
         OCP_APP_OPT="$OCP_APP_OPT $NAME:ansible_extravars=preflight_source_dir:$PWD/openshift-preflight"
