@@ -51,7 +51,6 @@ def execute_command(args):
         return 1
 
     commands = []
-    booked = []
 
     while True:
         booked_resources = []
@@ -68,7 +67,7 @@ def execute_command(args):
         if not to_exec:
             log.debug(
                 "No command to run in pool %s (%s) in %s"
-                % (args.pool, booked, args.top_dir)
+                % (args.pool, booked_resources, args.top_dir)
             )
             free_resources(booked_resources, args.top_dir)
             break
@@ -128,8 +127,9 @@ def execute_command(args):
                     proc = subprocess.Popen(data["real_cmd"])
                 if proc:
                     data["pid"] = proc.pid
-                    commands.append([res, proc, out_fd, data["real_cmd"], idx, to_exec])
-                    booked.extend(booked_resources)
+                    commands.append(
+                        [booked_resources, proc, out_fd, data["real_cmd"], idx, to_exec]
+                    )
                 with open(to_exec, "w") as f:
                     json.dump(data, f)
             except Exception:
@@ -145,7 +145,7 @@ def execute_command(args):
         while number > 0:
             log.debug("Waiting %d commands" % number)
             status = os.wait()
-            for res, proc, fd, cmd, idx, to_exec in commands:
+            for booked, proc, fd, cmd, idx, to_exec in commands:
                 if proc and proc.pid == status[0]:
                     number -= 1
                     break
@@ -162,8 +162,8 @@ def execute_command(args):
                     os.remove(to_exec)
                 except FileNotFoundError:
                     pass
-            if res and args:
-                booked = free_resources(booked, args.top_dir)
+            if booked != [] and args:
+                free_resources(booked, args.top_dir)
     return 0
 
 
@@ -203,7 +203,6 @@ def free_resources(resources, top_dir):
     log.debug("Freeing resources: %s" % resources)
     for r, pool in resources:
         free_resource(r, top_dir, pool)
-    return []
 
 
 def get_command(args):

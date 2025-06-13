@@ -361,7 +361,18 @@ class TestQueue(unittest.TestCase):
             main.main(["dci-queue", "add-resource", "8nodes", "cluster5"]), 0
         )
         self.assertEqual(
-            main.main(["dci-queue", "schedule", "8nodes", "echo", "@RESOURCE"]), 0
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    "[ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available; sleep 10",
+                ]
+            ),
+            0,
         )
         self.assertEqual(
             main.main(
@@ -372,13 +383,54 @@ class TestQueue(unittest.TestCase):
                     "--",
                     "bash",
                     "-c",
-                    "[ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available; sleep 30",
+                    "[ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available; sleep 10",
                 ]
             ),
             0,
         )
         self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
         self.doesnt_exist(".", ".", "cluster4-available")
+        self.doesnt_exist(".", ".", "cluster5-available")
+
+    def test_run_two(self):
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster4"]), 0
+        )
+        self.assertEqual(
+            main.main(["dci-queue", "add-resource", "8nodes", "cluster5"]), 0
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    "[ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available",
+                ]
+            ),
+            0,
+        )
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "8nodes",
+                    "--",
+                    "bash",
+                    "-c",
+                    "sleep 10; [ -e ${DCI_QUEUE_DIR}/available/8nodes/@RESOURCE ] && touch ${DCI_QUEUE_DIR}/@RESOURCE-available",
+                ]
+            ),
+            0,
+        )
+        self.assertEqual(main.main(["dci-queue", "run", "8nodes"]), 0)
+        self.doesnt_exist(".", ".", "cluster4-available")
+        self.doesnt_exist(".", ".", "cluster5-available")
 
     def test_run_multiple(self):
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "hub"]), 0)
