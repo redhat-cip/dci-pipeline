@@ -105,6 +105,14 @@ def execute_command(args):
     return 0
 
 
+def get_resources(data):
+    """Get the resources from the data."""
+    res = [res for res, pool in data.get("booked", [])]
+    if res is []:
+        res = [data.get("resource", "unknown")]
+    return res
+
+
 def display_cmd(args, filename, ext=None):
     cmdfile = os.path.join(args.top_dir, "queue", args.pool, filename)
     if os.path.exists(cmdfile):
@@ -123,7 +131,7 @@ def display_cmd(args, filename, ext=None):
                         if "priority" in data and data["priority"] > 0
                         else ""
                     ),
-                    " [%s]" % data["resource"] if "resource" in data else "",
+                    " [%s]" % ",".join(get_resources(data)),
                     " ".join(cmd),
                     data["wd"],
                     " [REMOVE]" if "remove" in data and data["remove"] else "",
