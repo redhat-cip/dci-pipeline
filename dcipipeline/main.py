@@ -1369,7 +1369,11 @@ def main(args=sys.argv):
                     else:
                         job_info = None
                         log.error("No job_info found for jobdef %s" % jobdef["name"])
-                    if job_info and "jobstates" in job_info["job"]:
+                    if (
+                        job_info
+                        and "jobstates" in job_info["job"]
+                        and len(job_info["job"]["jobstates"]) > 0
+                    ):
                         job_states = sorted(
                             job_info["job"]["jobstates"],
                             key=lambda x: x["created_at"],
