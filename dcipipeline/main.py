@@ -41,10 +41,6 @@ from dciclient.v1.api import jobstate as dci_jobstate
 from dciclient.v1.api import pipeline as dci_pipeline
 from dciclient.v1.api import topic as dci_topic
 
-if sys.version_info[0] == 2:
-    FileNotFoundError = IOError
-    PermissionError = IOError
-
 # remove all handlers before adding the console handler to avoid a
 # side effect of having loaded ansible.utils.display which creates a
 # logger to ANSIBLE_LOG if set in ansible.cfg.
@@ -354,8 +350,13 @@ def generate_query_from_tags(fallback_tags, build_tags, c_type):
     extra_build_tags, tags = extract_build_tags(filter_type_tags(fallback_tags, c_type))
     build_tags += extra_build_tags
     if len(build_tags) > 0:
-        idx = max([ORDERED_TAGS.index(tag) for tag in build_tags])
-        build_tags = ORDERED_TAGS[idx:]
+        # Only consider tags that are actually in ORDERED_TAGS
+        valid_build_tags = [tag for tag in build_tags if tag in ORDERED_TAGS]
+        if valid_build_tags:
+            idx = max([ORDERED_TAGS.index(tag) for tag in valid_build_tags])
+            build_tags = ORDERED_TAGS[idx:]
+        else:
+            build_tags = []
     return generate_tags_query_clause(
         None, tags, generate_tags_query_clause("or", build_tags)
     )
@@ -408,7 +409,7 @@ def generate_query(c_type, fallback_tags):
 def _get_created_after_from_today(days_before):
     time_of_day = datetime.datetime.today()
     created_after = time_of_day - datetime.timedelta(days=days_before)
-    return f"{created_after.year}-{created_after.month}-{created_after.day}T00:00:00.000000"
+    return f"{created_after.year:04d}-{created_after.month:02d}-{created_after.day:02d}T00:00:00.000000"
 
 
 def _get_components_by_kw(**kwargs):
@@ -577,11 +578,13 @@ def schedule_job(
     jobdef,
     remoteci_context,
     pipeline_user_context,
-    tags=[],
+    tags=None,
     prev_components=None,
     previous_job_id=None,
     pipeline_id=None,
 ):
+    if tags is None:
+        tags = []
     previous_job_id = previous_job_id or jobdef.get("previous_job_id")
     log.info(
         "scheduling job %s on topic %s%s previous_job_id=%s pipeline_id=%s"
@@ -737,11 +740,13 @@ def build_cmdline(jobdef):
 
 
 def check_stats(stats):
-    if (
-        stats.get("ok", {}) == {}
-        and stats.get("changed", {}) == {}
-        and stats.get("processed", {}) == {}
-    ):
+    # Check if any tasks were executed by looking for non-zero values
+    ok_count = stats.get("ok", 0)
+    changed_count = stats.get("changed", 0)
+    processed_count = stats.get("processed", 0)
+
+    # If all counts are zero or empty, nothing was executed
+    if not ok_count and not changed_count and not processed_count:
         log.error("Nothing has been executed")
         return False
     return True
@@ -887,7 +892,8 @@ def run_jobdef(context, jobdef, dci_credentials, data_dir, cancel_cb):
     if run.stats is None:
         ansible_log = os.path.join(private_data_dir, "ansible.log")
         if os.path.exists(ansible_log):
-            log.error(open(ansible_log).read())
+            with open(ansible_log) as f:
+                log.error(f.read())
         else:
             log.error("No ansible.log found")
     upload_ansible_log(context, private_data_dir, jobdef)
@@ -1039,16 +1045,15 @@ def get_config(args):
             # we delete keys
             for key in list(pipeline[idx].keys()):
                 # Special merge: concat lists and merge dicts
-                if (
-                    key in pipeline[idx]
-                    and key in pipeline[idx - 1]
-                    and type(pipeline[idx][key]) == type(pipeline[idx - 1][key])  # noqa
-                ):
-                    if isinstance(pipeline[idx][key], list):
-                        pipeline[idx - 1][key] += pipeline[idx][key]
+                if key in pipeline[idx] and key in pipeline[idx - 1]:
+                    current_val = pipeline[idx][key]
+                    prev_val = pipeline[idx - 1][key]
+
+                    if isinstance(current_val, list) and isinstance(prev_val, list):
+                        pipeline[idx - 1][key] += current_val
                         del pipeline[idx][key]
-                    elif isinstance(pipeline[idx][key], dict):
-                        pipeline[idx - 1][key].update(pipeline[idx][key])
+                    elif isinstance(current_val, dict) and isinstance(prev_val, dict):
+                        pipeline[idx - 1][key].update(current_val)
                         del pipeline[idx][key]
             pipeline[idx - 1].update(pipeline[idx])
             del pipeline[idx]
@@ -1098,9 +1103,17 @@ def create_inputs(config_dir, prev_jobdefs, jobdef, job_info):
             log.info(
                 "Copying %s into %s" % (prev_jobdef_outputs_key, jobdef_inputs_key)
             )
-            with open(jobdef_inputs_key, "wb") as ofile:
-                with open(prev_jobdef_outputs_key, "rb") as ifile:
-                    ofile.write(ifile.read())
+            try:
+                with open(jobdef_inputs_key, "wb") as ofile:
+                    with open(prev_jobdef_outputs_key, "rb") as ifile:
+                        ofile.write(ifile.read())
+            except (IOError, OSError) as e:
+                log.error(
+                    "Failed to copy file %s to %s: %s"
+                    % (prev_jobdef_outputs_key, jobdef_inputs_key, str(e))
+                )
+                continue
+
             if "ansible_extravars" not in jobdef:
                 jobdef["ansible_extravars"] = {}
             log.debug(
@@ -1120,7 +1133,7 @@ def add_outputs_paths(job_info, jobdef):
         return
 
     outputs_job_directory_prefix = "%s/outputs" % job_info["data_dir"]
-    os.makedirs(outputs_job_directory_prefix)
+    os.makedirs(outputs_job_directory_prefix, exist_ok=True)
     outputs_keys_paths = {}
     for key in jobdef["outputs"]:
         outputs_keys_paths[key] = "%s/%s" % (
@@ -1332,11 +1345,11 @@ PIPELINE = []
 
 
 def main(args=sys.argv):
-    global PIPELINE
-    del PIPELINE[:]
+    # Clear the pipeline list safely
+    PIPELINE.clear()
     signal_handler = SignalHandler()
     config_dir, pipeline, options = get_config(args)
-    PIPELINE += pipeline
+    PIPELINE.extend(pipeline)
 
     for stage in get_stages_of_jobdefs(pipeline):
         job_in_errors, jobdefs = run_stage(
