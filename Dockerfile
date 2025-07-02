@@ -26,7 +26,7 @@ RUN set -ex && \
     chown -R dci-openshift-agent: /var/lib/dci-openshift-agent && \
     sed -i 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+NOPASSWD:\s\+ALL\)/\1/' /etc/sudoers && \
     rm -rf /var/cache /var/log/dnf* /var/log/yum.* && \
-    rm -rf /usr/src/* ~/.cache && \
+    rm -rf ~/.cache && \
     dnf clean all
 
 ARG _REPO_URL="https://raw.githubusercontent.com/containers/image_build/main/podman"
