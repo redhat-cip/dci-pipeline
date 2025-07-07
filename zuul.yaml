@@ -67,7 +67,6 @@
         - dci-build-and-push-dci-pipeline-dev-container-job
         - dci-pipeline-tests-el8
         - dci-pipeline-tests-el9
-        - dci-rpm-build-doc-el8
         - dci-doc-build-container-job
         - dci-rpm-build-el8
         - dci-rpm-build-el9
@@ -76,7 +75,6 @@
       jobs:
         - dci-pipeline-tests-el8
         - dci-pipeline-tests-el9
-        - dci-rpm-build-doc-el8
         - dci-doc-build-container-job
         - dci-rpm-build-el8
         - dci-rpm-build-el9
@@ -85,14 +83,12 @@
       jobs:
         - dci-build-and-push-dci-pipeline-container-job
         - dci-rpm-build-el8
-        - dci-rpm-build-doc-el8
         - dci-doc-build-and-push-container-job
         - dci-rpm-build-el9
         - dci-rpm-publish:
             dependencies:
               - dci-rpm-build-el8
               - dci-rpm-build-el9
-              - dci-rpm-build-doc-el8
         - dci-deploy:
             dependencies:
               - dci-rpm-publish
