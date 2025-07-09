@@ -29,6 +29,7 @@
       - ansible-collection-containers-podman
       - ansible-role-dci-podman
       - ansible-role-dci-sync-registry
+      - redhatci/ansible-collection-redhatci-ocp
 
 - job:
     name: dci-build-and-push-dci-pipeline-container-job
@@ -57,6 +58,7 @@
       - ansible-collection-containers-podman
       - ansible-role-dci-podman
       - ansible-role-dci-sync-registry
+      - redhatci/ansible-collection-redhatci-ocp
 
 - project:
 

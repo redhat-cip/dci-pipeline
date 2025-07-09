@@ -162,10 +162,8 @@ TOPDIR=$(cd $(dirname $0); pwd)
 
 if [[ $0 =~ .*-podman$ ]]; then
     SUFFIX=-podman
-    PODMAN_TAG=use-dci-container
 else
     SUFFIX=
-    PODMAN_TAG=
 fi
 
 if [ -r "$TOPDIR/common$SUFFIX" ]; then
@@ -619,7 +617,7 @@ for NAME in $OCP_NAMES $CNF_NAMES; do
         fi
     done
 
-    ALL_TAGS="$ALL_TAGS $NAME:$EXTENDED_TAGS,$PODMAN_TAG $NAME:url=$URL $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
+    ALL_TAGS="$ALL_TAGS $NAME:$EXTENDED_TAGS $NAME:url=$URL $NAME:$GIT_REPOS $QUEUE_OPT $NAME:ansible_extravars=dci_change_dir:$PWD"
     if [ -x "$PWD/.venv/bin/python3" ]; then
         ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars=ansible_playbook_python:$PWD/.venv/bin/python3"
     fi
@@ -639,6 +637,25 @@ else
     if [ -d dci-pipeline ]; then
         export PATH=$PWD/dci-pipeline/tools:$PWD/dci-pipeline/container:$PATH
     fi
+fi
+
+if [ -n "$SUFFIX" ]; then
+    echo "Extracting required projects"
+    # Software Factory projects
+    for proj in dci-packaging python-dciclient python-dciauth dci-ansible dci-openshift-agent dci-openshift-app-agent dci-pipeline ansible-collection-community-crypto ansible-collection-community-kubernetes ansible-collection-community-general ansible-collection-community-libvirt ansible-collection-containers-podman ansible-role-dci-podman ansible-role-dci-sync-registry; do
+        if [ ! -d "$proj" ]; then
+            git clone "https://softwarefactory-project.io/r/$proj"
+        fi
+    done
+    # GitHub projects
+    if [ ! -d ansible-collection-redhatci-ocp ]; then
+        git clone https://github.com/redhatci/ansible-collection-redhatci-ocp.git
+    fi
+    echo "Building container image"
+    ./dci-pipeline/container/build.sh "$DCI_PIPELINE_TAG"
+    # Make sure we don't fetch from quay
+    export DCI_PIPELINE_IMAGE="localhost/$DCI_PIPELINE_TAG"
+    export DCI_PIPELINE_TAG=latest
 fi
 
 type -p "dci-pipeline$SUFFIX"
