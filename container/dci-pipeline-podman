@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2022 Red Hat, Inc.
+# Copyright (C) 2022-2025 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -21,6 +21,11 @@ MOUNTED_PATHS=(
   "/var/consoles"
   "${HOME}"
 )
+
+# if /var/lib/dic-pipeline is writtable, add it to the mounted paths
+if [[ -w /var/lib/dci-pipeline ]]; then
+    MOUNTED_PATHS+=("/var/lib/dci-pipeline")
+fi
 
 mounts=
 
