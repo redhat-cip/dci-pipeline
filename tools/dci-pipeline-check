@@ -147,6 +147,11 @@ case $CHANGEID in
         fi
         [ -n "$DIR" ] || DIR=$HOME/github/$PR$JOBSUFFIX
         TYPE=github
+        # In podman mode, export the tag pointing to the image that
+        # was built by the zuul pipeline.
+        if [ -n "$SUFFIX" ]; then
+            export DCI_PIPELINE_TAG="github-$PR"
+        fi
         ;;
     *)
         [ -n "$DIR" ] || DIR=$HOME/gerrit/$CHANGEID$JOBSUFFIX
@@ -206,15 +211,6 @@ MAINDIR="$(ls|grep -Fv .json)"
   # extract depends-on from the last commit message
   cd "$MAINDIR"; git log -1
 ) | tr -d '\r' | sort -u | "$BASEDIR/extract-dependencies$SUFFIX" $DIR
-
-# in podman mode for a main change from github, find the first gerrit
-# depends-on and use it as the tag for the container image.
-if [ -n "$SUFFIX" ] && [ "$TYPE" = github ]; then
-    GERRIT_CHANGE=$(jq -r .body github.json | tr -d '\r' | grep -Eiq '^\s*(build-depends|depends-on):' | head -1 | sed -e 's@\s*\(build-depends\|depends-on\):\s*\(.*\)\s*@\2@i')
-    if [ -n "$GERRIT_CHANGE" ]; then
-        export DCI_PIPELINE_TAG="gerrit-$GERRIT_CHANGE"
-    fi
-fi
 
 # take test-runner from the local dir
 if [ -d dci-pipeline ]; then
