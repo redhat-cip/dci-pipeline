@@ -39,6 +39,19 @@ fi
 
 . "$BASEDIR/common$SUFFIX"
 
+TMPDIR="$(mktemp -d)"
+
+if [ ! -d "$TMPDIR" ] || [ ! -w "$TMPDIR" ]; then
+    echo "unable to create a temporary directory" 1>&2
+    exit 1
+fi
+
+cleanup() {
+    rm -rf "$TMPDIR"
+}
+
+trap cleanup 0
+
 # set PATH for yaml2json
 PATH=$BASEDIR:$PATH
 
@@ -70,6 +83,10 @@ for arg in "$@"; do
                 exit 1
             fi
 
+            # copy the pipeline to the temporary directory
+            cp $pipeline $TMPDIR || exit 1
+            pipeline="$TMPDIR/$(basename $pipeline)"
+
             if grep -q -E "^\s*-?\s*ansible_playbook\s*:\s*[\"']?/usr/share/dci-openshift-app-agent/dci-openshift-app-agent.yml[\"']?" $pipeline; then
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             else
@@ -77,46 +94,9 @@ for arg in "$@"; do
             fi
 
             for name in $names; do
-                # Inject the inventory and configuration arguments
-                INV=$("$BASEDIR"/yaml2json "$pipeline" | \
-                    jq -r ".[]|select(.name==\"$name\")|.ansible_inventory" | \
-                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
-                CONF=$("$BASEDIR"/yaml2json "$pipeline" | \
-                    jq -r ".[]|select(.name==\"$name\")|.configuration" | \
-                    sed -e "s/@QUEUE/$DCI_QUEUE/" -e "s/@RESOURCE/$RES/")
-                EXTRA_VARS=($("$BASEDIR"/yaml2json "$pipeline" |
-                    jq -r '.[].ansible_extravars|to_entries[]|select(.value|tostring|test("@QUEUE|@RESOURCE")?)|.key'))
-                if [ "$CONF" != null ]; then
-                    CONF="$name:configuration=$CONF"
-                else
-                    CONF=
-                fi
-                # Inject the extra vars used with @QUEUE/@RESOURCE
-                EXTRA=
-                if [ -n "${EXTRA_VARS}" ]; then
-                    for var in "${EXTRA_VARS[@]}"; do
-                        val=$("$BASEDIR"/yaml2json "$pipeline" |
-                            jq -r ".[]|select(.name==\"$name\")|.ansible_extravars.${var}|tostring" |
-                            sed -e "s/@QUEUE/$DCI_QUEUE/g" -e "s/@RESOURCE/$RES/g")
-                        # auxiliary variable to check if the extravar is/is not a string
-                        extra_string_vars=($("$BASEDIR"/yaml2json "$pipeline" |
-                            jq -r '.[].ansible_extravars|to_entries[]|select((.value|type == "string") and (.value|test("@QUEUE|@RESOURCE")))|.key'))
-                        # extravar is a string
-                        if [[ "${extra_string_vars[@]}" =~ $var ]]; then
-                            EXTRA="$EXTRA ${name}:ansible_extravars=${var}:${val}"
-                        # extravar is an object
-                        else
-                            EXTRA="$EXTRA ${name}:ansible_extravars={\"${var}\":${val}}"
-                        fi
-                    done
-                fi
-                # for a pipeline definition split in multiple files
-                # there could be no inventory in the current file
-                if [ "$INV" != null ]; then
-                    CMD="$CMD $name:ansible_inventory=${INV} $CONF $EXTRA $pipeline"
-                else
-                    CMD="$CMD $CONF $EXTRA $pipeline"
-                fi
+                # Replace @QUEUE/@RESOURCE
+                sed -i -e "s/@QUEUE/$DCI_QUEUE/g" -e "s/@RESOURCE/$RES/g" $pipeline
+                CMD="$CMD $pipeline"
             done
             ;;
     esac
