@@ -29,16 +29,24 @@ if [ $(id -u) -eq 0 ]; then
     chcon --reference /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta
 fi
 
-for dir in . ../python-dciclient ../python-dciauth; do
-    cd $dir
+for dir in dci-pipeline python-dciclient python-dciauth; do
+    cd ../$dir
     rm -rf dist
+    VERS=$(sed -n -e "s/Version:\s*\([^ ]*\)\s*/\1/p" $dir.spec)
+    REL=$(git rev-parse --abbrev-ref HEAD)
     PYTHONPATH=../dci-packaging python3 setup.py sdist
+    printf -- "- name: $dir \n  version: $VERS-$REL\n" >> ../dci-pipeline/dist/src_version.txt
     cd -
 done
 
 for repo in ansible-collection-redhatci-ocp ; do
     if [ ! -d ../$repo ]; then
         git clone https://github.com/redhatci/${repo}.git ../${repo}
+        cd ../$repo
+        VERS=$(sed -n -e "s/Version:\s*\([^ ]*\)\s*/\1/p" $repo.spec)
+        REL=$(git rev-parse --abbrev-ref HEAD)
+        printf -- "- name: $repo \n  version: $VERS-$REL\n" >> ../dci-pipeline/dist/src_version.txt
+        cd -
     fi
 done
 
@@ -56,7 +64,9 @@ for dir in dci-ansible \
     ; do
     cd  ../$dir
     VERS=$(sed -n -e "s/Version:\s*\([^ ]*\)\s*/\1/p" $dir.spec)
+    REL=$(git rev-parse --abbrev-ref HEAD)
     git archive "--output=../dci-pipeline/dist/$dir-$VERS.tar.gz" "--prefix=$dir-$VERS/" --format=tar HEAD
+    printf -- "- name: $dir \n  version: $VERS-$REL\n" >> ../dci-pipeline/dist/src_version.txt
     cd -
 done
 
