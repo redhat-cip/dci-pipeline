@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 
+import io
 import json
 import os
 import shutil
@@ -20,6 +21,7 @@ import tempfile
 import time
 import unittest
 import uuid
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 from dciqueue import lib, main, run_cmd
@@ -33,7 +35,8 @@ class TestQueue(unittest.TestCase):
         os.environ["DCI_QUEUE_CONSOLE_OUTPUT"] = "t"
 
     def tearDown(self):
-        shutil.rmtree(self.queue_dir)
+        if self.queue_dir:
+            shutil.rmtree(self.queue_dir)
 
     def call(self, arg, stdout=None, stderr=None, *args, **kwargs):
         self.arg = arg
@@ -555,9 +558,6 @@ class TestQueue(unittest.TestCase):
         self.file_exists("queue", "8nodes", "1")
 
     def test_list(self):
-        import io
-        from contextlib import redirect_stdout
-
         self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "8nodes"]), 0)
 
         with io.StringIO() as buf, redirect_stdout(buf):
@@ -580,6 +580,47 @@ class TestQueue(unittest.TestCase):
             output = buf.getvalue()
         self.assertEqual(rc, 0)
         self.assertIn("No pool was found", output)
+
+    def test_list_extra_pools(self):
+        # Prepare two pools and resources
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "poolA"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "poolB"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "poolA", "resA"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "poolB", "resB"]), 0)
+
+        # Schedule a command on poolA with an extra poolB
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "-e",
+                    "poolB",
+                    "poolA",
+                    "--",
+                    "bash",
+                    "-c",
+                    "echo @RESOURCE; sleep 10",
+                ]
+            ),
+            0,
+        )
+
+        # Run the command in background
+        if os.fork() == 0:
+            self.assertEqual(main.main(["dci-queue", "run", "poolA"]), 0)
+            self.queue_dir = None  # Prevent cleanup in child process
+            return
+
+        # wait 1 second to ensure the command has started
+        time.sleep(1)
+
+        # Capture and verify list output includes the extra pool
+        with io.StringIO() as buf, redirect_stdout(buf):
+            rc = main.main(["dci-queue", "list", "poolA"])
+            output = buf.getvalue()
+        self.assertEqual(rc, 0)
+        self.assertIn("[resA,resB]", output)
 
     def test_log_level(self):
         self.assertEqual(
@@ -637,9 +678,6 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(main.main(["dci-queue", "searchdir", "8nodes", "/tmp"]), 0)
 
     def test_dci_job_via_pipeline(self):
-        import io
-        from contextlib import redirect_stdout
-
         job_id = uuid.uuid4()
         job_name = "test-dci-pipeline-job"
         job_ids = "%s:%s\n" % (job_name, job_id)
@@ -674,9 +712,6 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(output, job_ids)
 
     def test_dci_job_via_check_change(self):
-        import io
-        from contextlib import redirect_stdout
-
         job_id = uuid.uuid4()
         job_name = "test-dci-check-change-job"
         job_ids = "%s:%s\n" % (job_name, job_id)
