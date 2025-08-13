@@ -581,16 +581,24 @@ done
 
 ALL_TAGS=
 
-# if we have a gitops change (directory ending with -gitops), we need to inject the gitops branch
+# If we have a gitops change (directory ending with -gitops) or a
+# sub-directory containing gitops, we need to inject the gitops branch
 if [ -d *-gitops ]; then
+    GITOPS_REPO=$(ls -d *-gitops 2>/dev/null)
+elif ls -d */*gitops*/ 2>/dev/null; then
+    GITOPS_REPO=$(basename $(cd $(ls -d */*gitops*/..|head -1) && pwd))
+else
+    GITOPS_REPO=
+fi
+if [ -n "$GITOPS_REPO" ]; then
     # there are 2 cases: the main change is from the gitops PR or the gitops PR is a depends-on
     # first case: $REPO is the gitops repo and the branch is in github.json
-    if [ "$REPO" = "$(ls -d *-gitops)" ]; then
+    if [ "$REPO" = "$GITOPS_REPO" ]; then
         GITOPS_BRANCH="$(jq -r .head.ref github.json)"
     else
         # second case: the change is from a dependent PR and the branch is <repo>-<pr number>.json
         # we assume there is only one gitops repo
-        GITOPS_BRANCH="$(jq -r .head.ref *-gitops-*.json)"
+        GITOPS_BRANCH="$(jq -r .head.ref ${GITOPS_REPO}-*.json)"
     fi
     for NAME in $ZTP_NAMES; do
         ALL_TAGS="$ALL_TAGS $NAME:ansible_extravars={\"dci_gitops_policies_repo\":{\"branch\":\"$GITOPS_BRANCH\"},\"dci_gitops_sites_repo\":{\"branch\":\"$GITOPS_BRANCH\"}}"
