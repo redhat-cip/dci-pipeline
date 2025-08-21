@@ -110,7 +110,7 @@ finish() {
         $BASEDIR/send_status "$DIR" "$STATUS" "$LAST_RESULT" $DCI_URL
 
         if [ -z "$KILLED" ]; then
-            # Send Google chat alert for unsuccessful jobs in github repos
+            # Send alert for unsuccessful jobs in github repos
             if [[ " ERROR FAILURE " =~ "${LAST_RESULT} " ]] &&
                [[ -n "${REPO}" ]]; then
                 $BASEDIR/alert "${REPO}" "${RESULT} from ${URL}"
