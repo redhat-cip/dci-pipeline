@@ -35,8 +35,9 @@ for elt in "${MOUNTED_PATHS[@]}" "${CONTAINER_MOUNTED_PATHS[@]}"; do
   fi
 done
 
-podman run --rm --security-opt label=disable -e USER -e LC_ALL=C.UTF-8 --userns=keep-id --group-add=wheel --pull=newer $mounts \
-       "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
+podman run --rm --security-opt label=disable -e USER -e LC_ALL=C.UTF-8 -e DCI_QUEUE_JOBID \
+      --userns=keep-id --group-add=wheel --pull=newer $mounts \
+      "${DCI_PIPELINE_IMAGE:=quay.io/distributedci/dci-pipeline}":"${DCI_PIPELINE_TAG:=latest}" \
       dci-pipeline "$@"
 
 # dci-pipeline-podman ends here
