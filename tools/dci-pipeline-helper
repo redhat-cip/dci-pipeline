@@ -69,6 +69,7 @@ for arg in "$@"; do
             if [ -z "$RES" ] || [ -z "$DCI_QUEUE" ]; then
                 echo "No resources for queue #${num}" 1>&2
                 exit 1
+            fi
             ;;
         *:*=*)
             CMD="$CMD $arg"
