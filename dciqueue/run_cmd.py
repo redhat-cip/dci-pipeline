@@ -116,6 +116,18 @@ def execute_command(args):
                     out_fd = open(
                         os.path.join(args.top_dir, "log", args.pool, str(idx)), "w"
                     )
+                    # log environment variables
+                    out_fd.write(f'+ DCI_QUEUE={os.environ["DCI_QUEUE"]}\n')
+                    out_fd.write(f'+ DCI_QUEUE_RES={os.environ["DCI_QUEUE_RES"]}\n')
+                    out_fd.write(f'+ DCI_QUEUE_ID={os.environ["DCI_QUEUE_ID"]}\n')
+                    out_fd.write(f'+ DCI_QUEUE_JOBID={os.environ["DCI_QUEUE_JOBID"]}\n')
+                    for idx in range(1, num):
+                        out_fd.write(
+                            f'+ DCI_QUEUE{idx}={os.environ[f"DCI_QUEUE{idx}"]}\n'
+                        )
+                        out_fd.write(
+                            f'+ DCI_QUEUE_RES{idx}={os.environ[f"DCI_QUEUE_RES{idx}"]}\n'
+                        )
                     out_fd.write("+ cd " + data["wd"] + "\n")
                     out_fd.write("+ " + " ".join(data["real_cmd"]) + "\n")
                     out_fd.flush()

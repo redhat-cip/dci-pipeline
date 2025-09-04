@@ -66,6 +66,9 @@ for arg in "$@"; do
             num=${arg#-p}
             RES=$(eval echo \$DCI_QUEUE_RES$num)
             DCI_QUEUE=$(eval echo \$DCI_QUEUE$num)
+            if [ -z "$RES" ] || [ -z "$DCI_QUEUE" ]; then
+                echo "No resources for queue #${num}" 1>&2
+                exit 1
             ;;
         *:*=*)
             CMD="$CMD $arg"
