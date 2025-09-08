@@ -78,6 +78,12 @@ for req in "$TOPDIR"/dci-openshift-*/requirements.yml; do
     ansible-galaxy collection install -r "$req"
 done
 
+#install python prerequisites for collections
+find "$TOPDIR/.." -path "*/meta/requirements.txt" -type f | while read -r python_req; do
+  cat "$python_req"
+  pip3 install -r "$python_req"
+done
+
 ansible-galaxy list
 
 ## agents
