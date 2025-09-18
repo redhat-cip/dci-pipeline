@@ -13,8 +13,8 @@ ADD dist/* /usr/src/
 RUN set -ex && \
     dnf -y update && \
     dnf -y install git gcc gettext python3-devel python3-pip python3-setuptools python3-cryptography \
-        python3-netaddr python3-dns python3-firewall make \
-        sudo policycoreutils fuse-overlayfs wget podman jq && \
+        python3-netaddr python3-dns python3-firewall make rsync \
+        sudo policycoreutils fuse-overlayfs wget podman jq pigz && \
     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf -y install python3-openshift python3-passlib python3-junit_xml && \
     mkdir -p /usr/share/dci /usr/share/ansible/roles /etc/ansible/roles /usr/share/ansible/collections && \
