@@ -769,6 +769,136 @@ class TestQueue(unittest.TestCase):
         self.doesnt_exist("queue", "8nodes", "1234" + run_cmd.EXT)
         self.file_exists("available", "8nodes", "res")
 
+    def test_partial_resource_booking_bug(self):
+        """Test that demonstrates the bug where jobs launch with partial resource booking.
+
+        This test shows the critical bug: when a job requires multiple resources and one
+        extra pool resource is not available, the job still launches with only the primary
+        resource booked, leading to inconsistent state.
+        """
+        # Setup: Create two pools with different resource availability
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "primary"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-pool", "-n", "extra"]), 0)
+
+        # Add resources: primary pool has resources, extra pool has NO resources
+        self.assertEqual(main.main(["dci-queue", "add-resource", "primary", "res1"]), 0)
+        self.assertEqual(main.main(["dci-queue", "add-resource", "primary", "res2"]), 0)
+        # Intentionally NOT adding resources to extra pool to simulate unavailable resources
+
+        # Create a test script that will detect if it runs with partial resources
+        test_script = os.path.join(self.queue_dir, "test_partial_booking.sh")
+        with open(test_script, "w") as f:
+            f.write(
+                """#!/bin/bash
+# This script detects if it runs with partial resource booking
+echo "=== RESOURCE BOOKING TEST ==="
+echo "Primary resource: $DCI_QUEUE_RES"
+echo "Primary pool: $DCI_QUEUE"
+echo "Extra resource 1: $DCI_QUEUE_RES1"
+echo "Extra pool 1: $DCI_QUEUE1"
+echo "Extra resource 2: $DCI_QUEUE_RES2"
+echo "Extra pool 2: $DCI_QUEUE2"
+
+# Check if we have the expected number of resources
+resource_count=0
+if [ -n "$DCI_QUEUE_RES" ]; then
+    resource_count=$((resource_count + 1))
+fi
+if [ -n "$DCI_QUEUE_RES1" ]; then
+    resource_count=$((resource_count + 1))
+fi
+if [ -n "$DCI_QUEUE_RES2" ]; then
+    resource_count=$((resource_count + 1))
+fi
+
+echo "Total resources booked: $resource_count"
+
+# Check if we have resources from different pools (the real test)
+# We should have primary pool resource AND extra pool resource
+has_primary=false
+has_extra=false
+
+if [ "$DCI_QUEUE" = "primary" ] && [ -n "$DCI_QUEUE_RES" ]; then
+    has_primary=true
+fi
+
+# Check if we have extra pool resources
+if [ "$DCI_QUEUE1" = "extra" ] && [ -n "$DCI_QUEUE_RES1" ]; then
+    has_extra=true
+fi
+if [ "$DCI_QUEUE2" = "extra" ] && [ -n "$DCI_QUEUE_RES2" ]; then
+    has_extra=true
+fi
+
+echo "Has primary pool resource: $has_primary"
+echo "Has extra pool resource: $has_extra"
+
+# The bug: job should NOT run if extra resources are not available
+# But currently it DOES run with only primary resource
+if [ "$has_extra" = "false" ]; then
+    echo "BUG DETECTED: Job launched without extra pool resource!"
+    echo "Expected both primary and extra pool resources, but only got primary"
+    echo "This demonstrates the partial resource booking bug!"
+    exit 1
+else
+    echo "SUCCESS: All required resources were booked from both pools"
+    exit 0
+fi
+"""
+            )
+        os.chmod(test_script, 0o755)
+
+        # Schedule a job that requires both primary and extra resources
+        # This should fail to book extra resources and NOT launch the job
+        self.assertEqual(
+            main.main(
+                [
+                    "dci-queue",
+                    "schedule",
+                    "-e",
+                    "extra",  # Requires extra pool resource
+                    "primary",
+                    "bash",
+                    test_script,
+                    "@RESOURCE",  # Add @RESOURCE placeholder
+                ]
+            ),
+            0,
+        )
+
+        # Verify the job is queued
+        self.file_exists("queue", "primary", "1")
+
+        # Run the job - with the fix, this should NOT launch the job
+        result = main.main(["dci-queue", "run", "primary"])
+
+        print(f"Run result: {result}")
+
+        # Check if the job was consumed from queue
+        job_was_consumed = not os.path.exists(
+            os.path.join(self.queue_dir, "queue", "primary", "1")
+        )
+        print(f"Job was consumed from queue: {job_was_consumed}")
+
+        # With the fix: job should NOT have run at all because extra resources are not available
+        self.assertFalse(
+            job_was_consumed,
+            "FIXED: Job should NOT have been consumed from queue when extra resources are not available!",
+        )
+
+        # The job should still be in the queue waiting for resources
+        self.file_exists("queue", "primary", "1")
+
+        # The primary resource should still be available (not booked)
+        self.file_exists("available", "primary", "res1")
+        self.file_exists("available", "primary", "res2")
+
+        # No log file should exist since the job didn't run
+        log_file = os.path.join(self.queue_dir, "log", "primary", "1")
+        self.assertFalse(
+            os.path.exists(log_file), "No log file should exist since job didn't run"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
