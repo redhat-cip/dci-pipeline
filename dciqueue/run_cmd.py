@@ -51,40 +51,69 @@ def execute_command(args):
         return 1
 
     commands = []
+    skipped_jobs = set()  # Track jobs that have been skipped to avoid infinite loop
 
     while True:
         booked_resources = []
-        res = book_resource(args.top_dir, args.pool)
 
-        if res is None:
-            log.debug("No available resource anymore in pool %s" % args.pool)
-            break
-        log.debug("Booked resource %s in pool %s" % (res, args.pool))
-        booked_resources.append((res, args.pool))
-
-        to_exec, idx = get_command(args)
+        # First, peek at the next job to check resource requirements
+        to_exec, idx = peek_next_command(args)
 
         if not to_exec:
-            log.debug(
-                "No command to run in pool %s (%s) in %s"
-                % (args.pool, booked_resources, args.top_dir)
-            )
-            free_resources(booked_resources, args.top_dir)
+            log.debug("No command to run in pool %s" % args.pool)
             break
         else:
+            # Check if we've already skipped this job to avoid infinite loop
+            if idx in skipped_jobs:
+                log.debug("All remaining jobs have been skipped, breaking loop")
+                break
+
             with open(to_exec) as f:
                 data = json.load(f)
 
-            log.debug("Executing command %s" % data)
+            log.debug("Checking command %s" % data)
+
+            # Check if extra resources are available BEFORE booking any resources
+            extra_resources_available = True
+            for pool in data["extra_pools"]:
+                if not has_available_resource(args.top_dir, pool):
+                    log.debug("No available resource in pool %s" % pool)
+                    extra_resources_available = False
+                    break
+
+            # If extra resources are not available, skip this job
+            if not extra_resources_available:
+                log.debug("Skipping job due to unavailable extra resources")
+                skipped_jobs.add(idx)
+                continue
+
+            # Now book the primary resource
+            res = book_resource(args.top_dir, args.pool)
+
+            if res is None:
+                log.debug("No available resource anymore in pool %s" % args.pool)
+                break
+            log.debug("Booked resource %s in pool %s" % (res, args.pool))
+            booked_resources.append((res, args.pool))
+
+            # Now consume the job from the queue
+            to_exec, idx = get_command(args)
 
             # book extra resources if needed
+            extra_booking_failed = False
             for pool in data["extra_pools"]:
                 extra_res = book_resource(args.top_dir, pool)
                 if extra_res is None:
                     log.debug("No available resource anymore in pool %s" % pool)
                     free_resources(booked_resources, args.top_dir)
+                    extra_booking_failed = True
                     break
                 booked_resources.append((extra_res, pool))
+
+            # If extra resource booking failed, skip this job and continue to next
+            if extra_booking_failed:
+                log.debug("Skipping job due to failed extra resource booking")
+                continue
 
             data["real_cmd"] = [c.replace("@RESOURCE", res) for c in data["cmd"]]
             data["resource"] = res
@@ -215,6 +244,51 @@ def free_resources(resources, top_dir):
     log.debug("Freeing resources: %s" % resources)
     for r, pool in resources:
         free_resource(r, top_dir, pool)
+
+
+def peek_next_command(args):
+    """Peek at the next command without consuming it from the queue."""
+    seq = lib.Seq(args)
+
+    seq.lock()
+    first, next = seq.get()
+
+    to_exec = None
+    index = None
+    pri = -1
+    # first pass to find the highest priority job
+    for idx in range(first, next):
+        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(idx))
+        if os.path.exists(cmdfile):
+            log.debug("getting priority for %s" % cmdfile)
+            with open(cmdfile) as cmdfd:
+                data = json.load(cmdfd)
+                priority = data["priority"] if "priority" in data else 0
+                if priority > pri:
+                    log.debug("top priority so far %s => %d" % (cmdfile, priority))
+                    index = idx
+                    pri = priority
+    if index is not None:
+        cmdfile = os.path.join(args.top_dir, "queue", args.pool, str(index))
+        to_exec = cmdfile  # Don't move the file, just return the path
+
+    seq.unlock()
+    log.debug("peek_next_command %s %s" % (to_exec, index))
+    return to_exec, index
+
+
+def has_available_resource(top_dir, pool):
+    """Check if there's at least one available resource in the pool."""
+    available_dir = os.path.join(top_dir, "available", pool)
+    if not os.path.exists(available_dir):
+        return False
+
+    resources = [
+        f
+        for f in os.listdir(available_dir)
+        if os.path.islink(os.path.join(available_dir, f))
+    ]
+    return len(resources) > 0
 
 
 def get_command(args):
