@@ -339,7 +339,7 @@ for arg in "$@"; do
                 CNF_PIPELINES="$CNF_PIPELINES $pipeline"
             else
                 OCP_PIPELINES="$OCP_PIPELINES $pipeline"
-                if "$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].ansible_extravars.acm_cluster_type'|grep -q ztp-spoke; then
+                if "$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].ansible_extravars.acm_cluster_type'|grep -q '^ztp-spoke$'; then
                     ZTP_NAME=$("$BASEDIR"/yaml2json "$pipeline"|jq -r '.[].name')
                     ZTP_NAMES="$ZTP_NAMES $ZTP_NAME"
                 fi
