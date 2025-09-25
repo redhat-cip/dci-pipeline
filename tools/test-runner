@@ -433,8 +433,9 @@ if [ -d dci-openshift-agent ]; then
 fi
 
 if [ -d $PIPELINES_REPO ]; then
+    PIPELINES_TOPDIR=$(cd $PIPELINES_DIR && git rev-parse --show-toplevel)
     for pipeline in $ALL_PIPELINES; do
-        sed -i -e "s@$PIPELINES_DIR@$PWD/$PIPELINES_REPO/$PIPELINES_PATH@" $pipeline
+        sed -i -e "s@$PIPELINES_TOPDIR@$PWD/$PIPELINES_REPO@" $pipeline
     done
 fi
 
