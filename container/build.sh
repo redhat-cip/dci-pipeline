@@ -54,7 +54,6 @@ for dir in dci-ansible \
     dci-openshift-agent \
     dci-openshift-app-agent \
     ansible-collection-community-crypto \
-    ansible-collection-community-kubernetes \
     ansible-collection-community-general \
     ansible-collection-community-libvirt \
     ansible-collection-containers-podman \

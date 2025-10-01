@@ -8,7 +8,6 @@ agents inside a single container.
 Extract all these git repositories in the same directory:
 
 * ansible-collection-community-crypto
-* ansible-collection-community-kubernetes
 * ansible-collection-community-general
 * ansible-collection-community-libvirt
 * ansible-collection-containers-podman
@@ -39,8 +38,8 @@ $ ./container/dci-pipeline-podman <dci-pipeline args>
 
 ## Mount extra directories
 
-By default, only $HOME is mounted in the comtainer, you can define 
-the variable CONTAINER_MOUNTED_PATHS in the ~/.config/dci-pipeline/config 
+By default, only $HOME is mounted in the container, you can define
+the variable CONTAINER_MOUNTED_PATHS in the ~/.config/dci-pipeline/config
 configuration file to mount more directories.
 
 Example:
