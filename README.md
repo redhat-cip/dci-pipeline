@@ -1,3 +1,6 @@
+⚠️ **Note:** This project has been migrated to a new repository.
+Please visit the new location [here](https://github.com/distributedci/dci-pipeline).
+
 # CI pipeline management for DCI jobs
 
 ## Installation
